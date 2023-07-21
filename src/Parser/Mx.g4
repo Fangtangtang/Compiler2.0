@@ -1,24 +1,12 @@
 grammar Mx;
-program: declaration* EOF;
 
-declaration:
-    functionDeclaration         //函数声明定义
-    | declarationStatement      //变量、常量、类
+program:
+    (funcDefStatement | declarationStatement)*
+    EOF
     ;
 
 constructor:
     Identifier LeftRoundBracket RightRoundBracket suite;
-//函数
-functionDeclaration:
-    returnType Identifier
-    LeftRoundBracket funcParameterList* RightRoundBracket
-    functionBody=suite
-    ;
-
-
-funcParameterList:
-    variableType expression (Comma variableType expression)* ;
-
 
 /*
    STATEMENT
@@ -27,10 +15,14 @@ funcParameterList:
 statement:
     suite                   #blockStmt
     | selectionStatement    #ifStmt
-    | loopStatement         #loopStmt
-    | jumpStatement         #jumpStmt
+    | whileStatement        #whileStmt
+    | forStatement          #forStmt
+    | returnStatement       #returnStmt
+    | breakStatement        #breakStmt
+    | continueStatement     #continueStmt
     | declarationStatement  #varDefStmt
     | expressionStatement   #exprStmt
+    | funcDefStatement      #funcDefStmt
     ;
 
 suite:
@@ -51,17 +43,19 @@ selectionStatement:
 //循环语句
 //  while循环
 //  for循环
-loopStatement:
+whileStatement:
     While  LeftRoundBracket
             conditionExpression=expression
-           RightRoundBracket statement   #whileStmt
+           RightRoundBracket statement
+    ;
 
-    | For LeftRoundBracket
+forStatement:
+    For LeftRoundBracket
             initializationStatement? Semicolon
             (forConditionExpression=expression)? Semicolon
             (stepExpression=expression)?
-          RightRoundBracket
-          statement                 #forStmt
+        RightRoundBracket
+        statement
     ;
 
 //可以有一个类型，多个变量
@@ -72,11 +66,14 @@ initializationStatement:
 
 //跳转语句
 //包括 return，break，continue 三种语句
-jumpStatement:
-    Return expression? Semicolon
-    | Break Semicolon
-    | Continue Semicolon
-    ;
+returnStatement:
+    Return expression? Semicolon;
+
+breakStatement:
+    Break Semicolon;
+
+continueStatement:
+    Continue Semicolon;
 
 //表达式语句直接由一个表达式加 ; 组成
 expressionStatement:
@@ -84,6 +81,18 @@ expressionStatement:
 
 parameterList:
     expression (Comma expression)*;
+
+//函数
+funcDefStatement:
+    returnType Identifier
+    LeftRoundBracket funcParameterList* RightRoundBracket
+    functionBody=suite
+    ;
+
+
+funcParameterList:
+    variableType expression (Comma variableType expression)* ;
+
 /*
    EXPRESSION
    ---------------------------------------------------------------------------------------------------------------------
@@ -187,9 +196,9 @@ arrayIdentifier:
 
 classIdentifier:
     Class Identifier LeftCurlyBrace
-        declaration*
+        (funcDefStatement | declarationStatement)*
         constructor?
-        declaration*
+        (funcDefStatement | declarationStatement)*
     RightCurlyBrace
     ;
 

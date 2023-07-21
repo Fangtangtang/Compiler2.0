@@ -1,5 +1,5 @@
-// Generated from F:/repo/Compiler-2023/Parser\Mx.g4 by ANTLR 4.12.0
-package Parser;
+// Generated from F:/repo/Compiler-2023/src/parser\Mx.g4 by ANTLR 4.12.0
+package parser;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Token;
