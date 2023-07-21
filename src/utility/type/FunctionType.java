@@ -8,6 +8,6 @@ import java.util.*;
  */
 public class FunctionType extends Type{
     public FunctionType(){
-        this.type=Types.FUNCTION;
+        this.typeName=Types.FUNCTION;
     }
 }

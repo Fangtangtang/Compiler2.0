@@ -6,6 +6,6 @@ package utility.type;
  */
 public class IntType extends Type{
     public IntType(){
-        this.type=Types.INT;
+        this.typeName=Types.INT;
     }
 }

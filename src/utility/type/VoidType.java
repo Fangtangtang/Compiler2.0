@@ -6,6 +6,6 @@ package utility.type;
  */
 public class VoidType extends Type {
     public VoidType() {
-        this.type = Types.VOID;
+        this.typeName = Types.VOID;
     }
 }

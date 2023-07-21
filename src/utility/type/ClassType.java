@@ -11,6 +11,6 @@ public class ClassType extends Type {
     public HashMap<String, Type> members = new HashMap<>();
 
     public ClassType() {
-        this.type = Types.CLASS;
+        this.typeName = Types.CLASS;
     }
 }

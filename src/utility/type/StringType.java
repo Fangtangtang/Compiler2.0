@@ -6,6 +6,6 @@ package utility.type;
  */
 public class StringType extends Type{
     public StringType(){
-        this.type=Types.STRING;
+        this.typeName=Types.STRING;
     }
 }

@@ -11,6 +11,6 @@ abstract public class Type {
         ARRAY, CLASS, FUNCTION
     }
 
-    public Types type;
+    public Types typeName;
 
 }

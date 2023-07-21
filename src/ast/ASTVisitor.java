@@ -1,7 +1,8 @@
 package ast;
 
 import ast.stmt.*;
-
+import ast.expr.*;
+import ast.other.*;
 /**
  * @author F
  * ASTVisitor接口
@@ -26,5 +27,8 @@ public interface ASTVisitor {
     void visit(WhileStmtNode node);
 
     //expr
+
+    //other
+    void visit(TypeNode node);
 
 }
