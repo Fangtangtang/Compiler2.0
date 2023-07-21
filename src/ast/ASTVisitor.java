@@ -5,6 +5,7 @@ import ast.stmt.*;
 /**
  * @author F
  * ASTVisitor接口
+ * （类似parse tree的Visitor接口）
  * 被ASTNode接受，访问每一个结点，遍历AST
  */
 public interface ASTVisitor {
