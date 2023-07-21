@@ -5,9 +5,6 @@ import ast.ExprNode;
 import ast.StmtNode;
 import ast.other.TypeNode;
 import utility.Position;
-import utility.type.*;
-
-import java.util.*;
 
 /**
  * @author F

@@ -113,7 +113,7 @@ expression:
     LeftRoundBracket expression RightRoundBracket                   #nestificationExpr
 
     | literal                                                       #constant
-    | Identifier                                                    #variable
+    | Identifier                                                    #variableName
     | This                                                          #pointer
     //2 从左到右关联
     | expression LeftRoundBracket parameterList? RightRoundBracket  #functionCallExpr
@@ -133,14 +133,14 @@ expression:
     //7 从左到右关联
     | expression operator=(LeftShift | RightShift) expression                       #binaryExpr
     //8 从左到右关联
-    | expression operator=(Less | LessEqual | Greater | GreaterEqual) expression    #binaryExpr
+    | expression operator=(Less | LessEqual | Greater | GreaterEqual) expression    #cmpExpr
     //9-14 从左到右关联
-    | expression operator=(Equal | NotEqual) expression                             #binaryExpr
+    | expression operator=(Equal | NotEqual) expression                             #cmpExpr
     | expression operator=And expression                                            #binaryExpr
     | expression operator=Xor expression                                            #binaryExpr
     | expression operator=Or expression                                             #binaryExpr
-    | expression operator=AndAnd expression                                         #binaryExpr
-    | expression operator=OrOr expression                                           #binaryExpr
+    | expression operator=AndAnd expression                                         #logicExpr
+    | expression operator=OrOr expression                                           #logicExpr
 
     //15 从右到左关联
     | <assoc=right> expression Question expression Colon expression                 #ternaryExpr
