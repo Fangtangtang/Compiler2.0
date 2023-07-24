@@ -4,7 +4,7 @@ import java.util.*;
 
 /**
  * @author F
- * class类型，类内定义成员
+ * class类型，类内定义成员、函数
  */
 public class ClassType extends Type {
 

@@ -22,16 +22,18 @@ public class FuncDefStmtNode extends StmtNode {
 
     public TypeNode returnType;
     public String name;
-    public ArrayList<ParameterNode> parameterList = new ArrayList<>();
+    public ParameterNode parameterList;
     public BlockStmtNode functionBody;
 
     public FuncDefStmtNode(Position pos,
                            TypeNode returnType,
                            String name,
+                           ParameterNode parameterList,
                            BlockStmtNode functionBody) {
         super(pos);
         this.returnType = returnType;
         this.name = name;
+        this.parameterList = parameterList;
         this.functionBody = functionBody;
     }
 

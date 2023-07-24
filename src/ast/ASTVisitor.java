@@ -21,6 +21,8 @@ public interface ASTVisitor {
 
     void visit(BreakStmtNode node);
 
+    void visit(ConstructorDefStmtNode node);
+
     void visit(ContinueStmtNode node);
 
     void visit(ExprStmtNode node);
@@ -78,5 +80,9 @@ public interface ASTVisitor {
     void visit(TypeNode node);
 
     void visit(ParameterNode node);
+
+    void visit(VarDefUnitNode node);
+
+    void visit(InitNode node);
 
 }

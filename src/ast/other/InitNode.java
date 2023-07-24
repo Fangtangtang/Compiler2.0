@@ -1,21 +1,21 @@
-package ast.stmt;
+package ast.other;
 
+import ast.ASTNode;
 import ast.ASTVisitor;
-import ast.StmtNode;
-import ast.other.VarDefUnitNode;
 import utility.Position;
 
 import java.util.ArrayList;
 
-
 /**
  * @author F
+ * for循环初始化列表
+ * funcDef参数表
+ * variableType? variableDeclaration (Comma variableDeclaration)* ;
  */
-public class VarDefStmtNode extends StmtNode {
-
+public class InitNode extends ASTNode {
     public ArrayList<VarDefUnitNode> varDefUnitNodes = new ArrayList<>();
 
-    public VarDefStmtNode(Position pos) {
+    public InitNode(Position pos) {
         super(pos);
     }
 

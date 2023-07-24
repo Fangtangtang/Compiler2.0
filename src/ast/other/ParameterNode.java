@@ -5,25 +5,17 @@ import ast.ASTVisitor;
 import ast.ExprNode;
 import utility.Position;
 
+import java.util.ArrayList;
+
 /**
  * @author F
- * 函数的参数结点
- * 将原本的参数表拆开
+ * 函数调用的参数结点
  */
 public class ParameterNode extends ASTNode {
+    public ArrayList<ExprNode> parameterList=new ArrayList<>();
 
-    public TypeNode varType;
-    public String name;
-    public ExprNode defaultValue;
-
-    public ParameterNode(Position pos,
-                         TypeNode varType,
-                         String name,
-                         ExprNode defaultValue) {
+    public ParameterNode(Position pos) {
         super(pos);
-        this.varType = varType;
-        this.name = name;
-        this.defaultValue = defaultValue;
     }
 
     @Override

@@ -5,24 +5,22 @@ program:
     EOF
     ;
 
-constructor:
-    Identifier LeftRoundBracket RightRoundBracket suite;
-
 /*
    STATEMENT
    ---------------------------------------------------------------------------------------------------------------------
  */
 statement:
-    suite                   #blockStmt
-    | selectionStatement    #ifStmt
-    | whileStatement        #whileStmt
-    | forStatement          #forStmt
-    | returnStatement       #returnStmt
-    | breakStatement        #breakStmt
-    | continueStatement     #continueStmt
-    | declarationStatement  #varDefStmt
-    | expressionStatement   #exprStmt
-    | funcDefStatement      #funcDefStmt
+    suite                       #blockStmt
+    | selectionStatement        #ifStmt
+    | whileStatement            #whileStmt
+    | forStatement              #forStmt
+    | returnStatement           #returnStmt
+    | breakStatement            #breakStmt
+    | continueStatement         #continueStmt
+    | declarationStatement      #varDefStmt
+    | expressionStatement       #exprStmt
+    | funcDefStatement          #funcDefStmt
+    | constructFuncDefStatement #constructorStmt
     ;
 
 suite:
@@ -30,9 +28,12 @@ suite:
 
 declarationStatement:
     variableType
-        (variableDeclarationExpression=expression (Comma variableDeclarationExpression=expression)*)?
+        (variableDeclaration (Comma variableDeclaration)*)?
     Semicolon
     ;
+
+variableDeclaration:
+    Identifier (Assign initExpression=expression)?;
 
 selectionStatement:
     If LeftRoundBracket conditionExpression=expression RightRoundBracket
@@ -44,14 +45,14 @@ selectionStatement:
 //  while循环
 //  for循环
 whileStatement:
-    While  LeftRoundBracket
+    While LeftRoundBracket
             conditionExpression=expression
-           RightRoundBracket statement
+          RightRoundBracket statement
     ;
 
 forStatement:
     For LeftRoundBracket
-            initializationStatement? Semicolon
+            initList? Semicolon
             (forConditionExpression=expression)? Semicolon
             (stepExpression=expression)?
         RightRoundBracket
@@ -61,8 +62,8 @@ forStatement:
 //可以有一个类型，多个变量
 //int a=1,b=2
 //a=1
-initializationStatement:
-    variableType? variableDeclarationExpression=expression (Comma variableDeclarationExpression=expression)* ;
+initList:
+    variableType? variableDeclaration (Comma variableDeclaration)* ;
 
 //跳转语句
 //包括 return，break，continue 三种语句
@@ -85,13 +86,19 @@ parameterList:
 //函数
 funcDefStatement:
     returnType Identifier
-    LeftRoundBracket funcParameterList* RightRoundBracket
+    LeftRoundBracket funcParameterList? RightRoundBracket
     functionBody=suite
     ;
 
 
 funcParameterList:
-    variableType expression (Comma variableType expression)* ;
+    parameterDeclaration (Comma parameterDeclaration)* ;
+
+parameterDeclaration:
+    variableType Identifier (Assign initExpression=expression)?;
+
+constructFuncDefStatement:
+    Identifier LeftRoundBracket RightRoundBracket suite;
 
 /*
    EXPRESSION
@@ -153,11 +160,11 @@ expression:
 //  数组：int[][][]=new int[1][][]正确（至少有一个size确定）
 //  对象： new <Type>() 或 new <Type>
 construction:
-    (Identifier | buildInVariableType)
-                (LeftSquareBracket expression RightSquareBracket)+
-                        (LeftSquareBracket RightSquareBracket)*                     #arrayConstruction
-    | (Identifier | buildInVariableType) LeftRoundBracket RightRoundBracket         #varConstruction
-    | (Identifier | buildInVariableType)                                            #varSimpleConstruction
+    unitVariableType
+            (LeftSquareBracket expression RightSquareBracket)+
+            (LeftSquareBracket RightSquareBracket)*                 #arrayConstruction
+    | unitVariableType LeftRoundBracket RightRoundBracket           #varConstruction
+    | unitVariableType                                              #varSimpleConstruction
     ;
 
 returnType:
@@ -180,6 +187,12 @@ variableType:
     | classIdentifier
     ;
 
+//用于new的变量名
+unitVariableType:
+    buildInVariableType
+    | Identifier
+    ;
+
 buildInVariableType:
     Bool
     | Int
@@ -197,7 +210,7 @@ arrayIdentifier:
 classIdentifier:
     Class Identifier LeftCurlyBrace
         (funcDefStatement | declarationStatement)*
-        constructor?
+        constructFuncDefStatement?
         (funcDefStatement | declarationStatement)*
     RightCurlyBrace
     ;

@@ -2,8 +2,11 @@ package ast.expr;
 
 import ast.ASTVisitor;
 import ast.ExprNode;
+import ast.other.TypeNode;
 import utility.Position;
 import utility.type.Type;
+
+import java.util.ArrayList;
 
 /**
  * @author F
@@ -16,11 +19,15 @@ import utility.type.Type;
  * | (Identifier | buildInVariableType)                                            #varSimpleConstruction
  */
 public class NewExprNode extends ExprNode {
+    public TypeNode typeNode;
+
+    public ArrayList<ExprNode> dimensions = new ArrayList<>();
 
     public NewExprNode(Position pos,
-                       Type varType) {
+                       TypeNode typeNode) {
         super(pos);
-        this.exprType = varType;
+        this.typeNode=typeNode;
+        this.exprType = typeNode.type;
     }
 
     @Override

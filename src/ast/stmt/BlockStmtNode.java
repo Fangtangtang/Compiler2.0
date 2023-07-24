@@ -14,7 +14,7 @@ import java.util.*;
  * LeftCurlyBrace statement* RightCurlyBrace;
  */
 public class BlockStmtNode extends StmtNode {
-    ArrayList<StmtNode> statements = new ArrayList<>();
+    public ArrayList<StmtNode> statements = new ArrayList<>();
 
     public BlockStmtNode(Position pos) {
         super(pos);
