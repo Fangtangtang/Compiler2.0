@@ -3,18 +3,18 @@ package ast.expr;
 import ast.ASTVisitor;
 import ast.ExprNode;
 import utility.Position;
+import utility.type.*;
 
 /**
  * @author F
- * identifier变量名
+ * This指针
  */
-public class VarNameExprNode extends ExprNode {
-    public String name;
+public class PointerExprNode extends ExprNode {
 
-    public VarNameExprNode(Position pos,
-                           String name) {
+    public PointerExprNode(Position pos,
+                           Type exprType) {
         super(pos);
-        this.name = name;
+        this.exprType = exprType;
     }
 
     @Override

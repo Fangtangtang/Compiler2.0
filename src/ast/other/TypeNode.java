@@ -16,6 +16,10 @@ public class TypeNode extends ASTNode {
         super(pos);
     }
 
+    public TypeNode(Position pos,Type type){
+        super(pos);
+        this.type=type;
+    }
     @Override
     public void accept(ASTVisitor visitor) {
         visitor.visit(this);

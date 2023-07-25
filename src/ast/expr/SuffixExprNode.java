@@ -21,13 +21,12 @@ public class SuffixExprNode extends ExprNode {
     public SuffixOperator operator;
 
     public SuffixExprNode(Position pos,
-                          Type exprType,
                           ExprNode expression,
                           SuffixOperator operator) {
         super(pos);
-        this.exprType = exprType;
         this.expression = expression;
         this.operator = operator;
+        this.exprType = expression.exprType;
     }
 
     @Override

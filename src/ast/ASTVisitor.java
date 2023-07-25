@@ -48,7 +48,7 @@ public interface ASTVisitor {
 
     void visit(LogicExprNode node);
 
-    void visit(NestificationExprNode node);
+    void visit(ParenthesisExprNode node);
 
     void visit(PrefixExprNode node);
 
@@ -76,6 +76,9 @@ public interface ASTVisitor {
 
     void visit(ArrayVisExprNode node);
 
+    void visit(PointerExprNode node);
+
+
     //other
     void visit(TypeNode node);
 
@@ -85,4 +88,5 @@ public interface ASTVisitor {
 
     void visit(InitNode node);
 
+    void visit(ClassDefNode node);
 }

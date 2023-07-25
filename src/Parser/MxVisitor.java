@@ -239,13 +239,6 @@ public interface MxVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitBinaryExpr(MxParser.BinaryExprContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code nestificationExpr}
-	 * labeled alternative in {@link MxParser#expression}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitNestificationExpr(MxParser.NestificationExprContext ctx);
-	/**
 	 * Visit a parse tree produced by the {@code arrayVisExpr}
 	 * labeled alternative in {@link MxParser#expression}.
 	 * @param ctx the parse tree
@@ -287,6 +280,13 @@ public interface MxVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitFunctionCallExpr(MxParser.FunctionCallExprContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code parenthesisExpr}
+	 * labeled alternative in {@link MxParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitParenthesisExpr(MxParser.ParenthesisExprContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code assignExpr}
 	 * labeled alternative in {@link MxParser#expression}.
@@ -346,11 +346,11 @@ public interface MxVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitArrayIdentifier(MxParser.ArrayIdentifierContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link MxParser#classIdentifier}.
+	 * Visit a parse tree produced by {@link MxParser#classDeclaration}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitClassIdentifier(MxParser.ClassIdentifierContext ctx);
+	T visitClassDeclaration(MxParser.ClassDeclarationContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link MxParser#literal}.
 	 * @param ctx the parse tree

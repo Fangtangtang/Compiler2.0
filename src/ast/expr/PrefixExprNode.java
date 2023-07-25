@@ -19,11 +19,10 @@ public class PrefixExprNode extends ExprNode {
     public PrefixOperator operator;
 
     public PrefixExprNode(Position pos,
-                          Type exprType,
                           ExprNode expression,
                           PrefixOperator operator) {
         super(pos);
-        this.exprType = exprType;
+        this.exprType = expression.exprType;
         this.expression = expression;
         this.operator = operator;
     }

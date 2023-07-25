@@ -1,7 +1,7 @@
 grammar Mx;
 
 program:
-    (funcDefStatement | declarationStatement)*
+    (funcDefStatement | declarationStatement | classDeclaration)*
     EOF
     ;
 
@@ -117,7 +117,7 @@ constructFuncDefStatement:
  */
 expression:
     //0 改优先级
-    LeftRoundBracket expression RightRoundBracket                   #nestificationExpr
+    LeftRoundBracket expression RightRoundBracket                   #parenthesisExpr
 
     | literal                                                       #constant
     | Identifier                                                    #variableName
@@ -184,7 +184,6 @@ variableType:
     buildInVariableType
     | Identifier
     | arrayIdentifier
-    | classIdentifier
     ;
 
 //用于new的变量名
@@ -203,16 +202,15 @@ arrayIdentifier:
     (
     buildInVariableType
     | Identifier
-    | classIdentifier
     )
     (LeftSquareBracket RightSquareBracket)+ ;
 
-classIdentifier:
+classDeclaration:
     Class Identifier LeftCurlyBrace
         (funcDefStatement | declarationStatement)*
         constructFuncDefStatement?
         (funcDefStatement | declarationStatement)*
-    RightCurlyBrace
+    RightCurlyBrace Semicolon
     ;
 
 //各种常量

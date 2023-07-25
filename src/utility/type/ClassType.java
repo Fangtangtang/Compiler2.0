@@ -8,9 +8,14 @@ import java.util.*;
  */
 public class ClassType extends Type {
 
+    public String name;
     public HashMap<String, Type> members = new HashMap<>();
 
     public ClassType() {
+        this.typeName = Types.CLASS;
+    }
+    public ClassType(String name) {
+        this.name=name;
         this.typeName = Types.CLASS;
     }
 }

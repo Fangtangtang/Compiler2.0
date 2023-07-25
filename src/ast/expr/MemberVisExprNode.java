@@ -14,13 +14,12 @@ public class MemberVisExprNode extends ExprNode {
     public ExprNode rhs;
 
     public MemberVisExprNode(Position pos,
-                             Type exprType,
                              ExprNode lhs,
                              ExprNode rhs) {
         super(pos);
-        this.exprType = exprType;
         this.lhs = lhs;
         this.rhs = rhs;
+        this.exprType = rhs.exprType;
     }
 
 

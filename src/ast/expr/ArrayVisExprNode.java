@@ -10,16 +10,15 @@ import java.util.ArrayList;
 /**
  * @author F
  * 数组下标访问表达式
+ * TODO:type?
  */
 public class ArrayVisExprNode extends ExprNode {
     public ExprNode arrayName;
     public ArrayList<ExprNode> indexList;
 
     public ArrayVisExprNode(Position pos,
-                            Type exprType,
                             ExprNode arrayName) {
         super(pos);
-        this.exprType = exprType;
         this.arrayName = arrayName;
     }
 

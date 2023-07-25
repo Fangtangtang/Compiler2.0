@@ -6,6 +6,10 @@ import utility.Position;
 import utility.type.BoolType;
 
 
+/**
+ * @author F
+ * 二元比较
+ */
 public class CmpExprNode extends ExprNode {
     public enum CmpOperator {
         Less, LessEqual, Greater, GreaterEqual,

@@ -14,13 +14,15 @@ import java.util.ArrayList;
  */
 public class FuncCallExprNode extends ExprNode {
     public ExprNode func;
-    public ArrayList<ParameterNode> parameterList = new ArrayList<>();
+    public ParameterNode parameter;
 
     public FuncCallExprNode(Position pos,
-                            ExprNode func) {
+                            ExprNode func,
+                            ParameterNode parameter) {
         super(pos);
         this.exprType = new FunctionType();
         this.func = func;
+        this.parameter=parameter;
     }
 
     @Override
