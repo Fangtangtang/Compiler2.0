@@ -17,6 +17,13 @@ public class ArrayType extends Type {
                      int dimensions) {
         this.typeName = Types.ARRAY;
         this.eleType = eleType;
-        this.dimensions=dimensions;
+        this.dimensions = dimensions;
+    }
+
+    @Override
+    public String toString() {
+        String str = typeName.name() + ' '
+                + eleType.toString();
+        return String.format("%s dim:%d", str, dimensions);
     }
 }

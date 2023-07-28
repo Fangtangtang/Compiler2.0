@@ -14,4 +14,8 @@ abstract public class Type {
 
     public Types typeName;
 
+    @Override
+    public String toString(){
+        return typeName.name();
+    }
 }
