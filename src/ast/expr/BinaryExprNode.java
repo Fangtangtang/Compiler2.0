@@ -28,9 +28,6 @@ public class BinaryExprNode extends ExprNode {
                           ExprNode rhs,
                           BinaryOperator operator) {
         super(pos);
-        if (lhs.exprType != rhs.exprType) {
-            throw new SemanticException(pos, "exprType exception");
-        }
         this.lhs = lhs;
         this.rhs = rhs;
         this.operator = operator;

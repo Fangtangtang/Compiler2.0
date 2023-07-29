@@ -8,6 +8,7 @@ import ast.expr.ConstantExprNode.*;
 import ast.other.*;
 import ast.stmt.*;
 import ast.expr.*;
+import org.antlr.v4.runtime.CodePointBuffer;
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 import parser.MxParser;
 import parser.MxParser.*;
@@ -154,13 +155,14 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
     @Override
     public ASTNode visitVariableDeclaration(MxParser.VariableDeclarationContext ctx) {
         DeclarationStatementContext parentCtx = (DeclarationStatementContext) ctx.getParent();
+        TypeNode typeNode = (TypeNode) visit(parentCtx.variableType());
         ExprNode expr = null;
         if (ctx.expression() != null) {
             expr = (ExprNode) visit(ctx.expression());
         }
         return new VarDefUnitNode(
                 new Position(ctx),
-                new TypeNode(new Position(parentCtx.variableType())),
+                typeNode,
                 ctx.Identifier().toString(),
                 expr
         );
@@ -214,7 +216,7 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
      * visitForStatement
      * -----------------------------------------------------------------------
      * For LeftRoundBracket
-     * initializationStatement? Semicolon
+     * initList? Semicolon
      * (forConditionExpression=expression)? Semicolon
      * (stepExpression=expression)?
      * RightRoundBracket
@@ -358,10 +360,14 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
      */
     @Override
     public ASTNode visitFuncDefStatement(FuncDefStatementContext ctx) {
+        InitNode parameter = null;
+        if (ctx.funcParameterList() != null) {
+            parameter = (InitNode) visit(ctx.funcParameterList());
+        }
         return new FuncDefStmtNode(new Position(ctx),
                 (TypeNode) visit(ctx.returnType()),
                 ctx.Identifier().toString(),
-                (ParameterNode) visit(ctx.funcParameterList()),
+                parameter,
                 (BlockStmtNode) visit(ctx.functionBody));
     }
 
@@ -394,10 +400,15 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
      */
     @Override
     public ASTNode visitParameterDeclaration(ParameterDeclarationContext ctx) {
+        ExprNode initExpr = null;
+        if (ctx.expression() != null) {
+            initExpr = (ExprNode) visit(ctx.expression());
+        }
         return new VarDefUnitNode(new Position(ctx),
                 (TypeNode) visit(ctx.variableType()),
                 ctx.Identifier().toString(),
-                (ExprNode) visit(ctx.expression()));
+                initExpr
+        );
     }
 
     /**
@@ -435,12 +446,20 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
     @Override
     public ASTNode visitNewExpr(NewExprContext ctx) {
         ConstructionContext context = ctx.construction();
-        NewExprNode newExprNode = new NewExprNode(new Position(ctx),
-                (TypeNode) visit(context));
+        NewExprNode newExprNode;
         if (context instanceof ArrayConstructionContext) {
+            newExprNode = new NewExprNode(
+                    new Position(ctx),
+                    ((ArrayConstructionContext) context).LeftSquareBracket().size(),
+                    (TypeNode) visit(context));
             ((ArrayConstructionContext) context).expression().forEach(
                     expr -> newExprNode.dimensions.add((ExprNode) visit(expr))
             );
+        } else {
+            newExprNode = new NewExprNode(
+                    new Position(ctx),
+                    0,
+                    (TypeNode) visit(context));
         }
         return newExprNode;
     }
@@ -482,10 +501,10 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
             return new BoolConstantExprNode(new Position(ctx), false);
         } else if (ctx.literal().IntegerLiteral() != null) {
             return new IntConstantExprNode(new Position(ctx),
-                    Integer.parseInt(ctx.literal().toString()));
+                    Integer.parseInt(ctx.literal().IntegerLiteral().toString()));
         } else if (ctx.literal().StringLiteral() != null) {
             return new StrConstantExprNode(new Position(ctx),
-                    ctx.literal().toString());
+                    ctx.literal().StringLiteral().toString());
         } else {
             return new NullConstantExprNode(new Position(ctx));
         }
@@ -531,9 +550,16 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
      */
     @Override
     public ASTNode visitSuffixExpr(SuffixExprContext ctx) {
+        SuffixExprNode.SuffixOperator operator;
+        if (ctx.PlusPlus() != null) {
+            operator = SuffixExprNode.SuffixOperator.PlusPlus;
+        } else {
+            operator = SuffixExprNode.SuffixOperator.MinusMinus;
+        }
         return new SuffixExprNode(new Position(ctx),
                 (ExprNode) visit(ctx.expression()),
-                SuffixExprNode.SuffixOperator.valueOf(ctx.operator.toString()));
+                operator
+        );
     }
 
     /**
@@ -551,10 +577,33 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
      */
     @Override
     public ASTNode visitBinaryExpr(BinaryExprContext ctx) {
+        BinaryExprNode.BinaryOperator operator;
+        if (ctx.Multiply() != null) {
+            operator = BinaryExprNode.BinaryOperator.Multiply;
+        } else if (ctx.Divide() != null) {
+            operator = BinaryExprNode.BinaryOperator.Divide;
+        } else if (ctx.Mod() != null) {
+            operator = BinaryExprNode.BinaryOperator.Mod;
+        } else if (ctx.Plus() != null) {
+            operator = BinaryExprNode.BinaryOperator.Plus;
+        } else if (ctx.Minus() != null) {
+            operator = BinaryExprNode.BinaryOperator.Minus;
+        } else if (ctx.LeftShift() != null) {
+            operator = BinaryExprNode.BinaryOperator.LeftShift;
+        } else if (ctx.RightShift() != null) {
+            operator = BinaryExprNode.BinaryOperator.RightShift;
+        } else if (ctx.And() != null) {
+            operator = BinaryExprNode.BinaryOperator.And;
+        } else if (ctx.Xor() != null) {
+            operator = BinaryExprNode.BinaryOperator.Xor;
+        } else {
+            operator = BinaryExprNode.BinaryOperator.Or;
+        }
         return new BinaryExprNode(new Position(ctx),
                 (ExprNode) visit(ctx.expression(0)),
                 (ExprNode) visit(ctx.expression(1)),
-                BinaryExprNode.BinaryOperator.valueOf(ctx.operator.toString()));
+                operator
+        );
     }
 
     /**
@@ -588,10 +637,25 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
      */
     @Override
     public ASTNode visitCmpExpr(CmpExprContext ctx) {
+        CmpExprNode.CmpOperator operator;
+        if (ctx.Less() != null) {
+            operator = CmpExprNode.CmpOperator.Less;
+        } else if (ctx.LessEqual() != null) {
+            operator = CmpExprNode.CmpOperator.LessEqual;
+        } else if (ctx.Greater() != null) {
+            operator = CmpExprNode.CmpOperator.Greater;
+        } else if (ctx.GreaterEqual() != null) {
+            operator = CmpExprNode.CmpOperator.GreaterEqual;
+        } else if (ctx.Equal() != null) {
+            operator = CmpExprNode.CmpOperator.Equal;
+        } else {
+            operator = CmpExprNode.CmpOperator.NotEqual;
+        }
         return new CmpExprNode(new Position(ctx),
                 (ExprNode) visit(ctx.expression(0)),
                 (ExprNode) visit(ctx.expression(1)),
-                CmpExprNode.CmpOperator.valueOf(ctx.operator.toString()));
+                operator
+        );
     }
 
     /**
@@ -606,15 +670,25 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
      */
     @Override
     public ASTNode visitPrefixExpr(PrefixExprContext ctx) {
-        if (Objects.equals(ctx.operator.toString(), "LogicNot")) {
+        if (ctx.LogicNot() != null) {
             return new LogicPrefixExprNode(new Position(ctx),
                     (ExprNode) visit(ctx.expression()),
-                    LogicPrefixExprNode.LogicPrefixOperator.valueOf(ctx.operator.toString())
+                    LogicPrefixExprNode.LogicPrefixOperator.LogicNot
             );
         } else {
+            PrefixExprNode.PrefixOperator operator;
+            if (ctx.PlusPlus() != null) {
+                operator = PrefixExprNode.PrefixOperator.PlusPlus;
+            } else if (ctx.MinusMinus() != null) {
+                operator = PrefixExprNode.PrefixOperator.MinusMinus;
+            } else if (ctx.Not() != null) {
+                operator = PrefixExprNode.PrefixOperator.Not;
+            } else {
+                operator = PrefixExprNode.PrefixOperator.Minus;
+            }
             return new PrefixExprNode(new Position(ctx),
                     (ExprNode) visit(ctx.expression()),
-                    PrefixExprNode.PrefixOperator.valueOf(ctx.operator.toString())
+                    operator
             );
         }
     }
@@ -648,10 +722,16 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
      */
     @Override
     public ASTNode visitLogicExpr(LogicExprContext ctx) {
+        LogicExprNode.LogicOperator operator;
+        if (ctx.AndAnd() != null) {
+            operator = LogicExprNode.LogicOperator.AndAnd;
+        } else {
+            operator = LogicExprNode.LogicOperator.OrOr;
+        }
         return new LogicExprNode(new Position(ctx),
                 (ExprNode) visit(ctx.expression(0)),
                 (ExprNode) visit(ctx.expression(1)),
-                LogicExprNode.LogicOperator.valueOf(ctx.operator.toString())
+                operator
         );
     }
 
@@ -822,10 +902,9 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
      */
     @Override
     public ASTNode visitBuildInVariableType(BuildInVariableTypeContext ctx) {
-        String typeName = ctx.toString();
-        if (Objects.equals(typeName, "Bool")) {
+        if (ctx.Bool() != null) {
             return new TypeNode(new Position(ctx), new BoolType());
-        } else if (Objects.equals(typeName, "Int")) {
+        } else if (ctx.Int() != null) {
             return new TypeNode(new Position(ctx), new IntType());
         } else {
             return new TypeNode(new Position(ctx), new StringType());

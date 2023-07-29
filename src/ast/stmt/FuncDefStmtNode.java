@@ -3,7 +3,7 @@ package ast.stmt;
 import ast.ASTVisitor;
 import ast.StmtNode;
 import ast.other.ParameterNode;
-import ast.other.TypeNode;
+import ast.other.*;
 import utility.Position;
 
 import java.util.*;
@@ -22,13 +22,13 @@ public class FuncDefStmtNode extends StmtNode {
 
     public TypeNode returnType;
     public String name;
-    public ParameterNode parameterList;
+    public InitNode parameterList;
     public BlockStmtNode functionBody;
 
     public FuncDefStmtNode(Position pos,
                            TypeNode returnType,
                            String name,
-                           ParameterNode parameterList,
+                           InitNode parameterList,
                            BlockStmtNode functionBody) {
         super(pos);
         this.returnType = returnType;

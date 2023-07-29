@@ -2,6 +2,7 @@ package ast.other;
 
 import ast.ASTNode;
 import ast.ASTVisitor;
+import org.antlr.v4.runtime.ParserRuleContext;
 import utility.Position;
 import utility.type.*;
 
@@ -16,10 +17,11 @@ public class TypeNode extends ASTNode {
         super(pos);
     }
 
-    public TypeNode(Position pos,Type type){
+    public TypeNode(Position pos, Type type) {
         super(pos);
-        this.type=type;
+        this.type = type;
     }
+
     @Override
     public void accept(ASTVisitor visitor) {
         visitor.visit(this);

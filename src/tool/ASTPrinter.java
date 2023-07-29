@@ -37,7 +37,7 @@ public class ASTPrinter implements ASTVisitor {
     public void visit(RootNode node) {
         String message = "RootNode: ";
         message += String.format("Stmt:%d", node.declarations.size());
-        message += String.format("Class:%d", node.classDefs.size());
+        message += String.format(" Class:%d", node.classDefs.size());
         print(message);
         //visit children
         ++depth;
@@ -254,7 +254,7 @@ public class ASTPrinter implements ASTVisitor {
 
     @Override
     public void visit(NewExprNode node) {
-        print(String.format("NewExprNode: dim%d", node.dimensions.size()));
+        print(String.format("NewExprNode: dim%d", node.dimension));
         //visit children
         ++depth;
         node.typeNode.accept(this);

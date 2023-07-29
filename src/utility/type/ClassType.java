@@ -18,4 +18,9 @@ public class ClassType extends Type {
         this.name=name;
         this.typeName = Types.CLASS;
     }
+
+    @Override
+    public String toString() {
+        return typeName.name()+" "+this.name;
+    }
 }
