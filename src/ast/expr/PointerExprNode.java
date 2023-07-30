@@ -8,6 +8,7 @@ import utility.type.*;
 /**
  * @author F
  * This指针
+ * this 指针作为左值视为语法错误
  */
 public class PointerExprNode extends ExprNode {
 
@@ -15,7 +16,6 @@ public class PointerExprNode extends ExprNode {
                            Type exprType) {
         super(pos);
         this.exprType = exprType;
-        this.isAssignable=true;
     }
 
     @Override
