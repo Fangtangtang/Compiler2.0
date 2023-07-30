@@ -17,12 +17,12 @@ public class Main {
     //程序的入口点
     //可能会抛出任何类型的异常
     public static void main(String[] args) throws Exception {
-        String fileName = "testcases/variable/array.mx";
+        String fileName = "C:/Users/21672/Desktop/mx_raw/sema/array-package/array-11.mx";
         InputStream inputStream = new FileInputStream(fileName);
 
         try {
             //AST root
-            RootNode ASTRoot;
+            RootNode astRoot;
 
             //char -> lexer
             MxLexer lexer = new MxLexer(CharStreams.fromStream(inputStream));
@@ -34,10 +34,10 @@ public class Main {
             ParseTree parseTreeRoot = parser.program();
 
             ASTBuilder astBuilder = new ASTBuilder();
-            ASTRoot = (RootNode) astBuilder.visit(parseTreeRoot);
+            astRoot = (RootNode) astBuilder.visit(parseTreeRoot);
 
             ASTPrinter printer = new ASTPrinter();
-            printer.visit(ASTRoot);
+            printer.visit(astRoot);
 
         } catch (MxException exception) {
             System.err.println(exception.toString());

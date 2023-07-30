@@ -913,7 +913,7 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
         if (ctx.buildInVariableType() != null) {
             tmp = (TypeNode) visit(ctx.buildInVariableType());
         } else {
-            tmp = (TypeNode) visit(ctx.Identifier());
+            tmp = new TypeNode(new Position(ctx.Identifier()), new ClassType(ctx.Identifier().toString()));
         }
         return new TypeNode(new Position(ctx),
                 new ArrayType(tmp.type, ctx.LeftSquareBracket().size()));
