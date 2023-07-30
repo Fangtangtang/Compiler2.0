@@ -106,6 +106,11 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
         return visit(ctx.constructFuncDefStatement());
     }
 
+    @Override
+    public ASTNode visitEmptyStmt(EmptyStmtContext ctx) {
+        return null;
+    }
+
     /**
      * visitSuite
      * ----------------------------------------------------------------------
@@ -228,10 +233,6 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
      */
     @Override
     public ASTNode visitForStatement(ForStatementContext ctx) {
-        StmtNode initStatement = null;
-        if (ctx.initList() != null) {
-            initStatement = (StmtNode) visit(ctx.initList());
-        }
         ExprNode conditionExpr = null;
         if (ctx.forConditionExpression != null) {
             conditionExpr = (ExprNode) visit(ctx.forConditionExpression);
@@ -242,28 +243,11 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
         }
         return new ForStmtNode(
                 new Position(ctx),
-                initStatement,
+                (StmtNode) visit(ctx.initializationStatement),
                 conditionExpr,
                 stepExpr,
-                (StmtNode) visit(ctx.statement())
+                (StmtNode) visit(ctx.statement(1))
         );
-    }
-
-    /**
-     * visitInitList
-     * --------------------------------------------------------------
-     * for循环初始化
-     *
-     * @param ctx the parse tree
-     * @return initNode
-     */
-    @Override
-    public ASTNode visitInitList(InitListContext ctx) {
-        InitNode initNode = new InitNode(new Position(ctx));
-        ctx.variableDeclaration().forEach(
-                varDef -> initNode.varDefUnitNodes.add((VarDefUnitNode) visit(varDef))
-        );
-        return initNode;
     }
 
     /**
@@ -321,10 +305,9 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
      */
     @Override
     public ASTNode visitExpressionStatement(ExpressionStatementContext ctx) {
-        return new ExprStmtNode(
-                new Position(ctx),
-                (ExprNode) visit(ctx.expression())
-        );
+        ExprStmtNode exprStmtNode = new ExprStmtNode(new Position(ctx));
+        ctx.expression().forEach(expr -> exprStmtNode.exprList.add((ExprNode) visit(expr)));
+        return exprStmtNode;
     }
 
     /**

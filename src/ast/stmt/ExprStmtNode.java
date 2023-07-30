@@ -16,11 +16,10 @@ import java.util.*;
  */
 public class ExprStmtNode extends StmtNode {
 
-    public ExprNode expr;
+    public ArrayList<ExprNode> exprList=new ArrayList<>() ;
 
-    public ExprStmtNode(Position pos, ExprNode expr) {
+    public ExprStmtNode(Position pos) {
         super(pos);
-        this.expr = expr;
     }
 
     @Override

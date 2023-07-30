@@ -3,6 +3,7 @@ package ast.stmt;
 import ast.ASTVisitor;
 import ast.ExprNode;
 import ast.StmtNode;
+import ast.other.InitNode;
 import utility.Position;
 
 /**
@@ -19,18 +20,18 @@ import utility.Position;
  */
 public class ForStmtNode extends StmtNode {
 
-    public StmtNode initialization;
+    public StmtNode initializationStmt;
     public ExprNode condition;
     public ExprNode step;
     public StmtNode statement;
 
     public ForStmtNode(Position pos,
-                       StmtNode initialization,
+                       StmtNode initializationStmt,
                        ExprNode condition,
                        ExprNode step,
                        StmtNode statement) {
         super(pos);
-        this.initialization=initialization;
+        this.initializationStmt=initializationStmt;
         this.condition=condition;
         this.step=step;
         this.statement=statement;

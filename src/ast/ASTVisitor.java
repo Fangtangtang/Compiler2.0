@@ -40,53 +40,55 @@ public interface ASTVisitor {
     void visit(WhileStmtNode node);
 
     //expr
+    void visit(ArrayVisExprNode node);
+
+    void visit(AssignExprNode node);
+
     void visit(BinaryExprNode node);
 
     void visit(CmpExprNode node);
 
-    void visit(AssignExprNode node);
+    void visit(FuncCallExprNode node);
+
 
     void visit(LogicExprNode node);
+
+    void visit(LogicPrefixExprNode node);
+
+    void visit(MemberVisExprNode node);
+
+    void visit(NewExprNode node);
 
     void visit(ParenthesisExprNode node);
 
     void visit(PrefixExprNode node);
 
-    void visit(LogicPrefixExprNode node);
+    void visit(PointerExprNode node);
+
 
     void visit(SuffixExprNode node);
 
     void visit(TernaryExprNode node);
 
-    void visit(NewExprNode node);
-
-    void visit(MemberVisExprNode node);
-
-    void visit(IntConstantExprNode node);
-
-    void visit(StrConstantExprNode node);
+    void visit(VarNameExprNode node);
 
     void visit(BoolConstantExprNode node);
 
+    void visit(IntConstantExprNode node);
+
     void visit(NullConstantExprNode node);
 
-    void visit(VarNameExprNode node);
-
-    void visit(FuncCallExprNode node);
-
-    void visit(ArrayVisExprNode node);
-
-    void visit(PointerExprNode node);
-
+    void visit(StrConstantExprNode node);
 
     //other
-    void visit(TypeNode node);
-
-    void visit(ParameterNode node);
-
-    void visit(VarDefUnitNode node);
+    void visit(ClassDefNode node);
 
     void visit(InitNode node);
 
-    void visit(ClassDefNode node);
+    void visit(ParameterNode node);
+
+    void visit(TypeNode node);
+
+    void visit(VarDefUnitNode node);
+
 }

@@ -84,7 +84,7 @@ public class ASTPrinter implements ASTVisitor {
         print("ExprStmtNode");
         //visit children
         ++depth;
-        node.expr.accept(this);
+        node.exprList.forEach(expr->expr.accept(this));
         --depth;
     }
 
@@ -93,8 +93,8 @@ public class ASTPrinter implements ASTVisitor {
         print("ForStmtNode");
         //visit children
         ++depth;
-        if (node.initialization != null) {
-            node.initialization.accept(this);
+        if (node.initializationStmt != null) {
+            node.initializationStmt.accept(this);
         }
         if (node.condition != null) {
             node.condition.accept(this);
@@ -339,15 +339,6 @@ public class ASTPrinter implements ASTVisitor {
     }
 
     @Override
-    public void visit(ParameterNode node) {
-        print(String.format("ParameterNode: paras:%d", node.parameterList.size()));
-        //visit chilsren
-        ++depth;
-        node.parameterList.forEach(para -> para.accept(this));
-        --depth;
-    }
-
-    @Override
     public void visit(VarDefUnitNode node) {
         print(String.format("VarDefUnitNode: %s", node.name));
         //visit children
@@ -368,6 +359,14 @@ public class ASTPrinter implements ASTVisitor {
         --depth;
     }
 
+    @Override
+    public void visit(ParameterNode node){
+        print(String.format("ParameterNode: paras:%d",node.parameterList.size()));
+        //visit children
+        ++depth;
+        node.parameterList.forEach(para -> para.accept(this));
+        --depth;
+    }
     @Override
     public void visit(ClassDefNode node) {
         print(String.format(

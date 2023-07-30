@@ -94,6 +94,13 @@ public interface MxVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitConstructorStmt(MxParser.ConstructorStmtContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code emptyStmt}
+	 * labeled alternative in {@link MxParser#statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitEmptyStmt(MxParser.EmptyStmtContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link MxParser#suite}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -129,12 +136,6 @@ public interface MxVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitForStatement(MxParser.ForStatementContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MxParser#initList}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitInitList(MxParser.InitListContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link MxParser#returnStatement}.
 	 * @param ctx the parse tree

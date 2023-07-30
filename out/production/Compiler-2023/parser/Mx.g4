@@ -21,6 +21,7 @@ statement:
     | expressionStatement       #exprStmt
     | funcDefStatement          #funcDefStmt
     | constructFuncDefStatement #constructorStmt
+    | Semicolon                 #emptyStmt
     ;
 
 suite:
@@ -52,18 +53,12 @@ whileStatement:
 
 forStatement:
     For LeftRoundBracket
-            initList? Semicolon
+            initializationStatement=statement
             (forConditionExpression=expression)? Semicolon
             (stepExpression=expression)?
         RightRoundBracket
         statement
     ;
-
-//可以有一个类型，多个变量
-//int a=1,b=2
-//a=1
-initList:
-    variableType? variableDeclaration (Comma variableDeclaration)* ;
 
 //跳转语句
 //包括 return，break，continue 三种语句
@@ -78,7 +73,7 @@ continueStatement:
 
 //表达式语句直接由一个表达式加 ; 组成
 expressionStatement:
-    expression Semicolon;
+    expression (Comma expression)* Semicolon;
 
 parameterList:
     expression (Comma expression)*;
@@ -89,7 +84,6 @@ funcDefStatement:
     LeftRoundBracket funcParameterList? RightRoundBracket
     functionBody=suite
     ;
-
 
 funcParameterList:
     parameterDeclaration (Comma parameterDeclaration)* ;

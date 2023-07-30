@@ -2,6 +2,7 @@ package ast.expr;
 
 import ast.ASTVisitor;
 import ast.ExprNode;
+import ast.other.InitNode;
 import ast.other.ParameterNode;
 import utility.Position;
 import utility.type.FunctionType;
