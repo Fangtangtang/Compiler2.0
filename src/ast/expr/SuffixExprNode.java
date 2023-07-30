@@ -10,6 +10,7 @@ import java.rmi.server.ExportException;
 /**
  * @author F
  * 后缀表达式
+ * 不可赋值
  */
 public class SuffixExprNode extends ExprNode {
 

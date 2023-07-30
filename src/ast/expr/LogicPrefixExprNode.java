@@ -9,6 +9,7 @@ import utility.type.Type;
 /**
  * @author F
  * 逻辑运算前缀表达式
+ * 运算结果不可赋值
  */
 public class LogicPrefixExprNode extends ExprNode {
     public enum LogicPrefixOperator {

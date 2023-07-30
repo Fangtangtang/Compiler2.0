@@ -11,6 +11,8 @@ import utility.type.Type;
 public abstract class ExprNode extends ASTNode {
     public Type exprType;
 
+    public boolean isAssignable = false;
+
     public ExprNode(Position pos) {
         super(pos);
     }

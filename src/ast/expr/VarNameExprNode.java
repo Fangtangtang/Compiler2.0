@@ -15,6 +15,7 @@ public class VarNameExprNode extends ExprNode {
                            String name) {
         super(pos);
         this.name = name;
+        this.isAssignable=true;
     }
 
     @Override

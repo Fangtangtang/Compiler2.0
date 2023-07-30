@@ -15,6 +15,7 @@ public class PointerExprNode extends ExprNode {
                            Type exprType) {
         super(pos);
         this.exprType = exprType;
+        this.isAssignable=true;
     }
 
     @Override

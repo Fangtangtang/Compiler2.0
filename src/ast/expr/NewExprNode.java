@@ -17,6 +17,7 @@ import java.util.ArrayList;
  * (LeftSquareBracket RightSquareBracket)*                     #arrayConstruction
  * | (Identifier | buildInVariableType) LeftRoundBracket RightRoundBracket         #varConstruction
  * | (Identifier | buildInVariableType)                                            #varSimpleConstruction
+ * 不可赋值
  */
 public class NewExprNode extends ExprNode {
     public TypeNode typeNode;

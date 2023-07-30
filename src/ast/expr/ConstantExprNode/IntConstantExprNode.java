@@ -8,6 +8,7 @@ import utility.type.IntType;
 /**
  * @author F
  * 整型常量
+ * 不可赋值
  */
 public class IntConstantExprNode extends ExprNode {
     public int value;

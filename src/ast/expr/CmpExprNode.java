@@ -9,6 +9,7 @@ import utility.type.BoolType;
 /**
  * @author F
  * 二元比较
+ * 运算结果不可赋值
  */
 public class CmpExprNode extends ExprNode {
     public enum CmpOperator {

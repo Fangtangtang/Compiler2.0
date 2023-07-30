@@ -8,6 +8,7 @@ import utility.type.StringType;
 /**
  * @author F
  * 字符串常量
+ * 不可赋值
  */
 public class StrConstantExprNode extends ExprNode {
     public String value;

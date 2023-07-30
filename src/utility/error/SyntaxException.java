@@ -9,6 +9,6 @@ import utility.Position;
 public class SyntaxException extends MxException {
 
     public SyntaxException(Position pos, String message) {
-        super(pos, "SyntaxException " + message);
+        super(pos, "SyntaxException:\t" + message);
     }
 }

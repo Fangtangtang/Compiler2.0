@@ -8,6 +8,7 @@ import utility.type.BoolType;
 /**
  * @author F
  * 逻辑常量
+ * 不可赋值
  */
 public class BoolConstantExprNode extends ExprNode {
     public boolean value;

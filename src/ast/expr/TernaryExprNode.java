@@ -7,6 +7,7 @@ import utility.Position;
 /**
  * @author F
  * 三目表达式
+ * 不可赋值
  */
 public class TernaryExprNode extends ExprNode {
     public ExprNode condition;

@@ -8,6 +8,7 @@ import utility.type.NullType;
 /**
  * @author F
  * null常量
+ * 不可赋值
  */
 public class NullConstantExprNode extends ExprNode {
 

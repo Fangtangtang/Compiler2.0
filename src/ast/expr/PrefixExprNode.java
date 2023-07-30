@@ -25,6 +25,9 @@ public class PrefixExprNode extends ExprNode {
         this.exprType = expression.exprType;
         this.expression = expression;
         this.operator = operator;
+        if (operator == PrefixOperator.PlusPlus || operator == PrefixOperator.MinusMinus) {
+            this.isAssignable = true;
+        }
     }
 
     @Override

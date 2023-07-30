@@ -12,6 +12,7 @@ import utility.type.Type;
  * 二元表达式
  * 表达式类型由lhs、rhs决定
  * 若两表达式类型不相符，抛出异常
+ * 运算结果不可赋值
  */
 public class BinaryExprNode extends ExprNode {
     public enum BinaryOperator {
@@ -31,7 +32,6 @@ public class BinaryExprNode extends ExprNode {
         this.lhs = lhs;
         this.rhs = rhs;
         this.operator = operator;
-        this.exprType = lhs.exprType;
     }
 
     @Override

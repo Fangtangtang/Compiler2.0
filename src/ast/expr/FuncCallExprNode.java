@@ -12,6 +12,7 @@ import java.util.ArrayList;
 /**
  * @author F
  * 函数调用表达式
+ * 返回右值，不可赋值
  */
 public class FuncCallExprNode extends ExprNode {
     public ExprNode func;

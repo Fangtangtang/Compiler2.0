@@ -20,6 +20,7 @@ public class MemberVisExprNode extends ExprNode {
         this.lhs = lhs;
         this.rhs = rhs;
         this.exprType = rhs.exprType;
+        this.isAssignable=true;
     }
 
 

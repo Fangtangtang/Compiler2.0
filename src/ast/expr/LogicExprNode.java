@@ -9,6 +9,7 @@ import utility.type.BoolType;
  * @author F
  * 逻辑二元运算表达式
  * bool类型
+ * 不可赋值
  */
 public class LogicExprNode extends ExprNode {
     public enum LogicOperator {

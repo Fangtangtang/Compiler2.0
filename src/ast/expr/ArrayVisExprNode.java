@@ -20,6 +20,7 @@ public class ArrayVisExprNode extends ExprNode {
     public ArrayVisExprNode(Position pos,
                             ExprNode arrayName) {
         super(pos);
+        this.isAssignable=true;
         this.arrayName = arrayName;
     }
 
