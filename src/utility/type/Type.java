@@ -1,5 +1,7 @@
 package utility.type;
 
+import java.util.HashMap;
+
 /**
  * @author F
  * 标识类型的基类
@@ -13,8 +15,10 @@ abstract public class Type {
     }
 
     public Types typeName;
+    public HashMap<String, Type> members = null;
+
     @Override
-    public String toString(){
+    public String toString() {
         return typeName.name();
     }
 }

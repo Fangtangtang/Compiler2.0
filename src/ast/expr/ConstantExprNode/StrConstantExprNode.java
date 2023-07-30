@@ -16,7 +16,7 @@ public class StrConstantExprNode extends ExprNode {
     public StrConstantExprNode(Position pos,
                                String value) {
         super(pos);
-        this.exprType = new StringType();
+        this.exprType = new StringType(true);
         this.value = value;
     }
 

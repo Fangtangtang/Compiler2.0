@@ -2,6 +2,7 @@ package utility.type;
 
 import ast.other.*;
 import ast.stmt.*;
+import utility.ParameterUnit;
 
 import java.util.*;
 
@@ -12,17 +13,15 @@ import java.util.*;
 public class FunctionType extends Type {
     public String name;
     public Type returnType;
-    public ArrayList<VarDefUnitNode> parameters = new ArrayList<>();
+    public ArrayList<ParameterUnit> parameters = new ArrayList<>();
     public BlockStmtNode functionBody;
 
     public FunctionType() {
         this.typeName = Types.FUNCTION;
     }
 
-    public FunctionType(String name,
-                        Type returnType) {
+    public FunctionType(Type returnType) {
         this.typeName = Types.FUNCTION;
-        this.name = name;
         this.returnType = returnType;
     }
 }

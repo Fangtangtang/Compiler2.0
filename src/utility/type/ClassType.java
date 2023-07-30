@@ -9,7 +9,6 @@ import java.util.*;
 public class ClassType extends Type {
 
     public String name;
-    public HashMap<String, Type> members = new HashMap<>();
 
     public ClassType() {
         this.typeName = Types.CLASS;
@@ -17,6 +16,7 @@ public class ClassType extends Type {
     public ClassType(String name) {
         this.name=name;
         this.typeName = Types.CLASS;
+        this.members=new HashMap<>();
     }
 
     @Override

@@ -1,6 +1,7 @@
 package utility.type;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * @author F
@@ -18,6 +19,12 @@ public class ArrayType extends Type {
         this.typeName = Types.ARRAY;
         this.eleType = eleType;
         this.dimensions = dimensions;
+        //数组内建方法
+        this.members = new HashMap<>();
+        this.members.put(
+                "size",
+                new FunctionType(new IntType())
+        );
     }
 
     @Override
