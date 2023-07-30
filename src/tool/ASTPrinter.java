@@ -36,13 +36,11 @@ public class ASTPrinter implements ASTVisitor {
     @Override
     public void visit(RootNode node) {
         String message = "RootNode: ";
-        message += String.format("Stmt:%d", node.declarations.size());
-        message += String.format(" Class:%d", node.classDefs.size());
+        message += String.format("%d", node.declarations.size());
         print(message);
         //visit children
         ++depth;
-        node.declarations.forEach(stmt -> stmt.accept(this));
-        node.classDefs.forEach(def -> def.accept(this));
+        node.declarations.forEach(declaration -> declaration.accept(this));
         --depth;
     }
 

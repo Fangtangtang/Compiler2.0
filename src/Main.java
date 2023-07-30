@@ -18,7 +18,7 @@ public class Main {
     //可能会抛出任何类型的异常
     public static void main(String[] args) throws Exception {
 //        String fileName = "C:/Users/21672/Desktop/mx_raw/sema/array-package/array-11.mx";
-        String fileName = "testcases/variable/constence.mx";
+        String fileName = "testcases/variable/class.mx";
         InputStream inputStream = new FileInputStream(fileName);
 
         try {

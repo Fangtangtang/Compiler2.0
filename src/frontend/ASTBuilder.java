@@ -39,16 +39,21 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
     @Override
     public ASTNode visitProgram(MxParser.ProgramContext ctx) {
         RootNode root = new RootNode(new Position(ctx));
-        ctx.declarationStatement().forEach(
-                stmt -> root.declarations.add((VarDefStmtNode) visit(stmt))
-        );
-        ctx.funcDefStatement().forEach(
-                stmt -> root.declarations.add((FuncDefStmtNode) visit(stmt))
-        );
-        ctx.classDeclaration().forEach(
-                classDef -> root.classDefs.add((ClassDefNode) visit(classDef))
+        ctx.declarations().forEach(
+                declaration -> root.declarations.add(visit(declaration))
         );
         return root;
+    }
+
+    @Override
+    public ASTNode visitDeclarations(DeclarationsContext ctx) {
+        if (ctx.funcDefStatement() != null) {
+            return (FuncDefStmtNode) visit(ctx.funcDefStatement());
+        }
+        if (ctx.declarationStatement() != null) {
+            return (VarDefStmtNode) visit(ctx.declarationStatement());
+        }
+        return (ClassDefNode) visit(ctx.classDeclaration());
     }
 
     @Override
@@ -928,6 +933,7 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
      * (funcDefStatement | declarationStatement)*
      * RightCurlyBrace Semicolon
      * ;
+     * 类中方法可以使用定义在后面的变量
      *
      * @param ctx the parse tree
      * @return classDefNode

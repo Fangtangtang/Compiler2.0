@@ -1,10 +1,15 @@
 grammar Mx;
 
 program:
-    (funcDefStatement | declarationStatement | classDeclaration)*
+    declarations*
     EOF
     ;
 
+declarations:
+    funcDefStatement
+    | declarationStatement
+    | classDeclaration
+    ;
 /*
    STATEMENT
    ---------------------------------------------------------------------------------------------------------------------
