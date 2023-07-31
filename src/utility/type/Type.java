@@ -15,7 +15,7 @@ abstract public class Type {
     }
 
     public Types typeName;
-    public HashMap<String, Type> members = null;
+    public  HashMap<String, Type> members = null;
 
     @Override
     public String toString() {

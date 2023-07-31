@@ -31,14 +31,14 @@ public class ForStmtNode extends StmtNode {
                        ExprNode step,
                        StmtNode statement) {
         super(pos);
-        this.initializationStmt=initializationStmt;
-        this.condition=condition;
-        this.step=step;
-        this.statement=statement;
+        this.initializationStmt = initializationStmt;
+        this.condition = condition;
+        this.step = step;
+        this.statement = statement;
     }
 
     @Override
-    public void accept(ASTVisitor visitor) {
-        visitor.visit(this);
+    public <T> T accept(ASTVisitor<? extends T> visitor) {
+        return visitor.visit(this);
     }
 }

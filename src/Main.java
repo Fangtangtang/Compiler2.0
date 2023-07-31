@@ -5,6 +5,7 @@ import org.antlr.v4.runtime.tree.*;
 import parser.*;
 import tool.*;
 import utility.MxErrorListener;
+import utility.SymbolTable;
 import utility.error.MxException;
 
 import java.io.*;
@@ -41,6 +42,10 @@ public class Main {
 
             ASTPrinter printer = new ASTPrinter();
             printer.visit(astRoot);
+
+            SymbolTable symbolTable = new SymbolTable();
+//            SymbolCollector symbolCollector = new SymbolCollector(symbolTable);
+//            symbolTable.print();
 
         } catch (MxException exception) {
             System.err.println(exception.toString());

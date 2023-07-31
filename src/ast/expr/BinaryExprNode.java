@@ -35,7 +35,7 @@ public class BinaryExprNode extends ExprNode {
     }
 
     @Override
-    public void accept(ASTVisitor visitor) {
-        visitor.visit(this);
+    public <T> T accept(ASTVisitor<? extends T> visitor) {
+        return visitor.visit(this);
     }
 }

@@ -21,7 +21,7 @@ public class InitNode extends ASTNode {
     }
 
     @Override
-    public void accept(ASTVisitor visitor) {
-        visitor.visit(this);
+    public <T> T accept(ASTVisitor<? extends T> visitor) {
+        return visitor.visit(this);
     }
 }

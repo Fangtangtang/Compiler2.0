@@ -1,7 +1,6 @@
 package utility;
 
-import ast.other.TypeNode;
-import ast.other.VarDefUnitNode;
+import utility.error.SemanticException;
 import utility.type.*;
 
 import java.util.HashMap;
@@ -28,7 +27,7 @@ public class SymbolTable {
         symbolTable.put("int", new IntType());
         symbolTable.put("bool", new BoolType());
         symbolTable.put("string", new StringType());
-        symbolTable.put("null", new NullType());
+//        symbolTable.put("null", new NullType());
     }
 
     //构造时调用私有函数，将内置的类和函数加入symbolTable
@@ -78,8 +77,49 @@ public class SymbolTable {
         symbolTable.put("toString", toStringFunc);
     }
 
-    public SymbolTable(){
+    public SymbolTable() {
         addBuildInClass();
-        addBuildInFunc();
+//        addBuildInFunc();
+    }
+
+    public void addSymbol(String name, Type type, Position pos) {
+        if (symbolTable.containsKey(name)) {
+            throw new SemanticException(pos, "multiple definition of " + name);
+        }
+        symbolTable.put(name, type);
+    }
+
+    public void addClassType(String name, ClassType classType, Position pos) {
+        if (!symbolTable.containsKey(name)) {
+            throw new SemanticException(pos, String.format("class %s doesn't exist", name));
+        }
+        if (symbolTable.get(name) instanceof ClassType) {
+            symbolTable.put(name, classType);
+        } else {
+            throw new SemanticException(pos, String.format("%s isn't class", name));
+        }
+    }
+
+    public void checkMain(Position pos) {
+        if (!symbolTable.containsKey("main")) {
+            throw new SemanticException(pos, "main function doesn't exist");
+        }
+        FunctionType mainFunc=(FunctionType) symbolTable.get("main");
+        if(!(mainFunc.returnType instanceof IntType)||mainFunc.parameters.size()!=0){
+            throw new SemanticException(pos, "invalid main function");
+        }
+    }
+
+    public Type getSymbol(String name, Position pos) {
+        if (symbolTable.containsKey(name)) {
+            return symbolTable.get(name);
+        }
+        throw new SemanticException(pos, String.format("type %s doesn't exist", name));
+    }
+
+    public void print(){
+        for (String key : symbolTable.keySet()) {
+            System.out.println(key + ": " + symbolTable.get(key));
+        }
     }
 }

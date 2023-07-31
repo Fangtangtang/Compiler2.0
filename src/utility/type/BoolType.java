@@ -8,4 +8,9 @@ public class BoolType extends Type{
     public BoolType(){
         this.typeName=Types.BOOL;
     }
+
+    @Override
+    public String toString() {
+        return "bool";
+    }
 }

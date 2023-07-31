@@ -13,6 +13,9 @@ public class StringType extends Type {
 
     public StringType() {
         this.typeName = Types.STRING;
+    }
+
+    public void addBuildInFunc() {
         this.members = new HashMap<>();
         //内建方法
         //int length();
@@ -46,4 +49,8 @@ public class StringType extends Type {
         this.typeName = Types.STRING;
     }
 
+    @Override
+    public String toString() {
+        return "string";
+    }
 }

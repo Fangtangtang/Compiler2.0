@@ -9,7 +9,7 @@ import utility.Position;
  * @author F
  * ----------------------------------------
  * returnStatement:
- *     Return expression? Semicolon;
+ * Return expression? Semicolon;
  */
 public class ReturnStmtNode extends StmtNode {
     public ExprNode expression;
@@ -21,7 +21,7 @@ public class ReturnStmtNode extends StmtNode {
     }
 
     @Override
-    public void accept(ASTVisitor visitor) {
-        visitor.visit(this);
+    public <T> T accept(ASTVisitor<? extends T> visitor) {
+        return visitor.visit(this);
     }
 }

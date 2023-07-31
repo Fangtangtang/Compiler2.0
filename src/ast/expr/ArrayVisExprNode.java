@@ -15,17 +15,17 @@ import java.util.ArrayList;
  */
 public class ArrayVisExprNode extends ExprNode {
     public ExprNode arrayName;
-    public ArrayList<ExprNode> indexList=new ArrayList<>();
+    public ArrayList<ExprNode> indexList = new ArrayList<>();
 
     public ArrayVisExprNode(Position pos,
                             ExprNode arrayName) {
         super(pos);
-        this.isAssignable=true;
+        this.isAssignable = true;
         this.arrayName = arrayName;
     }
 
     @Override
-    public void accept(ASTVisitor visitor) {
-        visitor.visit(this);
+    public <T> T accept(ASTVisitor<? extends T> visitor) {
+        return visitor.visit(this);
     }
 }

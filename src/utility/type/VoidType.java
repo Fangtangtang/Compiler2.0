@@ -8,4 +8,9 @@ public class VoidType extends Type {
     public VoidType() {
         this.typeName = Types.VOID;
     }
+
+    @Override
+    public String toString() {
+        return "void";
+    }
 }

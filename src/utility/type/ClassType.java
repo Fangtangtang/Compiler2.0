@@ -21,6 +21,6 @@ public class ClassType extends Type {
 
     @Override
     public String toString() {
-        return typeName.name()+" "+this.name;
+        return this.name;
     }
 }

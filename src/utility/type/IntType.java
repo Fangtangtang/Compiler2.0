@@ -8,4 +8,9 @@ public class IntType extends Type{
     public IntType(){
         this.typeName=Types.INT;
     }
+
+    @Override
+    public String toString() {
+        return "int";
+    }
 }

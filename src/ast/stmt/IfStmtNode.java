@@ -9,10 +9,10 @@ import utility.Position;
  * @author F
  * ----------------------------------
  * selectionStatement:
- *     If LeftRoundBracket conditionExpression=expression RightRoundBracket
- *         trueStatement=statement
- *     (Else falseStatement=statement)*
- *     ;
+ * If LeftRoundBracket conditionExpression=expression RightRoundBracket
+ * trueStatement=statement
+ * (Else falseStatement=statement)*
+ * ;
  */
 public class IfStmtNode extends StmtNode {
     public ExprNode condition;
@@ -30,7 +30,7 @@ public class IfStmtNode extends StmtNode {
     }
 
     @Override
-    public void accept(ASTVisitor visitor) {
-        visitor.visit(this);
+    public <T> T accept(ASTVisitor<? extends T> visitor) {
+        return visitor.visit(this);
     }
 }

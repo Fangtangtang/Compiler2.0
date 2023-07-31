@@ -15,11 +15,11 @@ public class VarNameExprNode extends ExprNode {
                            String name) {
         super(pos);
         this.name = name;
-        this.isAssignable=true;
+        this.isAssignable = true;
     }
 
     @Override
-    public void accept(ASTVisitor visitor) {
-        visitor.visit(this);
+    public <T> T accept(ASTVisitor<? extends T> visitor) {
+        return visitor.visit(this);
     }
 }

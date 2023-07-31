@@ -10,11 +10,15 @@ import utility.Position;
  *          （可用于visit泛化，不同ASTNode都调用it.accept(this)，支持访问）
  */
 abstract public class ASTNode {
-    Position pos;
+    public Position pos;
 
     public ASTNode(Position pos) {
         this.pos = pos;
     }
 
-    abstract public void accept(ASTVisitor visitor);
+    //使用 <T> 来引入一个泛型参数 T
+    //返回一个类型为 T 的值
+    //ASTVisitor<? extends T>
+    //传递一个实现了 ParseTreeVisitor 接口的对象，并且这个对象的类型是 T 或其子类
+    abstract public <T> T accept(ASTVisitor<? extends T> visitor);
 }

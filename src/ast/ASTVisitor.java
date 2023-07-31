@@ -11,84 +11,84 @@ import ast.other.*;
  * （类似parse tree的Visitor接口）
  * 被ASTNode接受，访问每一个结点，遍历AST
  */
-public interface ASTVisitor {
+public interface ASTVisitor<T> {
 
     //root
-    void visit(RootNode node);
+    T visit(RootNode node);
 
     //stmt
-    void visit(BlockStmtNode node);
+    T visit(BlockStmtNode node);
 
-    void visit(BreakStmtNode node);
+    T visit(BreakStmtNode node);
 
-    void visit(ConstructorDefStmtNode node);
+    T visit(ConstructorDefStmtNode node);
 
-    void visit(ContinueStmtNode node);
+    T visit(ContinueStmtNode node);
 
-    void visit(ExprStmtNode node);
+    T visit(ExprStmtNode node);
 
-    void visit(ForStmtNode node);
+    T visit(ForStmtNode node);
 
-    void visit(FuncDefStmtNode node);
+    T visit(FuncDefStmtNode node);
 
-    void visit(IfStmtNode node);
+    T visit(IfStmtNode node);
 
-    void visit(ReturnStmtNode node);
+    T visit(ReturnStmtNode node);
 
-    void visit(VarDefStmtNode node);
+    T visit(VarDefStmtNode node);
 
-    void visit(WhileStmtNode node);
+    T visit(WhileStmtNode node);
 
     //expr
-    void visit(ArrayVisExprNode node);
+    T visit(ArrayVisExprNode node);
 
-    void visit(AssignExprNode node);
+    T visit(AssignExprNode node);
 
-    void visit(BinaryExprNode node);
+    T visit(BinaryExprNode node);
 
-    void visit(CmpExprNode node);
+    T visit(CmpExprNode node);
 
-    void visit(FuncCallExprNode node);
-
-
-    void visit(LogicExprNode node);
-
-    void visit(LogicPrefixExprNode node);
-
-    void visit(MemberVisExprNode node);
-
-    void visit(NewExprNode node);
-
-    void visit(ParenthesisExprNode node);
-
-    void visit(PrefixExprNode node);
-
-    void visit(PointerExprNode node);
+    T visit(FuncCallExprNode node);
 
 
-    void visit(SuffixExprNode node);
+    T visit(LogicExprNode node);
 
-    void visit(TernaryExprNode node);
+    T visit(LogicPrefixExprNode node);
 
-    void visit(VarNameExprNode node);
+    T visit(MemberVisExprNode node);
 
-    void visit(BoolConstantExprNode node);
+    T visit(NewExprNode node);
 
-    void visit(IntConstantExprNode node);
+    T visit(ParenthesisExprNode node);
 
-    void visit(NullConstantExprNode node);
+    T visit(PrefixExprNode node);
 
-    void visit(StrConstantExprNode node);
+    T visit(PointerExprNode node);
+
+
+    T visit(SuffixExprNode node);
+
+    T visit(TernaryExprNode node);
+
+    T visit(VarNameExprNode node);
+
+    T visit(BoolConstantExprNode node);
+
+    T visit(IntConstantExprNode node);
+
+    T visit(NullConstantExprNode node);
+
+    T visit(StrConstantExprNode node);
 
     //other
-    void visit(ClassDefNode node);
+    T visit(ClassDefNode node);
 
-    void visit(InitNode node);
+    T visit(InitNode node);
 
-    void visit(ParameterNode node);
+    T visit(ParameterNode node);
 
-    void visit(TypeNode node);
+    T visit(TypeNode node);
 
-    void visit(VarDefUnitNode node);
+    T visit(VarDefUnitNode node);
 
 }

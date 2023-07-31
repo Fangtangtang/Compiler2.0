@@ -24,4 +24,9 @@ public class FunctionType extends Type {
         this.typeName = Types.FUNCTION;
         this.returnType = returnType;
     }
+
+    @Override
+    public String toString() {
+        return this.name;
+    }
 }

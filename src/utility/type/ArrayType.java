@@ -27,10 +27,15 @@ public class ArrayType extends Type {
         );
     }
 
-    @Override
-    public String toString() {
+//    @Override
+    public String print() {
         String str = typeName.name() + ' '
                 + eleType.toString();
         return String.format("%s dim:%d", str, dimensions);
+    }
+
+    @Override
+    public String toString() {
+        return eleType.toString();
     }
 }
