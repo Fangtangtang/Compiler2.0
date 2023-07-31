@@ -59,23 +59,23 @@ public class SymbolCollector extends ASTBaseVisitor<Type> {
     public Type visit(ClassDefNode node) {
         ClassType classType = new ClassType(node.name);
         //预留构造函数
-        classType.members.put(node.name, classType);
+        classType.classMembers.put(node.name, classType);
         for (ASTNode childNode : node.members) {
             //类的成员函数
             if (childNode instanceof FuncDefStmtNode tmp) {
-                if (classType.members.containsKey(tmp.name)) {
+                if (classType.classMembers.containsKey(tmp.name)) {
                     throw new SemanticException(tmp.pos, "multiple definition of " + tmp.name + " in class");
                 }
-                classType.members.put(tmp.name, visit(tmp));
+                classType.classMembers.put(tmp.name, visit(tmp));
             }
             //类的成员变量
             else if (childNode instanceof VarDefStmtNode tmp) {
                 tmp.varDefUnitNodes.forEach(
                         var -> {
-                            if (classType.members.containsKey(var.name)) {
+                            if (classType.classMembers.containsKey(var.name)) {
                                 throw new SemanticException(var.pos, "multiple definition of " + var.name + " in class");
                             }
-                            classType.members.put(var.name, var.typeNode.type);
+                            classType.classMembers.put(var.name, var.typeNode.type);
                         }
                 );
             } else if (!(childNode instanceof ConstructorDefStmtNode)) {

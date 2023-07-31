@@ -5,6 +5,8 @@ import java.util.HashMap;
 /**
  * @author F
  * 标识类型的基类
+ * members:类公有的方法（static）
+ * classMembers：class的成员
  */
 abstract public class Type {
     enum Types {
@@ -15,7 +17,7 @@ abstract public class Type {
     }
 
     public Types typeName;
-    public  HashMap<String, Type> members = null;
+    public static HashMap<String, Type> members = null;
 
     @Override
     public String toString() {

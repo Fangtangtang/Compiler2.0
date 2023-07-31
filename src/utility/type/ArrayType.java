@@ -19,15 +19,18 @@ public class ArrayType extends Type {
         this.typeName = Types.ARRAY;
         this.eleType = eleType;
         this.dimensions = dimensions;
+    }
+
+    public static void addBuildInFunc() {
         //数组内建方法
-        this.members = new HashMap<>();
-        this.members.put(
+        members = new HashMap<>();
+        members.put(
                 "size",
                 new FunctionType(new IntType())
         );
     }
 
-//    @Override
+    //    @Override
     public String print() {
         String str = typeName.name() + ' '
                 + eleType.toString();

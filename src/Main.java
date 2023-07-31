@@ -44,8 +44,8 @@ public class Main {
             printer.visit(astRoot);
 
             SymbolTable symbolTable = new SymbolTable();
-//            SymbolCollector symbolCollector = new SymbolCollector(symbolTable);
-//            symbolTable.print();
+            SymbolCollector symbolCollector = new SymbolCollector(symbolTable);
+            symbolTable.print();
 
         } catch (MxException exception) {
             System.err.println(exception.toString());

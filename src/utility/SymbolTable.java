@@ -33,6 +33,8 @@ public class SymbolTable {
     //构造时调用私有函数，将内置的类和函数加入symbolTable
     //内置类型的内建函数写在type构造函数中，add到members里
     private void addBuildInFunc() {
+        StringType.addBuildInFunc();
+        ArrayType.addBuildInFunc();
         //void print(string str);
         FunctionType printFunc = new FunctionType(new VoidType());
         printFunc.parameters.add(
@@ -79,7 +81,7 @@ public class SymbolTable {
 
     public SymbolTable() {
         addBuildInClass();
-//        addBuildInFunc();
+        addBuildInFunc();
     }
 
     public void addSymbol(String name, Type type, Position pos) {
@@ -104,8 +106,8 @@ public class SymbolTable {
         if (!symbolTable.containsKey("main")) {
             throw new SemanticException(pos, "main function doesn't exist");
         }
-        FunctionType mainFunc=(FunctionType) symbolTable.get("main");
-        if(!(mainFunc.returnType instanceof IntType)||mainFunc.parameters.size()!=0){
+        FunctionType mainFunc = (FunctionType) symbolTable.get("main");
+        if (!(mainFunc.returnType instanceof IntType) || mainFunc.parameters.size() != 0) {
             throw new SemanticException(pos, "invalid main function");
         }
     }
@@ -117,7 +119,7 @@ public class SymbolTable {
         throw new SemanticException(pos, String.format("type %s doesn't exist", name));
     }
 
-    public void print(){
+    public void print() {
         for (String key : symbolTable.keySet()) {
             System.out.println(key + ": " + symbolTable.get(key));
         }

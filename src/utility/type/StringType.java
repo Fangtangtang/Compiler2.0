@@ -15,12 +15,12 @@ public class StringType extends Type {
         this.typeName = Types.STRING;
     }
 
-    public void addBuildInFunc() {
-        this.members = new HashMap<>();
+    public static void addBuildInFunc() {
+        members = new HashMap<>();
         //内建方法
         //int length();
         FunctionType lengthFunc = new FunctionType(new IntType());
-        this.members.put("length", lengthFunc);
+        members.put("length", lengthFunc);
 
         //string substring(int left, int right);
         FunctionType substringFunc = new FunctionType(new StringType());
@@ -30,18 +30,18 @@ public class StringType extends Type {
         substringFunc.parameters.add(
                 new ParameterUnit(new IntType(), "right")
         );
-        this.members.put("substring", substringFunc);
+        members.put("substring", substringFunc);
 
         //int parseInt();
         FunctionType parseIntFunc = new FunctionType(new IntType());
-        this.members.put("parseInt", parseIntFunc);
+        members.put("parseInt", parseIntFunc);
 
         //int ord(int pos);
         FunctionType ordFunc = new FunctionType(new IntType());
         ordFunc.parameters.add(
                 new ParameterUnit(new IntType(), "pos")
         );
-        this.members.put("ord", ordFunc);
+        members.put("ord", ordFunc);
     }
 
     public StringType(boolean isConstant) {
