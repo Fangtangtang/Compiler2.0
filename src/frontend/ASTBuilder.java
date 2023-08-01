@@ -14,6 +14,7 @@ import parser.MxParser;
 import parser.MxParser.*;
 import parser.MxVisitor;
 import utility.Position;
+import utility.error.SyntaxException;
 import utility.type.*;
 
 import java.util.Objects;
@@ -423,14 +424,27 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
         ConstructionContext context = ctx.construction();
         NewExprNode newExprNode;
         //构造数组
-        if (context instanceof ArrayConstructionContext) {
+        if (context instanceof ArrayConstructionContext arrayContext) {
             newExprNode = new NewExprNode(
                     new Position(ctx),
-                    ((ArrayConstructionContext) context).LeftSquareBracket().size(),
-                    (TypeNode) visit(context));
-            ((ArrayConstructionContext) context).expression().forEach(
-                    expr -> newExprNode.dimensions.add((ExprNode) visit(expr))
+                    arrayContext.arrayUnit().size() + 1,
+                    (TypeNode) visit(context)
             );
+            //第一个
+            boolean flag = false;
+            newExprNode.dimensions.add((ExprNode) visit(arrayContext.expression()));
+            for (int i = 0; i < arrayContext.arrayUnit().size(); ++i) {
+                ExprNode ind = (ExprNode) visit(arrayContext.arrayUnit(i));
+                if (ind != null ) {
+                    if(!flag){
+                        newExprNode.dimensions.add(ind);
+                    }else {
+                        throw new  SyntaxException(new Position(arrayContext),"invalid array construction");
+                    }
+                } else {
+                    flag = true;
+                }
+            }
         }
         //构造变量
         else {
@@ -441,6 +455,21 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
             );
         }
         return newExprNode;
+    }
+
+    /**
+     * visitArrayUnit
+     * LeftSquareBracket expression? RightSquareBracket;
+     *
+     * @param ctx the parse tree
+     * @return expr
+     */
+    @Override
+    public ASTNode visitArrayUnit(ArrayUnitContext ctx) {
+        if (ctx.expression() == null) {
+            return null;
+        }
+        return visit(ctx.expression());
     }
 
     /**
@@ -730,7 +759,7 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
         FuncCallExprNode funcCallExprNode = new FuncCallExprNode(new Position(ctx),
                 (ExprNode) visit(ctx.expression())
         );
-        if(ctx.parameterList()!=null){
+        if (ctx.parameterList() != null) {
             ctx.parameterList().expression().forEach(
                     expr -> funcCallExprNode.parameterList.add((ExprNode) visit(expr))
             );
@@ -771,8 +800,8 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
      * -----------------------------------------------------------------------------
      * 构造数组
      * unitVariableType
-     * (LeftSquareBracket expression RightSquareBracket)+
-     * (LeftSquareBracket RightSquareBracket)*                 #arrayConstruction
+     * (LeftSquareBracket expression RightSquareBracket)
+     * (arrayUnit)*                #arrayConstruction
      *
      * @param ctx the parse tree
      * @return typeNode
@@ -781,7 +810,7 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
     public ASTNode visitArrayConstruction(ArrayConstructionContext ctx) {
         TypeNode tmp = (TypeNode) visit(ctx.unitVariableType());
         return new TypeNode(new Position(ctx),
-                new ArrayType(tmp.type, ctx.LeftSquareBracket().size()));
+                new ArrayType(tmp.type, ctx.arrayUnit().size() + 1));
     }
 
     /**

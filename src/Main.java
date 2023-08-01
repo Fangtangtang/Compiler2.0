@@ -19,7 +19,7 @@ public class Main {
     //程序的入口点
     //可能会抛出任何类型的异常
     public static void main(String[] args) throws Exception {
-        String fileName = "C:/Users/21672/Desktop/mx_raw/sema/array-package/array-9.mx";
+        String fileName = "C:/Users/21672/Desktop/mx_raw/sema/array-package/array-11.mx";
 //        String fileName = "testcases/variable/array.mx";
         InputStream inputStream = new FileInputStream(fileName);
 

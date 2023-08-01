@@ -323,6 +323,12 @@ public interface MxVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitVarSimpleConstruction(MxParser.VarSimpleConstructionContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link MxParser#arrayUnit}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitArrayUnit(MxParser.ArrayUnitContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link MxParser#returnType}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
