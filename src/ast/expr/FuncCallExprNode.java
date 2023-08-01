@@ -3,7 +3,6 @@ package ast.expr;
 import ast.ASTVisitor;
 import ast.ExprNode;
 import ast.other.InitNode;
-import ast.other.ParameterNode;
 import utility.Position;
 import utility.type.FunctionType;
 
@@ -18,14 +17,14 @@ import java.util.ArrayList;
  */
 public class FuncCallExprNode extends ExprNode {
     public ExprNode func;
-    public ParameterNode parameter;
+    //    public ParameterNode parameter;
+    public ArrayList<ExprNode> parameterList = new ArrayList<>();
+
 
     public FuncCallExprNode(Position pos,
-                            ExprNode func,
-                            ParameterNode parameter) {
+                            ExprNode func) {
         super(pos);
         this.func = func;
-        this.parameter=parameter;
     }
 
     @Override

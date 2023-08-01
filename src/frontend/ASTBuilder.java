@@ -315,22 +315,9 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
         return exprStmtNode;
     }
 
-    /**
-     * visitParameterList
-     * ------------------------------------------------------------------
-     * 函数调用的参数表
-     * expression (Comma expression)*
-     *
-     * @param ctx the parse tree
-     * @return parameterNode
-     */
     @Override
     public ASTNode visitParameterList(ParameterListContext ctx) {
-        ParameterNode parameterNode = new ParameterNode(new Position(ctx));
-        ctx.expression().forEach(
-                expr -> parameterNode.parameterList.add((ExprNode) visit(expr))
-        );
-        return parameterNode;
+        return null;
     }
 
     /**
@@ -734,10 +721,13 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
      */
     @Override
     public ASTNode visitFunctionCallExpr(FunctionCallExprContext ctx) {
-        return new FuncCallExprNode(new Position(ctx),
-                (ExprNode) visit(ctx.expression()),
-                (ParameterNode) visit(ctx.parameterList())
+        FuncCallExprNode funcCallExprNode = new FuncCallExprNode(new Position(ctx),
+                (ExprNode) visit(ctx.expression())
         );
+        ctx.parameterList().expression().forEach(
+                expr -> funcCallExprNode.parameterList.add((ExprNode) visit(expr))
+        );
+        return funcCallExprNode;
     }
 
     /**

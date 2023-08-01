@@ -29,4 +29,9 @@ public class FunctionType extends Type {
     public String toString() {
         return this.name;
     }
+
+    @Override
+    public boolean equals(Type other) {
+        return (other instanceof FunctionType);
+    }
 }

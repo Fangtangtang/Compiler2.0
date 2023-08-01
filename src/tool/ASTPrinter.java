@@ -333,11 +333,13 @@ public class ASTPrinter implements ASTVisitor<Void> {
 
     @Override
     public Void visit(FuncCallExprNode node) {
-        print(String.format("FuncCallExprNode: %s", node.exprType.toString()));
+        print("FuncCallExprNode:");
         //visit children
         ++depth;
         node.func.accept(this);
-        node.parameter.accept(this);
+        node.parameterList.forEach(
+                expr -> expr.accept(this)
+        );
         --depth;
         return null;
     }
@@ -385,16 +387,6 @@ public class ASTPrinter implements ASTVisitor<Void> {
         //visit children
         ++depth;
         node.varDefUnitNodes.forEach(var -> var.accept(this));
-        --depth;
-        return null;
-    }
-
-    @Override
-    public Void visit(ParameterNode node) {
-        print(String.format("ParameterNode: paras:%d", node.parameterList.size()));
-        //visit children
-        ++depth;
-        node.parameterList.forEach(para -> para.accept(this));
         --depth;
         return null;
     }

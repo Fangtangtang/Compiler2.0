@@ -84,8 +84,6 @@ public interface ASTVisitor<T> {
 
     T visit(InitNode node);
 
-    T visit(ParameterNode node);
-
     T visit(TypeNode node);
 
     T visit(VarDefUnitNode node);

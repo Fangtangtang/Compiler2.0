@@ -179,11 +179,6 @@ public class ASTBaseVisitor<T> implements ASTVisitor<T> {
     }
 
     @Override
-    public T visit(ParameterNode node) {
-        return null;
-    }
-
-    @Override
     public T visit(TypeNode node) {
         return null;
     }
