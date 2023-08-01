@@ -58,12 +58,9 @@ public interface ASTVisitor<T> {
 
     T visit(NewExprNode node);
 
-    T visit(ParenthesisExprNode node);
-
     T visit(PrefixExprNode node);
 
     T visit(PointerExprNode node);
-
 
     T visit(SuffixExprNode node);
 

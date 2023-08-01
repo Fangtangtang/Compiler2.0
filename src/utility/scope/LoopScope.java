@@ -13,16 +13,19 @@ import ast.*;
  */
 public class LoopScope extends Scope {
     public FuncScope parentFuncScope = null;
+    public ClassScope parentClassScope = null;
     public ExprNode condition = null;
     public ExprNode step = null;
 
     public LoopScope(Scope parent,
                      ExprNode condition,
                      ExprNode step,
-                     FuncScope parentFuncScope) {
+                     FuncScope parentFuncScope,
+                     ClassScope parentClassScope) {
         super(parent);
         this.condition = condition;
         this.step = step;
         this.parentFuncScope = parentFuncScope;
+        this.parentClassScope = parentClassScope;
     }
 }

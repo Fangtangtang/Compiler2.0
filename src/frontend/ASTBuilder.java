@@ -422,6 +422,7 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
     public ASTNode visitNewExpr(NewExprContext ctx) {
         ConstructionContext context = ctx.construction();
         NewExprNode newExprNode;
+        //构造数组
         if (context instanceof ArrayConstructionContext) {
             newExprNode = new NewExprNode(
                     new Position(ctx),
@@ -430,7 +431,9 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
             ((ArrayConstructionContext) context).expression().forEach(
                     expr -> newExprNode.dimensions.add((ExprNode) visit(expr))
             );
-        } else {
+        }
+        //构造变量
+        else {
             newExprNode = new NewExprNode(
                     new Position(ctx),
                     0,

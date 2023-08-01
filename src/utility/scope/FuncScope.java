@@ -18,11 +18,14 @@ public class FuncScope extends Scope {
     public Type returnType;
     public boolean hasReturn = false;
     public boolean isConstructor = false;
+    public ClassScope parentClassScope = null;
 
     public FuncScope(Scope parent,
                      Type returnType,
-                     ArrayList<ParameterUnit> parameters) {
+                     ArrayList<ParameterUnit> parameters,
+                     ClassScope parentClassScope) {
         super(parent);
+        this.parentClassScope = parentClassScope;
         this.returnType = returnType;
         if (returnType instanceof VoidType) {
             hasReturn = true;

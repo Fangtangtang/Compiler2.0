@@ -119,11 +119,6 @@ public class ASTBaseVisitor<T> implements ASTVisitor<T> {
     }
 
     @Override
-    public T visit(ParenthesisExprNode node) {
-        return null;
-    }
-
-    @Override
     public T visit(PrefixExprNode node) {
         return null;
     }

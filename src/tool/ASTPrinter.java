@@ -218,16 +218,6 @@ public class ASTPrinter implements ASTVisitor<Void> {
     }
 
     @Override
-    public Void visit(ParenthesisExprNode node) {
-        print("ParenthesisExprNode");
-        //visit children
-        ++depth;
-        node.expression.accept(this);
-        --depth;
-        return null;
-    }
-
-    @Override
     public Void visit(PrefixExprNode node) {
         print(String.format("PrefixExprNode: %s", node.operator.name()));
         //visit children

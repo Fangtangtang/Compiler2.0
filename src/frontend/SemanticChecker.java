@@ -3,10 +3,19 @@ package frontend;
 import ast.ASTVisitor;
 import ast.*;
 import ast.expr.*;
+import ast.expr.ConstantExprNode.BoolConstantExprNode;
+import ast.expr.ConstantExprNode.IntConstantExprNode;
+import ast.expr.ConstantExprNode.NullConstantExprNode;
+import ast.expr.ConstantExprNode.StrConstantExprNode;
+import ast.other.ClassDefNode;
+import ast.other.InitNode;
+import ast.other.TypeNode;
+import ast.other.VarDefUnitNode;
 import ast.stmt.*;
 import utility.error.SemanticException;
 import utility.scope.*;
 import utility.type.*;
+
 
 /**
  * @author F
@@ -16,6 +25,35 @@ import utility.type.*;
 public class SemanticChecker implements ASTVisitor<Type> {
     //当前所在的作用域
     Scope currentScope = null;
+
+    /**
+     * 带成员的类型
+     * 包括内置的string、array
+     * 用于在成员访问语句中传递信息
+     * ------------------------------
+     * 成员访问时，将currentClass置为获得的成员类型（lhs）
+     * 要获得identifier的类型
+     * 先看currentClass是否是null
+     * 如果null，在作用域找
+     * 如果不是null，在currentClass的member里找
+     */
+    Type currentClass = null;
+
+    private ClassScope getParentClassScope() {
+        if (currentScope instanceof BlockScope) {
+            return ((BlockScope) currentScope).parentClassScope;
+        }
+        if (currentScope instanceof LoopScope) {
+            return ((LoopScope) currentScope).parentClassScope;
+        }
+        if (currentScope instanceof FuncScope) {
+            return ((FuncScope) currentScope).parentClassScope;
+        }
+        if (currentScope instanceof ClassScope) {
+            return (ClassScope) currentScope;
+        }
+        return null;
+    }
 
     private FuncScope getParentFuncScope() {
         if (currentScope instanceof FuncScope) {
@@ -75,9 +113,10 @@ public class SemanticChecker implements ASTVisitor<Type> {
      */
     @Override
     public Type visit(BlockStmtNode node) {
+        ClassScope classScope = getParentClassScope();
         FuncScope funcScope = getParentFuncScope();
         LoopScope loopScope = getParentLoopScope();
-        currentScope = new BlockScope(currentScope, funcScope, loopScope);
+        currentScope = new BlockScope(currentScope, funcScope, loopScope, classScope);
         node.statements.forEach(
                 stmt -> stmt.accept(this)
         );
@@ -113,11 +152,13 @@ public class SemanticChecker implements ASTVisitor<Type> {
      */
     @Override
     public Type visit(ConstructorDefStmtNode node) {
+        ClassScope classScope = getParentClassScope();
         //返回类型为自定义类，无参数
         currentScope = new FuncScope(
                 currentScope,
                 Scope.symbolTable.getSymbol(node.name, node.pos),
-                null
+                null,
+                classScope
         );
         ((FuncScope) currentScope).isConstructor = true;
         visit(node.suite);
@@ -167,11 +208,12 @@ public class SemanticChecker implements ASTVisitor<Type> {
      */
     @Override
     public Type visit(ForStmtNode node) {
+        ClassScope classScope = getParentClassScope();
         FuncScope funcScope = getParentFuncScope();
         if (funcScope == null) {
             throw new SemanticException(node.pos, "for loop should be in function");
         }
-        currentScope = new LoopScope(currentScope, node.condition, node.step, funcScope);
+        currentScope = new LoopScope(currentScope, node.condition, node.step, funcScope, classScope);
         if (!(node.condition.accept(this) instanceof BoolType)) {
             throw new SemanticException(node.condition.pos, "condition expr should be bool");
         }
@@ -193,7 +235,9 @@ public class SemanticChecker implements ASTVisitor<Type> {
      */
     @Override
     public Type visit(FuncDefStmtNode node) {
+        //获取函数标签：返回类型、参数表
         FunctionType type;
+        ClassScope classScope = null;
         boolean flag = false;
         //全局函数
         if (currentScope instanceof GlobalScope) {
@@ -204,12 +248,15 @@ public class SemanticChecker implements ASTVisitor<Type> {
         }
         //类成员函数
         else {
+            classScope = (ClassScope) currentScope;
             type = (FunctionType) ((ClassScope) currentScope).classType.classMembers.get(node.name);
         }
+        //构建函数作用域
         currentScope = new FuncScope(
                 currentScope,
                 type.returnType,
-                type.parameters
+                type.parameters,
+                classScope
         );
         visit(node.functionBody);
         if (!((FuncScope) currentScope).hasReturn && !flag) {
@@ -237,9 +284,10 @@ public class SemanticChecker implements ASTVisitor<Type> {
         if (node.trueStatement instanceof BlockStmtNode) {
             node.trueStatement.accept(this);
         } else {
+            ClassScope classScope = getParentClassScope();
             FuncScope funcScope = getParentFuncScope();
             LoopScope loopScope = getParentLoopScope();
-            currentScope = new BlockScope(currentScope, funcScope, loopScope);
+            currentScope = new BlockScope(currentScope, funcScope, loopScope, classScope);
             node.trueStatement.accept(this);
             currentScope = currentScope.getParent();
         }
@@ -248,9 +296,10 @@ public class SemanticChecker implements ASTVisitor<Type> {
             if (node.falseStatement instanceof BlockStmtNode) {
                 node.falseStatement.accept(this);
             } else {
+                ClassScope classScope = getParentClassScope();
                 FuncScope funcScope = getParentFuncScope();
                 LoopScope loopScope = getParentLoopScope();
-                currentScope = new BlockScope(currentScope, funcScope, loopScope);
+                currentScope = new BlockScope(currentScope, funcScope, loopScope, classScope);
                 node.falseStatement.accept(this);
                 currentScope = currentScope.getParent();
             }
@@ -321,6 +370,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
      */
     @Override
     public Type visit(WhileStmtNode node) {
+        ClassScope classScope = getParentClassScope();
         FuncScope funcScope = getParentFuncScope();
         if (funcScope == null) {
             throw new SemanticException(node.pos, "for loop should be in function");
@@ -329,7 +379,8 @@ public class SemanticChecker implements ASTVisitor<Type> {
                 currentScope,
                 node.condition,
                 null,
-                funcScope
+                funcScope,
+                classScope
         );
         if (!(node.condition.accept(this) instanceof BoolType)) {
             throw new SemanticException(node.condition.pos, "condition expr should be bool");
@@ -538,44 +589,233 @@ public class SemanticChecker implements ASTVisitor<Type> {
     /**
      * MemberVisExprNode
      * 获取类的成员函数、成员对象
-     * 调用访问lhs获得类型
-     * 根据类型去判断右式合法性
+     * 调用访问lhs获得类型，给currentClass赋值
+     * 再去获得左式
      *
      * @param node 成员访问
      * @return node.exprType
-     * 注意是否可以赋值
-     * 成员的类型（变量、函数）
      */
     @Override
     public Type visit(MemberVisExprNode node) {
-        Type left = node.lhs.accept(this);
-        //数组array.size() 返回数组的长度
-        if (left instanceof ArrayType) {
-            if (node.rhs instanceof FuncCallExprNode) {
-                FunctionType function = (FunctionType) node.rhs.accept(this);
-                if ("size".equals(function.name)
-                        && function.parameters.size() == 0) {
-                    node.exprType = new IntType();
-                    return node.exprType;
-                }
-            }
-            throw new SemanticException(node.pos, "invalid member function of array");
-        }
-        //字符串内置方法
-        if (left instanceof StringType) {
-            if (node.rhs instanceof FuncCallExprNode) {
-                FunctionType function = (FunctionType) node.rhs.accept(this);
-                Type member = StringType.members.get(function.name);
-                if (function.equals(member)){
-                    node.exprType=function.returnType;
-                    return node.exprType;
-                }
-            }
-            throw new SemanticException(node.pos, "invalid member function of string");
-        }
-        //自定义类
-        if (left instanceof ClassType){
+        currentClass = node.lhs.accept(this);
+        node.exprType = node.rhs.accept(this);
+        return node.exprType;
+    }
 
+    /**
+     * NewExprNode
+     * arrayConstruction | varConstruction
+     *
+     * @param node 新建变量、数组
+     * @return node.exprType
+     * 新建的类型
+     */
+    @Override
+    public Type visit(NewExprNode node) {
+        node.exprType = node.typeNode.accept(this);
+        return node.exprType;
+    }
+
+    /**
+     * PrefixExprNode
+     * ++a,--a可以赋值
+     *
+     * @param node 非逻辑运算的前缀表达式
+     * @return node.exprType (int)
+     */
+    @Override
+    public Type visit(PrefixExprNode node) {
+        Type type = node.expression.accept(this);
+        if (type instanceof IntType) {
+            node.exprType = new IntType();
+            if (node.operator == PrefixExprNode.PrefixOperator.PlusPlus
+                    || node.operator == PrefixExprNode.PrefixOperator.Minus) {
+                node.isAssignable = true;
+            }
+            return node.exprType;
         }
+        throw new SemanticException(node.pos, "invalid type in prefix expression");
+    }
+
+    /**
+     * PointerExprNode
+     * 仅可在类作用域内层使用
+     * 不可赋值
+     *
+     * @param node 类的this指针访问
+     * @return node.exprType
+     * 类类型
+     */
+    @Override
+    public Type visit(PointerExprNode node) {
+        ClassScope classScope = getParentClassScope();
+        if (classScope == null) {
+            throw new SemanticException(node.pos, "'this' should appear in class declaration");
+        }
+        node.exprType = classScope.classType;
+        return node.exprType;
+    }
+
+    /**
+     * SuffixExprNode
+     * 不可赋值
+     *
+     * @param node 后缀表达式
+     * @return node.exprType（int）
+     */
+    @Override
+    public Type visit(SuffixExprNode node) {
+        Type type = node.expression.accept(this);
+        if (type instanceof IntType) {
+            node.exprType = new IntType();
+            return node.exprType;
+        }
+        throw new SemanticException(node.pos, "invalid type in suffix expression");
+    }
+
+    /**
+     * TernaryExprNode
+     * a ? b : c
+     * a 为 bool 类型
+     * b 与 c 的类型一致
+     *
+     * @param node 三目运算表达式
+     * @return node.exprType
+     * 返回值类型为 b 与 c 的类型
+     */
+    @Override
+    public Type visit(TernaryExprNode node) {
+        if (!(node.condition.accept(this) instanceof BoolType)) {
+            throw new SemanticException(node.condition.pos, "condition expr should be bool");
+        }
+        Type left = node.trueExpr.accept(this);
+        Type right = node.falseExpr.accept(this);
+        if (left.equals(right)) {
+            node.exprType = left;
+            return node.exprType;
+        }
+        throw new SemanticException(node.condition.pos, "unmatched type in ternary expression");
+    }
+
+    /**
+     * VarNameExprNode
+     * 根据currentClass判断应该去哪里找
+     * 若通过currentClass找，消耗
+     *
+     * @param node identifier变量名
+     * @return node.exprType 变量类型
+     */
+    @Override
+    public Type visit(VarNameExprNode node) {
+        if (currentClass == null) {
+            node.exprType = currentScope.getType(node.name);
+            return node.exprType;
+        }
+        //通过currentClass找
+        if (currentClass instanceof ClassType) {
+            node.exprType = ((ClassType) currentClass).classMembers.get(node.name);
+        } else {
+            if (currentClass instanceof StringType) {
+                node.exprType = StringType.members.get(node.name);
+            } else if (currentClass instanceof ArrayType) {
+                node.exprType = ArrayType.members.get(node.name);
+            } else {
+                throw new SemanticException(node.pos, "type have no member");
+            }
+        }
+        currentClass = null;
+        return node.exprType;
+    }
+
+    @Override
+    public Type visit(BoolConstantExprNode node) {
+        return node.exprType;
+    }
+
+    @Override
+    public Type visit(IntConstantExprNode node) {
+        return node.exprType;
+    }
+
+    @Override
+    public Type visit(NullConstantExprNode node) {
+        return node.exprType;
+    }
+
+    @Override
+    public Type visit(StrConstantExprNode node) {
+        return node.exprType;
+    }
+
+    /**
+     * ClassDefNode
+     * 构建新的类作用域，
+     * 作用域中有类的成员标签
+     * 结束后跳回上一层
+     *
+     * @param node 类定义
+     * @return null
+     */
+    @Override
+    public Type visit(ClassDefNode node) {
+        currentScope = new ClassScope(currentScope,
+                (ClassType) Scope.symbolTable.getSymbol(node.name, node.pos));
+        node.members.forEach(
+                stmt -> stmt.accept(this)
+        );
+        currentScope = currentScope.getParent();
+        return null;
+    }
+
+    /**
+     * InitNode
+     *
+     * @param node 变量定义单元的集合
+     * @return null
+     */
+    @Override
+    public Type visit(InitNode node) {
+        node.varDefUnitNodes.forEach(
+                var -> var.accept(this)
+        );
+        return null;
+    }
+
+    /**
+     * TypeNode
+     *
+     * @param node 类型结点
+     * @return node.type
+     */
+    @Override
+    public Type visit(TypeNode node) {
+        return node.type;
+    }
+
+    /**
+     * VarDefUnitNode
+     * 向当前作用域中加入变量
+     * 检查当前作用域中是否会导致重名
+     * - 类定义作用域中不会出现要在这一步检查重名的变量
+     *
+     * @param node 变量定义单元
+     * @return null
+     */
+    @Override
+    public Type visit(VarDefUnitNode node) {
+        Type varType=node.typeNode.accept(this);
+        Type iniType = null;
+        if (node.initExpr != null) {
+            iniType= node.initExpr.accept(this);
+            if(!varType.equals(iniType)){
+                throw new SemanticException(node.pos, "initiation type not match");
+            }
+        }
+        currentScope.addIdentifier(
+                node.name,
+                iniType,
+                node.pos
+        );
+        return null;
     }
 }

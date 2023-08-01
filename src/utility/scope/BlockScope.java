@@ -9,11 +9,15 @@ public class BlockScope extends Scope {
     public FuncScope parentFuncScope = null;
     public LoopScope parentLoopScope = null;
 
+    public ClassScope parentClassScope = null;
+
     public BlockScope(Scope parent,
                       FuncScope parentFuncScope,
-                      LoopScope parentLoopScope) {
+                      LoopScope parentLoopScope,
+                      ClassScope parentClassScope) {
         super(parent);
-        this.parentFuncScope=parentFuncScope;
-        this.parentLoopScope=parentLoopScope;
+        this.parentFuncScope = parentFuncScope;
+        this.parentLoopScope = parentLoopScope;
+        this.parentClassScope = parentClassScope;
     }
 }
