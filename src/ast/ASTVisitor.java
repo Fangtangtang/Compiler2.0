@@ -50,7 +50,6 @@ public interface ASTVisitor<T> {
 
     T visit(FuncCallExprNode node);
 
-
     T visit(LogicExprNode node);
 
     T visit(LogicPrefixExprNode node);

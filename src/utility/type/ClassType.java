@@ -26,4 +26,11 @@ public class ClassType extends Type {
     public String toString() {
         return this.name;
     }
+
+    //同为自定义类，类名相同
+    @Override
+    public boolean equals(Type other) {
+        return (other instanceof ClassType
+                && this.name.equals(((ClassType) other).name));
+    }
 }

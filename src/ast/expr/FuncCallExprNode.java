@@ -24,7 +24,6 @@ public class FuncCallExprNode extends ExprNode {
                             ExprNode func,
                             ParameterNode parameter) {
         super(pos);
-//        this.exprType = new FunctionType();
         this.func = func;
         this.parameter=parameter;
     }

@@ -17,7 +17,6 @@ public class AssignExprNode extends ExprNode {
                           ExprNode lhs,
                           ExprNode rhs) {
         super(pos);
-        this.isAssignable=true;
         this.lhs = lhs;
         this.rhs = rhs;
     }

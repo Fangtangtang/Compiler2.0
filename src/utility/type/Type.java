@@ -23,4 +23,6 @@ abstract public class Type {
     public String toString() {
         return typeName.name();
     }
+
+    public abstract boolean equals(Type other);
 }

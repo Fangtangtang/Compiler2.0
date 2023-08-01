@@ -53,4 +53,9 @@ public class StringType extends Type {
     public String toString() {
         return "string";
     }
+
+    @Override
+    public boolean equals(Type other) {
+        return (other instanceof StringType);
+    }
 }

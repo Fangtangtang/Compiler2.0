@@ -17,7 +17,7 @@ import java.util.HashMap;
  */
 public abstract class Scope {
     public static SymbolTable symbolTable;
-    public Scope parent;
+    private final Scope parent;
     public HashMap<String, Type> name2type = new HashMap<>();
 
     public Scope(Scope parent) {

@@ -1,5 +1,7 @@
 package utility.type;
 
+import javax.print.attribute.standard.NumberUp;
+
 /**
  * @author F
  * 内置void类型
@@ -12,5 +14,10 @@ public class VoidType extends Type {
     @Override
     public String toString() {
         return "void";
+    }
+
+    @Override
+    public boolean equals(Type other) {
+        return (other instanceof VoidType || other instanceof NullType);
     }
 }

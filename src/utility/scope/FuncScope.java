@@ -2,6 +2,7 @@ package utility.scope;
 
 import utility.ParameterUnit;
 import utility.type.Type;
+import utility.type.VoidType;
 
 import java.util.ArrayList;
 
@@ -15,14 +16,21 @@ import java.util.ArrayList;
  */
 public class FuncScope extends Scope {
     public Type returnType;
+    public boolean hasReturn = false;
+    public boolean isConstructor = false;
 
     public FuncScope(Scope parent,
                      Type returnType,
                      ArrayList<ParameterUnit> parameters) {
         super(parent);
         this.returnType = returnType;
-        parameters.forEach(
-                parameter -> this.name2type.put(parameter.name, parameter.type)
-        );
+        if (returnType instanceof VoidType) {
+            hasReturn = true;
+        }
+        if (parameters != null) {
+            parameters.forEach(
+                    parameter -> this.name2type.put(parameter.name, parameter.type)
+            );
+        }
     }
 }
