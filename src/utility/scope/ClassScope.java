@@ -4,7 +4,11 @@ import utility.type.ClassType;
 
 /**
  * @author F
- * 类定义作用域
+ * 类作用域
+ * 类定义会构建一个类作用域
+ * 成员访问会进入一个类作用域
+ * 类包括
+ * - 自定义类
  */
 public class ClassScope extends Scope {
     public ClassType classType;

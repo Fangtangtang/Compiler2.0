@@ -480,10 +480,102 @@ public class SemanticChecker implements ASTVisitor<Type> {
      */
     @Override
     public Type visit(FuncCallExprNode node) {
-        Type type=node.func.accept(this);
-        if(!(type instanceof FunctionType function)){
+        Type type = node.func.accept(this);
+        if (!(type instanceof FunctionType function)) {
             throw new SemanticException(node.pos, "invalid function name");
         }
+        //参数检查
+        if (node.parameterList.size() != function.parameters.size()) {
+            throw new SemanticException(node.pos, "invalid function parameterList");
+        }
+        for (int i = 0; i < node.parameterList.size(); ++i) {
+            if (!(node.parameterList.get(i).accept(this)).equals(function.parameters.get(i).type)) {
+                throw new SemanticException(node.parameterList.get(i).pos, "unmatched function parameter type");
+            }
+        }
+        node.exprType = function.returnType;
+        return node.exprType;
+    }
 
+    /**
+     * LogicExprNode
+     * 检查左右两式，都应该为bool
+     *
+     * @param node 二元逻辑运算表达式
+     * @return node.exprType
+     */
+    @Override
+    public Type visit(LogicExprNode node) {
+        Type left = node.lhs.accept(this);
+        Type right = node.rhs.accept(this);
+        if (!left.equals(right)) {
+            throw new SemanticException(node.pos, "invalid logic expression. unmatched types");
+        } else if (!(left instanceof BoolType)) {
+            throw new SemanticException(node.pos, "logic expression should operate on bool types");
+        } else {
+            node.exprType = new BoolType();
+        }
+        return node.exprType;
+    }
+
+    /**
+     * LogicPrefixExprNode
+     * bool
+     *
+     * @param node 逻辑运算前缀表达式
+     * @return node.exprType
+     */
+    @Override
+    public Type visit(LogicPrefixExprNode node) {
+        if (!(node.expression.accept(this) instanceof BoolType)) {
+            throw new SemanticException(node.pos, "logic expression should operate on bool type");
+        } else {
+            node.exprType = new BoolType();
+        }
+        return node.exprType;
+    }
+
+    /**
+     * MemberVisExprNode
+     * 获取类的成员函数、成员对象
+     * 调用访问lhs获得类型
+     * 根据类型去判断右式合法性
+     *
+     * @param node 成员访问
+     * @return node.exprType
+     * 注意是否可以赋值
+     * 成员的类型（变量、函数）
+     */
+    @Override
+    public Type visit(MemberVisExprNode node) {
+        Type left = node.lhs.accept(this);
+        //数组array.size() 返回数组的长度
+        if (left instanceof ArrayType) {
+            if (node.rhs instanceof FuncCallExprNode) {
+                FunctionType function = (FunctionType) node.rhs.accept(this);
+                if ("size".equals(function.name)
+                        && function.parameters.size() == 0) {
+                    node.exprType = new IntType();
+                    return node.exprType;
+                }
+            }
+            throw new SemanticException(node.pos, "invalid member function of array");
+        }
+        //字符串内置方法
+        if (left instanceof StringType) {
+            if (node.rhs instanceof FuncCallExprNode) {
+                FunctionType function = (FunctionType) node.rhs.accept(this);
+                Type member = StringType.members.get(function.name);
+                if (function.equals(member)){
+                    node.exprType=function.returnType;
+                    return node.exprType;
+                }
+            }
+            throw new SemanticException(node.pos, "invalid member function of string");
+        }
+        //自定义类
+        if (left instanceof ClassType){
+
+        }
     }
 }

@@ -32,6 +32,20 @@ public class FunctionType extends Type {
 
     @Override
     public boolean equals(Type other) {
-        return (other instanceof FunctionType);
+        if (!(other instanceof FunctionType function)) {
+            return false;
+        }
+        if (!this.returnType.equals(function.returnType)) {
+            return false;
+        }
+        if (this.parameters.size() != function.parameters.size()) {
+            return false;
+        }
+        for (int i = 0; i < this.parameters.size(); ++i) {
+            if (!this.parameters.get(i).equals(((FunctionType) other).parameters.get(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 }
