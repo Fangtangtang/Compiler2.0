@@ -112,6 +112,14 @@ public class SymbolTable {
         }
     }
 
+    public boolean haveSymbol(String name) {
+        return symbolTable.containsKey(name);
+    }
+
+    public Type getSymbol(String name) {
+        return symbolTable.get(name);
+    }
+
     public Type getSymbol(String name, Position pos) {
         if (symbolTable.containsKey(name)) {
             return symbolTable.get(name);

@@ -49,6 +49,9 @@ public class ArrayType extends Type {
     //同为数组，基本类型相同，维度相同
     @Override
     public boolean equals(Type other) {
+        if (other instanceof NullType) {
+            return true;
+        }
         return (other instanceof ArrayType
                 && this.eleType.equals(((ArrayType) other).eleType)
                 && this.dimensions.equals(((ArrayType) other).dimensions));

@@ -199,8 +199,8 @@ public class SemanticChecker implements ASTVisitor<Type> {
 
     /**
      * ForStmtNode
-     * 进入新LoopScope
-     * initializationStmt作为作用域中第一个语句
+     * 先initializationStmt
+     * 然后进入新LoopScope
      * 检查完后返回上一层
      *
      * @param node for循环
@@ -213,12 +213,18 @@ public class SemanticChecker implements ASTVisitor<Type> {
         if (funcScope == null) {
             throw new SemanticException(node.pos, "for loop should be in function");
         }
-        currentScope = new LoopScope(currentScope, node.condition, node.step, funcScope, classScope);
-        if (!(node.condition.accept(this) instanceof BoolType)) {
-            throw new SemanticException(node.condition.pos, "condition expr should be bool");
+        if (node.initializationStmt != null) {
+            node.initializationStmt.accept(this);
         }
-        node.step.accept(this);
-        node.initializationStmt.accept(this);
+        currentScope = new LoopScope(currentScope, node.condition, node.step, funcScope, classScope);
+        if (node.condition != null) {
+            if (!(node.condition.accept(this) instanceof BoolType)) {
+                throw new SemanticException(node.condition.pos, "condition expr should be bool");
+            }
+        }
+        if (node.step != null) {
+            node.step.accept(this);
+        }
         node.statement.accept(this);
         currentScope = currentScope.getParent();
         return null;
@@ -436,10 +442,11 @@ public class SemanticChecker implements ASTVisitor<Type> {
      */
     @Override
     public Type visit(AssignExprNode node) {
+        node.lhs.accept(this);
         if (!node.lhs.isAssignable) {
             throw new SemanticException(node.pos, "invalid assign to a not assignable object");
         }
-        if ((node.lhs.accept(this)).equals(node.rhs.accept(this))) {
+        if (node.lhs.exprType.equals(node.rhs.accept(this))) {
             return null;
         }
         throw new SemanticException(node.pos, "invalid assign. unmatched types");
@@ -477,6 +484,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
      * CmpExprNode
      * string\int
      * array (== | !=) null
+     * - array和null视为同一类型（array.equals(null)==true）
      * bool\class (== | !=)
      * 调用访问左右两式获得类型
      * 类型是否匹配？
@@ -489,33 +497,21 @@ public class SemanticChecker implements ASTVisitor<Type> {
     public Type visit(CmpExprNode node) {
         Type left = node.lhs.accept(this);
         Type right = node.rhs.accept(this);
-        //左右异类
-        //array - null
-        if ((left instanceof ArrayType)
-                && (right instanceof NullType)) {
+        if (!left.equals(right)) {
+            throw new SemanticException(node.pos, "invalid compare expression. unmatched types");
+        }
+        //左右同类型
+        if (left instanceof ClassType || left instanceof BoolType || left instanceof ArrayType) {
             if (node.operator == CmpExprNode.CmpOperator.Equal
                     || node.operator == CmpExprNode.CmpOperator.NotEqual) {
                 node.exprType = new BoolType();
             } else {
-                throw new SemanticException(node.pos, "invalid operator in array compare expression.");
+                throw new SemanticException(node.pos, "invalid operator in " + left.toString() + " compare expression.");
             }
-        } else if (!left.equals(right)) {
-            throw new SemanticException(node.pos, "invalid compare expression. unmatched types");
-        }
-        //左右同类型
-        else {
-            if (left instanceof ClassType || left instanceof BoolType) {
-                if (node.operator == CmpExprNode.CmpOperator.Equal
-                        || node.operator == CmpExprNode.CmpOperator.NotEqual) {
-                    node.exprType = new BoolType();
-                } else {
-                    throw new SemanticException(node.pos, "invalid operator in " + left.toString() + " compare expression.");
-                }
-            } else if (left instanceof StringType || left instanceof IntType) {
-                node.exprType = new BoolType();
-            } else {
-                throw new SemanticException(node.pos, "invalid types in binary compare expression");
-            }
+        } else if (left instanceof StringType || left instanceof IntType) {
+            node.exprType = new BoolType();
+        } else {
+            throw new SemanticException(node.pos, "invalid types in binary compare expression");
         }
         return node.exprType;
     }
@@ -709,11 +705,23 @@ public class SemanticChecker implements ASTVisitor<Type> {
     public Type visit(VarNameExprNode node) {
         if (currentClass == null) {
             node.exprType = currentScope.getType(node.name);
+            if (node.exprType == null) {
+                throw new SemanticException(node.pos, "variable not defined");
+            }
+            //非类成员的函数
+            if (!(node.exprType instanceof FunctionType)) {
+                node.isAssignable = true;
+            }
             return node.exprType;
         }
-        //通过currentClass找
+        //通过currentClass找，类成员
         if (currentClass instanceof ClassType) {
             node.exprType = ((ClassType) currentClass).classMembers.get(node.name);
+            //类成员变量：访问除 string 外的基本类型 int, bool 的成员变量返回一个实值；
+            //访问其他类型成员变量返回引用。
+            if (!(node.exprType instanceof IntType || node.exprType instanceof BoolType)) {
+                node.isAssignable = true;
+            }
         } else {
             if (currentClass instanceof StringType) {
                 node.exprType = StringType.members.get(node.name);
@@ -803,17 +811,17 @@ public class SemanticChecker implements ASTVisitor<Type> {
      */
     @Override
     public Type visit(VarDefUnitNode node) {
-        Type varType=node.typeNode.accept(this);
-        Type iniType = null;
+        Type varType = node.typeNode.accept(this);
+        Type iniType;
         if (node.initExpr != null) {
-            iniType= node.initExpr.accept(this);
-            if(!varType.equals(iniType)){
+            iniType = node.initExpr.accept(this);
+            if (!varType.equals(iniType)) {
                 throw new SemanticException(node.pos, "initiation type not match");
             }
         }
         currentScope.addIdentifier(
                 node.name,
-                iniType,
+                varType,
                 node.pos
         );
         return null;

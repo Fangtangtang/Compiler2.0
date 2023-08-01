@@ -727,9 +727,11 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
         FuncCallExprNode funcCallExprNode = new FuncCallExprNode(new Position(ctx),
                 (ExprNode) visit(ctx.expression())
         );
-        ctx.parameterList().expression().forEach(
-                expr -> funcCallExprNode.parameterList.add((ExprNode) visit(expr))
-        );
+        if(ctx.parameterList()!=null){
+            ctx.parameterList().expression().forEach(
+                    expr -> funcCallExprNode.parameterList.add((ExprNode) visit(expr))
+            );
+        }
         return funcCallExprNode;
     }
 

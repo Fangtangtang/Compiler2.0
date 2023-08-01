@@ -19,8 +19,8 @@ public class Main {
     //程序的入口点
     //可能会抛出任何类型的异常
     public static void main(String[] args) throws Exception {
-//        String fileName = "C:/Users/21672/Desktop/mx_raw/sema/array-package/array-11.mx";
-        String fileName = "testcases/variable/class.mx";
+        String fileName = "C:/Users/21672/Desktop/mx_raw/sema/array-package/array-2.mx";
+//        String fileName = "testcases/variable/class2.mx";
         InputStream inputStream = new FileInputStream(fileName);
 
         try {
@@ -41,13 +41,16 @@ public class Main {
             ASTBuilder astBuilder = new ASTBuilder();
             astRoot = (RootNode) astBuilder.visit(parseTreeRoot);
 
-            ASTPrinter printer = new ASTPrinter();
-            printer.visit(astRoot);
+//            ASTPrinter printer = new ASTPrinter();
+//            printer.visit(astRoot);
 
             Scope.symbolTable = new SymbolTable();
             SymbolCollector symbolCollector = new SymbolCollector(Scope.symbolTable);
             symbolCollector.visit(astRoot);
-            Scope.symbolTable.print();
+
+//            Scope.symbolTable.print();
+            SemanticChecker semanticChecker=new SemanticChecker();
+            semanticChecker.visit(astRoot);
 
         } catch (MxException exception) {
             System.err.println(exception.toString());

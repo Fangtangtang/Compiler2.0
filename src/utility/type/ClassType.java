@@ -30,6 +30,9 @@ public class ClassType extends Type {
     //同为自定义类，类名相同
     @Override
     public boolean equals(Type other) {
+        if(other instanceof NullType){
+            return true;
+        }
         return (other instanceof ClassType
                 && this.name.equals(((ClassType) other).name));
     }
