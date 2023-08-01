@@ -77,9 +77,9 @@ public class SymbolCollector extends ASTBaseVisitor<Type> {
                             if (classType.classMembers.containsKey(var.name)) {
                                 throw new SemanticException(var.pos, "multiple definition of " + var.name + " in class");
                             }
-                            if(Objects.equals(var.typeNode.type.toString(), node.name)){
-                                throw new SemanticException(var.pos, "infinitely recursive definition in class " + node.name);
-                            }
+//                            if(Objects.equals(var.typeNode.type.toString(), node.name)){
+//                                throw new SemanticException(var.pos, "infinitely recursive definition in class " + node.name);
+//                            }
                             classType.classMembers.put(var.name, var.typeNode.type);
                         }
                 );

@@ -3,8 +3,11 @@ package utility.scope;
 /**
  * @author F
  * 全局作用域，
- * 所有的内置类、函数
- * 定义在全局的所有类（及所有成员）、函数
+ * program作用域的根，parent=null
+ * 按顺序add所有全局变量
  */
-public class GlobalScope {
+public class GlobalScope extends Scope {
+    public GlobalScope() {
+        super(null);
+    }
 }

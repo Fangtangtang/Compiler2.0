@@ -7,6 +7,7 @@ import tool.*;
 import utility.MxErrorListener;
 import utility.SymbolTable;
 import utility.error.MxException;
+import utility.scope.Scope;
 
 import java.io.*;
 
@@ -43,10 +44,10 @@ public class Main {
             ASTPrinter printer = new ASTPrinter();
             printer.visit(astRoot);
 
-            SymbolTable symbolTable = new SymbolTable();
-            SymbolCollector symbolCollector = new SymbolCollector(symbolTable);
+            Scope.symbolTable = new SymbolTable();
+            SymbolCollector symbolCollector = new SymbolCollector(Scope.symbolTable);
             symbolCollector.visit(astRoot);
-            symbolTable.print();
+            Scope.symbolTable.print();
 
         } catch (MxException exception) {
             System.err.println(exception.toString());

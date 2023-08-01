@@ -7,7 +7,7 @@ import java.util.HashMap;
  * @author F
  * 数组类型
  * eleType：数组基本元素的类型
- * dimensionList：数组的维度列表
+ * TODO:dimensionList：数组的维度列表
  */
 public class ArrayType extends Type {
     public Type eleType;
@@ -28,6 +28,10 @@ public class ArrayType extends Type {
                 "size",
                 new FunctionType(new IntType())
         );
+    }
+
+    public void clarifyEleType(Type eleType) {
+        this.eleType = eleType;
     }
 
     //    @Override
