@@ -9,6 +9,6 @@ import utility.Position;
 public class SemanticException extends MxException {
 
     public SemanticException(Position pos, String message) {
-        super(pos, "SemanticException " + message);
+        super(pos, "SemanticException:\t" + message);
     }
 }

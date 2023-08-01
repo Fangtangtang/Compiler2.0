@@ -11,6 +11,8 @@ import utility.type.ClassType;
 import utility.type.FunctionType;
 import utility.type.Type;
 
+import java.util.Objects;
+
 /**
  * @author F
  * 遍历AST结点
@@ -75,6 +77,9 @@ public class SymbolCollector extends ASTBaseVisitor<Type> {
                             if (classType.classMembers.containsKey(var.name)) {
                                 throw new SemanticException(var.pos, "multiple definition of " + var.name + " in class");
                             }
+                            if(Objects.equals(var.typeNode.type.toString(), node.name)){
+                                throw new SemanticException(var.pos, "infinitely recursive definition in class " + node.name);
+                            }
                             classType.classMembers.put(var.name, var.typeNode.type);
                         }
                 );
@@ -95,17 +100,19 @@ public class SymbolCollector extends ASTBaseVisitor<Type> {
         );
         //TODO:浅拷贝？指向同一个地址？
         FunctionType func = new FunctionType(node.returnType.type);
-        node.parameterList.varDefUnitNodes.forEach(
-                var -> {
-                    symbolTable.getSymbol(
-                            var.typeNode.type.toString(),
-                            var.typeNode.pos
-                    );
-                    func.parameters.add(
-                            new ParameterUnit(var.typeNode.type, var.name)
-                    );
-                }
-        );
+        if(node.parameterList!=null){
+            node.parameterList.varDefUnitNodes.forEach(
+                    var -> {
+                        symbolTable.getSymbol(
+                                var.typeNode.type.toString(),
+                                var.typeNode.pos
+                        );
+                        func.parameters.add(
+                                new ParameterUnit(var.typeNode.type, var.name)
+                        );
+                    }
+            );
+        }
         return func;
     }
 }

@@ -45,6 +45,7 @@ public class Main {
 
             SymbolTable symbolTable = new SymbolTable();
             SymbolCollector symbolCollector = new SymbolCollector(symbolTable);
+            symbolCollector.visit(astRoot);
             symbolTable.print();
 
         } catch (MxException exception) {
