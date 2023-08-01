@@ -437,7 +437,8 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
             newExprNode = new NewExprNode(
                     new Position(ctx),
                     0,
-                    (TypeNode) visit(context));
+                    (TypeNode) visit(context)
+            );
         }
         return newExprNode;
     }
@@ -595,8 +596,10 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
      */
     @Override
     public ASTNode visitArrayVisExpr(ArrayVisExprContext ctx) {
-        ArrayVisExprNode arrayVisExprNode = new ArrayVisExprNode(new Position(ctx),
-                (ExprNode) visit(ctx.expression(0)));
+        ArrayVisExprNode arrayVisExprNode = new ArrayVisExprNode(
+                new Position(ctx),
+                (ExprNode) visit(ctx.expression(0))
+        );
         for (int i = 1; i < ctx.expression().size(); ++i) {
             arrayVisExprNode.indexList.add((ExprNode) visit(ctx.expression(i)));
         }

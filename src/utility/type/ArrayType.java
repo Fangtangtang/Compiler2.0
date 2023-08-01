@@ -1,5 +1,7 @@
 package utility.type;
 
+import ast.ExprNode;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -12,7 +14,7 @@ import java.util.HashMap;
 public class ArrayType extends Type {
     public Type eleType;
     public Integer dimensions;
-    public ArrayList<Integer> dimensionList = new ArrayList<>();
+    public ArrayList<ExprNode> dimensionList = new ArrayList<>();
 
     public ArrayType(Type eleType,
                      int dimensions) {

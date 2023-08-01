@@ -398,7 +398,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
 
     /**
      * ArrayVisExprNode
-     * 调用访问数组名 -> arrayName类型，是否为数组
+     * 调用访问数组名 -> arrayName类型，是否为数组、是否为null
      * 调用访问indexList -> index是否都为int
      * 计算返回类型的维度
      *
@@ -413,6 +413,9 @@ public class SemanticChecker implements ASTVisitor<Type> {
         if (!(tmp instanceof ArrayType array)) {
             throw new SemanticException(node.arrayName.pos, "invalid array name");
         }
+//        if (!node.arrayName.isAssignable) {
+//            throw new SemanticException(node.arrayName.pos, "visit invalid array");
+//        }
         node.indexList.forEach(expr -> {
             if (!(expr.accept(this) instanceof IntType)) {
                 throw new SemanticException(expr.pos, "invalid array index");
@@ -601,6 +604,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
     /**
      * NewExprNode
      * arrayConstruction | varConstruction
+     * 数组：typeNode为array型
      *
      * @param node 新建变量、数组
      * @return node.exprType
@@ -609,6 +613,21 @@ public class SemanticChecker implements ASTVisitor<Type> {
     @Override
     public Type visit(NewExprNode node) {
         node.exprType = node.typeNode.accept(this);
+        if(node.exprType instanceof ArrayType){
+            node.dimensions.forEach(
+                    dim -> {
+                        if (!(dim.accept(this) instanceof IntType ind)) {
+                            throw new SemanticException(node.pos, "invalid array index");
+                        }
+                        ((ArrayType)node.exprType).dimensionList.add(dim);
+                    }
+            );
+        }
+//        if (node.dimension > 0) {
+//            node.exprType = new ArrayType(eleType, node.dimension);
+//        } else {
+//            node.exprType = eleType;
+//        }
         return node.exprType;
     }
 
@@ -818,6 +837,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
             if (!varType.equals(iniType)) {
                 throw new SemanticException(node.pos, "initiation type not match");
             }
+            varType=iniType;
         }
         currentScope.addIdentifier(
                 node.name,
