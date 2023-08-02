@@ -577,7 +577,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
     @Override
     public Type visit(LogicPrefixExprNode node) {
         if (!(node.expression.accept(this) instanceof BoolType)) {
-            throw new SemanticException(node.pos, "logic expression should operate on bool type");
+            throw new SemanticException(node.expression.pos, "logic expression should operate on bool type");
         } else {
             node.exprType = new BoolType();
         }
@@ -596,7 +596,12 @@ public class SemanticChecker implements ASTVisitor<Type> {
     @Override
     public Type visit(MemberVisExprNode node) {
         currentClass = node.lhs.accept(this);
+        if (!(node.rhs instanceof VarNameExprNode
+                || node.rhs instanceof FuncCallExprNode)) {
+            throw new SemanticException(node.rhs.pos, "invalid visit to class member");
+        }
         node.exprType = node.rhs.accept(this);
+        node.isAssignable = node.rhs.isAssignable;
         return node.exprType;
     }
 
@@ -639,6 +644,9 @@ public class SemanticChecker implements ASTVisitor<Type> {
             node.exprType = new IntType();
             if (node.operator == PrefixExprNode.PrefixOperator.PlusPlus
                     || node.operator == PrefixExprNode.PrefixOperator.Minus) {
+                if (!node.expression.isAssignable) {
+                    throw new SemanticException(node.pos, "prefix Plus\\Minus should operate on assignable variable");
+                }
                 node.isAssignable = true;
             }
             return node.exprType;
@@ -710,7 +718,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
      * VarNameExprNode
      * 根据currentClass判断应该去哪里找
      * 若通过currentClass找，消耗
-     * # 如果为class型，根据类名字去symbolTable找完整类信息
+     * 函数类不可赋值
      *
      * @param node identifier变量名
      * @return node.exprType 变量类型
@@ -731,9 +739,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
         //通过currentClass找，类成员
         if (currentClass instanceof ClassType) {
             node.exprType = ((ClassType) currentClass).classMembers.get(node.name);
-            //类成员变量：访问除 string 外的基本类型 int, bool 的成员变量返回一个实值；
-            //访问其他类型成员变量返回引用。
-            if (!(node.exprType instanceof IntType || node.exprType instanceof BoolType)) {
+            if (!(node.exprType instanceof FunctionType)) {
                 node.isAssignable = true;
             }
         } else {

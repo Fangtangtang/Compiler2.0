@@ -95,12 +95,7 @@ public class SymbolCollector extends ASTBaseVisitor<Type> {
     //若均合法，加入symbolTable
     @Override
     public Type visit(FuncDefStmtNode node) {
-        symbolTable.getSymbol(
-                node.returnType.type.toString(),
-                node.returnType.pos
-        );
-        //TODO:浅拷贝？指向同一个地址？
-        FunctionType func = new FunctionType(node.returnType.type);
+        FunctionType func = new FunctionType(visit(node.returnType));
         if (node.parameterList != null) {
             node.parameterList.varDefUnitNodes.forEach(
                     var -> {
