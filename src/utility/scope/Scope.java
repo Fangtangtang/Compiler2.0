@@ -57,18 +57,18 @@ public abstract class Scope {
                 return ((ClassScope) this).classType.classMembers.get(name);
             }
         } else {
-            //先在作用域内找
+            //在作用域内找
             if (name2type.containsKey(name)) {
                 return name2type.get(name);
             }
-            //全局作用域，再在symbol table找
-            if (this instanceof GlobalScope) {
-                if (Scope.symbolTable.haveSymbol(name)) {
-                    return Scope.symbolTable.getSymbol(name);
-                }
-            } else {
-                return parent.getType(name);
+        }
+        //全局作用域，再在symbol table找
+        if (this instanceof GlobalScope) {
+            if (Scope.symbolTable.haveSymbol(name)) {
+                return Scope.symbolTable.getSymbol(name);
             }
+        } else {
+            return parent.getType(name);
         }
         return null;
     }

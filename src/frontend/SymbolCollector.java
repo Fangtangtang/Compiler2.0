@@ -8,6 +8,8 @@ import ast.stmt.FuncDefStmtNode;
 import ast.stmt.VarDefStmtNode;
 import utility.*;
 import utility.error.SemanticException;
+import utility.scope.Scope;
+import utility.type.ArrayType;
 import utility.type.ClassType;
 import utility.type.FunctionType;
 import utility.type.Type;
@@ -38,7 +40,7 @@ public class SymbolCollector extends ASTBaseVisitor<Type> {
         for (ASTNode childNode : node.declarations) {
             if (childNode instanceof ClassDefNode tmp) {
                 symbolTable.addSymbol(
-                        tmp.name, new ClassType(), tmp.pos
+                        tmp.name, new ClassType(tmp.name), tmp.pos
                 );
             }
         }
@@ -46,7 +48,7 @@ public class SymbolCollector extends ASTBaseVisitor<Type> {
         //TODO:类成员中的构造函数怎么处理
         for (ASTNode childNode : node.declarations) {
             if (childNode instanceof ClassDefNode tmp) {
-                symbolTable.addClassType(tmp.name, (ClassType) visit(tmp), tmp.pos);
+                visit(tmp);
             } else if (childNode instanceof FuncDefStmtNode tmp) {
                 symbolTable.addSymbol(tmp.name, visit(tmp), tmp.pos);
             }
@@ -60,7 +62,7 @@ public class SymbolCollector extends ASTBaseVisitor<Type> {
 
     @Override
     public Type visit(ClassDefNode node) {
-        ClassType classType = new ClassType(node.name);
+        ClassType classType = (ClassType) symbolTable.getSymbol(node.name);
         for (ASTNode childNode : node.members) {
             //类的成员函数
             if (childNode instanceof FuncDefStmtNode tmp) {
@@ -119,6 +121,11 @@ public class SymbolCollector extends ASTBaseVisitor<Type> {
      */
     @Override
     public Type visit(TypeNode node) {
-        return symbolTable.getSymbol(node.type.toString(), node.pos);
+        if (!(node.type instanceof ArrayType)) {
+            node.type = symbolTable.getSymbol(node.type.toString(), node.pos);
+        } else {
+            ((ArrayType) node.type).eleType = symbolTable.getSymbol(node.type.toString(), node.pos);
+        }
+        return node.type;
     }
 }

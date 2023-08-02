@@ -488,7 +488,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
      * bool\class (== | !=)
      * 调用访问左右两式获得类型
      * 类型是否匹配？
-     * 是否为合法运算     *
+     * 是否为合法运算
      *
      * @param node 二元比较表达式
      * @return node.exprType（bool）
@@ -501,7 +501,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
             throw new SemanticException(node.pos, "invalid compare expression. unmatched types");
         }
         //左右同类型
-        if (left instanceof ClassType || left instanceof BoolType || left instanceof ArrayType) {
+        if (left instanceof ClassType || left instanceof BoolType || left instanceof ArrayType || left instanceof NullType) {
             if (node.operator == CmpExprNode.CmpOperator.Equal
                     || node.operator == CmpExprNode.CmpOperator.NotEqual) {
                 node.exprType = new BoolType();
@@ -622,11 +622,6 @@ public class SemanticChecker implements ASTVisitor<Type> {
                     }
             );
         }
-//        if (node.dimension > 0) {
-//            node.exprType = new ArrayType(eleType, node.dimension);
-//        } else {
-//            node.exprType = eleType;
-//        }
         return node.exprType;
     }
 
@@ -816,6 +811,11 @@ public class SemanticChecker implements ASTVisitor<Type> {
      */
     @Override
     public Type visit(TypeNode node) {
+        if (!(node.type instanceof ArrayType)) {
+            node.type = Scope.symbolTable.getSymbol(node.type.toString(), node.pos);
+        } else {
+            ((ArrayType) node.type).eleType = Scope.symbolTable.getSymbol(node.type.toString(), node.pos);
+        }
         return node.type;
     }
 
