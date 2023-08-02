@@ -225,7 +225,9 @@ public class SemanticChecker implements ASTVisitor<Type> {
         if (node.step != null) {
             node.step.accept(this);
         }
-        node.statement.accept(this);
+        if (node.statement != null) {
+            node.statement.accept(this);
+        }
         currentScope = currentScope.getParent();
         return null;
     }
@@ -294,7 +296,9 @@ public class SemanticChecker implements ASTVisitor<Type> {
             FuncScope funcScope = getParentFuncScope();
             LoopScope loopScope = getParentLoopScope();
             currentScope = new BlockScope(currentScope, funcScope, loopScope, classScope);
-            node.trueStatement.accept(this);
+            if (node.trueStatement != null) {
+                node.trueStatement.accept(this);
+            }
             currentScope = currentScope.getParent();
         }
         //falseStatement
@@ -328,18 +332,22 @@ public class SemanticChecker implements ASTVisitor<Type> {
     @Override
     public Type visit(ReturnStmtNode node) {
         FuncScope funcScope = getParentFuncScope();
-        //是否在非构造函数的函数作用域内
-        if (funcScope == null || funcScope.isConstructor) {
+        //是否在函数作用域内
+        if (funcScope == null) {
             throw new SemanticException(node.pos, "invalid return statement");
         }
         //是否有返回值
         if (node.expression == null) {
-            if (!(funcScope.returnType instanceof VoidType)) {
+            if (!(funcScope.returnType instanceof VoidType
+                    || funcScope.isConstructor)) {
                 throw new SemanticException(node.pos, "expect return, get null");
             }
         }
         //返回值类型是否合法
         else {
+            if (funcScope.isConstructor) {
+                throw new SemanticException(node.pos, "invalid return in constructor");
+            }
             Type type = node.expression.accept(this);
             funcScope.hasReturn = true;
             if (!(funcScope.returnType.equals(type))) {
@@ -391,7 +399,9 @@ public class SemanticChecker implements ASTVisitor<Type> {
         if (!(node.condition.accept(this) instanceof BoolType)) {
             throw new SemanticException(node.condition.pos, "condition expr should be bool");
         }
-        node.statement.accept(this);
+        if (node.statement != null) {
+            node.statement.accept(this);
+        }
         currentScope = currentScope.getParent();
         return null;
     }
@@ -538,7 +548,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
         Type tmp;
         for (int i = 0; i < node.parameterList.size(); ++i) {
             tmp = node.parameterList.get(i).accept(this);
-            if (tmp == null || !tmp.equals(function.parameters.get(i).type)) {
+            if (tmp == null || !(function.parameters.get(i).type).equals(tmp)) {
                 throw new SemanticException(node.parameterList.get(i).pos, "unmatched function parameter type");
             }
         }
@@ -643,7 +653,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
         if (type instanceof IntType) {
             node.exprType = new IntType();
             if (node.operator == PrefixExprNode.PrefixOperator.PlusPlus
-                    || node.operator == PrefixExprNode.PrefixOperator.Minus) {
+                    || node.operator == PrefixExprNode.PrefixOperator.MinusMinus) {
                 if (!node.expression.isAssignable) {
                     throw new SemanticException(node.pos, "prefix Plus\\Minus should operate on assignable variable");
                 }
@@ -683,7 +693,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
     @Override
     public Type visit(SuffixExprNode node) {
         Type type = node.expression.accept(this);
-        if (type instanceof IntType) {
+        if (type instanceof IntType && node.expression.isAssignable) {
             node.exprType = new IntType();
             return node.exprType;
         }
