@@ -11,12 +11,13 @@ import java.util.HashMap;
 public class StringType extends Type {
     boolean isConstant = false;
 
+    public static HashMap<String, Type> members = new HashMap<>();
+
     public StringType() {
         this.typeName = Types.STRING;
     }
 
     public static void addBuildInFunc() {
-        members = new HashMap<>();
         //内建方法
         //int length();
         FunctionType lengthFunc = new FunctionType(new IntType());

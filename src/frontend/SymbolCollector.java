@@ -2,6 +2,7 @@ package frontend;
 
 import ast.*;
 import ast.other.ClassDefNode;
+import ast.other.TypeNode;
 import ast.stmt.ConstructorDefStmtNode;
 import ast.stmt.FuncDefStmtNode;
 import ast.stmt.VarDefStmtNode;
@@ -60,8 +61,6 @@ public class SymbolCollector extends ASTBaseVisitor<Type> {
     @Override
     public Type visit(ClassDefNode node) {
         ClassType classType = new ClassType(node.name);
-        //预留构造函数
-        classType.classMembers.put(node.name, classType);
         for (ASTNode childNode : node.members) {
             //类的成员函数
             if (childNode instanceof FuncDefStmtNode tmp) {
@@ -77,13 +76,13 @@ public class SymbolCollector extends ASTBaseVisitor<Type> {
                             if (classType.classMembers.containsKey(var.name)) {
                                 throw new SemanticException(var.pos, "multiple definition of " + var.name + " in class");
                             }
-//                            if(Objects.equals(var.typeNode.type.toString(), node.name)){
-//                                throw new SemanticException(var.pos, "infinitely recursive definition in class " + node.name);
-//                            }
-                            classType.classMembers.put(var.name, var.typeNode.type);
+                            classType.classMembers.put(var.name, visit(var.typeNode));
                         }
                 );
-            } else if (!(childNode instanceof ConstructorDefStmtNode)) {
+            } else if (childNode instanceof ConstructorDefStmtNode) {
+                classType.constructor = new FunctionType();
+                classType.constructor.functionBody = ((ConstructorDefStmtNode) childNode).suite;
+            } else {
                 throw new SemanticException(node.pos, "invalid member in class " + node.name);
             }
         }
@@ -100,19 +99,26 @@ public class SymbolCollector extends ASTBaseVisitor<Type> {
         );
         //TODO:浅拷贝？指向同一个地址？
         FunctionType func = new FunctionType(node.returnType.type);
-        if(node.parameterList!=null){
+        if (node.parameterList != null) {
             node.parameterList.varDefUnitNodes.forEach(
                     var -> {
-                        symbolTable.getSymbol(
-                                var.typeNode.type.toString(),
-                                var.typeNode.pos
-                        );
                         func.parameters.add(
-                                new ParameterUnit(var.typeNode.type, var.name)
+                                new ParameterUnit(visit(var.typeNode), var.name)
                         );
                     }
             );
         }
         return func;
+    }
+
+    /**
+     * 判断类型是否合法
+     *
+     * @param node TypeNode
+     * @return type
+     */
+    @Override
+    public Type visit(TypeNode node) {
+        return symbolTable.getSymbol(node.type.toString(), node.pos);
     }
 }

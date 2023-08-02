@@ -160,8 +160,7 @@ expression:
 //  对象： new <Type>() 或 new <Type>
 construction:
     unitVariableType
-            (LeftSquareBracket expression RightSquareBracket)
-            (arrayUnit)*                                            #arrayConstruction
+            (arrayUnit)+                                            #arrayConstruction
     | unitVariableType LeftRoundBracket RightRoundBracket           #varConstruction
     | unitVariableType                                              #varSimpleConstruction
     ;

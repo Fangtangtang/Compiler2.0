@@ -129,9 +129,13 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
     @Override
     public ASTNode visitSuite(MxParser.SuiteContext ctx) {
         BlockStmtNode blockStmtNode = new BlockStmtNode(new Position(ctx));
-        ctx.statement().forEach(
-                stmt -> blockStmtNode.statements.add((StmtNode) visit(stmt))
-        );
+        StmtNode tmp;
+        for (int i = 0; i < ctx.statement().size(); ++i) {
+            tmp = (StmtNode) visit(ctx.statement(i));
+            if (tmp != null) {
+                blockStmtNode.statements.add(tmp);
+            }
+        }
         return blockStmtNode;
     }
 
@@ -427,19 +431,18 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
         if (context instanceof ArrayConstructionContext arrayContext) {
             newExprNode = new NewExprNode(
                     new Position(ctx),
-                    arrayContext.arrayUnit().size() + 1,
+                    arrayContext.arrayUnit().size(),
                     (TypeNode) visit(context)
             );
             //第一个
             boolean flag = false;
-            newExprNode.dimensions.add((ExprNode) visit(arrayContext.expression()));
             for (int i = 0; i < arrayContext.arrayUnit().size(); ++i) {
                 ExprNode ind = (ExprNode) visit(arrayContext.arrayUnit(i));
-                if (ind != null ) {
-                    if(!flag){
+                if (ind != null) {
+                    if (!flag) {
                         newExprNode.dimensions.add(ind);
-                    }else {
-                        throw new  SyntaxException(new Position(arrayContext),"invalid array construction");
+                    } else {
+                        throw new SyntaxException(new Position(arrayContext), "invalid array construction");
                     }
                 } else {
                     flag = true;
@@ -810,7 +813,7 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
     public ASTNode visitArrayConstruction(ArrayConstructionContext ctx) {
         TypeNode tmp = (TypeNode) visit(ctx.unitVariableType());
         return new TypeNode(new Position(ctx),
-                new ArrayType(tmp.type, ctx.arrayUnit().size() + 1));
+                new ArrayType(tmp.type, ctx.arrayUnit().size()));
     }
 
     /**

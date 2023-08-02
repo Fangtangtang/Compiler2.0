@@ -13,6 +13,7 @@ import java.util.HashMap;
  */
 public class ArrayType extends Type {
     public Type eleType;
+    public static HashMap<String, Type> members = new HashMap<>();
     public Integer dimensions;
     public ArrayList<ExprNode> dimensionList = new ArrayList<>();
 
@@ -25,7 +26,7 @@ public class ArrayType extends Type {
 
     public static void addBuildInFunc() {
         //数组内建方法
-        members = new HashMap<>();
+
         members.put(
                 "size",
                 new FunctionType(new IntType())

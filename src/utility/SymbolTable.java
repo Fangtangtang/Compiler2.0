@@ -27,7 +27,7 @@ public class SymbolTable {
         symbolTable.put("int", new IntType());
         symbolTable.put("bool", new BoolType());
         symbolTable.put("string", new StringType());
-//        symbolTable.put("null", new NullType());
+        symbolTable.put("null", new NullType());
     }
 
     //构造时调用私有函数，将内置的类和函数加入symbolTable

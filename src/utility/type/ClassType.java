@@ -10,6 +10,7 @@ import java.util.*;
 public class ClassType extends Type {
 
     public String name;
+    public FunctionType constructor = null;
     public HashMap<String, Type> classMembers = new HashMap<>();
 
     public ClassType() {
@@ -30,7 +31,7 @@ public class ClassType extends Type {
     //同为自定义类，类名相同
     @Override
     public boolean equals(Type other) {
-        if(other instanceof NullType){
+        if (other instanceof NullType) {
             return true;
         }
         return (other instanceof ClassType

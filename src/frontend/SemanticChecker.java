@@ -413,9 +413,6 @@ public class SemanticChecker implements ASTVisitor<Type> {
         if (!(tmp instanceof ArrayType array)) {
             throw new SemanticException(node.arrayName.pos, "invalid array name");
         }
-//        if (!node.arrayName.isAssignable) {
-//            throw new SemanticException(node.arrayName.pos, "visit invalid array");
-//        }
         node.indexList.forEach(expr -> {
             if (!(expr.accept(this) instanceof IntType)) {
                 throw new SemanticException(expr.pos, "invalid array index");
@@ -538,8 +535,10 @@ public class SemanticChecker implements ASTVisitor<Type> {
         if (node.parameterList.size() != function.parameters.size()) {
             throw new SemanticException(node.pos, "invalid function parameterList");
         }
+        Type tmp;
         for (int i = 0; i < node.parameterList.size(); ++i) {
-            if (!(node.parameterList.get(i).accept(this)).equals(function.parameters.get(i).type)) {
+            tmp = node.parameterList.get(i).accept(this);
+            if (tmp == null || !tmp.equals(function.parameters.get(i).type)) {
                 throw new SemanticException(node.parameterList.get(i).pos, "unmatched function parameter type");
             }
         }
@@ -613,13 +612,13 @@ public class SemanticChecker implements ASTVisitor<Type> {
     @Override
     public Type visit(NewExprNode node) {
         node.exprType = node.typeNode.accept(this);
-        if(node.exprType instanceof ArrayType){
+        if (node.exprType instanceof ArrayType) {
             node.dimensions.forEach(
                     dim -> {
                         if (!(dim.accept(this) instanceof IntType ind)) {
                             throw new SemanticException(node.pos, "invalid array index");
                         }
-                        ((ArrayType)node.exprType).dimensionList.add(dim);
+                        ((ArrayType) node.exprType).dimensionList.add(dim);
                     }
             );
         }
@@ -716,6 +715,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
      * VarNameExprNode
      * 根据currentClass判断应该去哪里找
      * 若通过currentClass找，消耗
+     * # 如果为class型，根据类名字去symbolTable找完整类信息
      *
      * @param node identifier变量名
      * @return node.exprType 变量类型
@@ -837,7 +837,6 @@ public class SemanticChecker implements ASTVisitor<Type> {
             if (!varType.equals(iniType)) {
                 throw new SemanticException(node.pos, "initiation type not match");
             }
-            varType=iniType;
         }
         currentScope.addIdentifier(
                 node.name,

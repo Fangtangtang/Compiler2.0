@@ -50,16 +50,6 @@ public abstract class Scope {
         }
     }
 
-//    public boolean containsIdentifier(String name) {
-//        if (name2type.containsKey(name)) {
-//            return true;
-//        }
-//        if (parent != null) {
-//            return parent.containsIdentifier(name);
-//        }
-//        return false;
-//    }
-
     public Type getType(String name) {
         //特殊作用域，从类成员中找
         if (this instanceof ClassScope) {
