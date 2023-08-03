@@ -512,7 +512,7 @@ public class ASTBuilder extends AbstractParseTreeVisitor<ASTNode> implements MxV
             return new BoolConstantExprNode(new Position(ctx), false);
         } else if (ctx.literal().IntegerLiteral() != null) {
             return new IntConstantExprNode(new Position(ctx),
-                    Integer.parseInt(ctx.literal().IntegerLiteral().toString()));
+                    ctx.literal().IntegerLiteral().toString());
         } else if (ctx.literal().StringLiteral() != null) {
             return new StrConstantExprNode(new Position(ctx),
                     ctx.literal().StringLiteral().toString());
