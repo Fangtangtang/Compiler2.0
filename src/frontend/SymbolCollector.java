@@ -82,6 +82,9 @@ public class SymbolCollector extends ASTBaseVisitor<Type> {
                         }
                 );
             } else if (childNode instanceof ConstructorDefStmtNode) {
+                if(!((ConstructorDefStmtNode)childNode).name.equals(node.name)){
+                    throw new SemanticException(childNode.pos, "mismatched constructor name");
+                }
                 classType.constructor = new FunctionType();
                 classType.constructor.functionBody = ((ConstructorDefStmtNode) childNode).suite;
             } else {

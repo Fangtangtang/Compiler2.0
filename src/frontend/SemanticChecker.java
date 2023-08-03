@@ -199,8 +199,8 @@ public class SemanticChecker implements ASTVisitor<Type> {
 
     /**
      * ForStmtNode
+     * 进入新LoopScope
      * 先initializationStmt
-     * 然后进入新LoopScope
      * 检查完后返回上一层
      *
      * @param node for循环
@@ -213,10 +213,10 @@ public class SemanticChecker implements ASTVisitor<Type> {
         if (funcScope == null) {
             throw new SemanticException(node.pos, "for loop should be in function");
         }
+        currentScope = new LoopScope(currentScope, node.condition, node.step, funcScope, classScope);
         if (node.initializationStmt != null) {
             node.initializationStmt.accept(this);
         }
-        currentScope = new LoopScope(currentScope, node.condition, node.step, funcScope, classScope);
         if (node.condition != null) {
             if (!(node.condition.accept(this) instanceof BoolType)) {
                 throw new SemanticException(node.condition.pos, "condition expr should be bool");
@@ -749,6 +749,9 @@ public class SemanticChecker implements ASTVisitor<Type> {
         //通过currentClass找，类成员
         if (currentClass instanceof ClassType) {
             node.exprType = ((ClassType) currentClass).classMembers.get(node.name);
+            if(node.exprType==null){
+                throw new SemanticException(node.pos, "type have no member");
+            }
             if (!(node.exprType instanceof FunctionType)) {
                 node.isAssignable = true;
             }
@@ -758,6 +761,9 @@ public class SemanticChecker implements ASTVisitor<Type> {
             } else if (currentClass instanceof ArrayType) {
                 node.exprType = ArrayType.members.get(node.name);
             } else {
+                throw new SemanticException(node.pos, "type have no member");
+            }
+            if(node.exprType==null){
                 throw new SemanticException(node.pos, "type have no member");
             }
         }
