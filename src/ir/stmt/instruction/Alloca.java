@@ -2,16 +2,13 @@ package ir.stmt.instruction;
 
 import ir.IRVisitor;
 import ir.entity.*;
-import ir.entity.ptr.GlobalPtr;
 import ir.entity.ptr.LocalPtr;
-import ir.entity.ptr.Ptr;
 import ir.irType.IRType;
-import utility.error.InternalException;
 
 
 /**
  * @author F
- * 分配内存空间的指令
+ * 局部变量分配内存空间的指令
  * <result> = alloca <type>
  * + --------------------------------
  * |
@@ -19,20 +16,15 @@ import utility.error.InternalException;
  * | int b;     ->  %b = alloca i32,
  * |
  * +---------------------------------
- * result为指针类型(GlobalPtr\LocalPtr)
+ * result为指针类型(LocalPtr)
  * type为指针指向对象的类型
  */
 public class Alloca extends Instruction {
-    public Ptr result;
+    public LocalPtr result;
 
-    public Alloca(boolean isGlobal,
-                  IRType irType,
+    public Alloca(IRType irType,
                   String identifier) {
-        if (isGlobal) {
-            this.result = new GlobalPtr(new Storage(irType), identifier);
-        } else {
-            this.result = new LocalPtr(new Storage(irType), identifier);
-        }
+        this.result = new LocalPtr(new Storage(irType), identifier);
     }
 
     @Override
