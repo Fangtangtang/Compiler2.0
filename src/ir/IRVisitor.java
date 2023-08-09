@@ -17,6 +17,8 @@ public interface IRVisitor {
 
     void visit(GetElementPtr stmt);
 
+    void visit(Global stmt);
+
     void visit(Icmp stmt);
 
     void visit(Load stmt);

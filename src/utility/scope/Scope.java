@@ -1,11 +1,9 @@
 package utility.scope;
 
-import utility.Position;
-import utility.SymbolTable;
+import ir.entity.Storage;
+import utility.*;
 import utility.error.SemanticException;
-import utility.type.ArrayType;
-import utility.type.ClassType;
-import utility.type.Type;
+import utility.type.*;
 
 import java.util.HashMap;
 
@@ -13,13 +11,17 @@ import java.util.HashMap;
  * @author F
  * 作用域抽象类
  * 所有的Scope共用一个在symbol collect阶段收集的symbol table
- * name2type:Identifier -> Type
+ * name2type:Identifier ->  Type
+ * nameMap:name ->  rename
+ * name2mem:Identifier  ->  Storage（内存空间）
  * 所有作用域：用双亲表示法表示的树，Scope为结点类
  */
 public abstract class Scope {
     public static SymbolTable symbolTable;
     private final Scope parent;
     public HashMap<String, Type> name2type = new HashMap<>();
+    public HashMap<String, String> nameMap = new HashMap<>();
+    public HashMap<String, Storage> name2mem = new HashMap<>();
 
     public Scope(Scope parent) {
         this.parent = parent;
