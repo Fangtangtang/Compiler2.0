@@ -1,7 +1,8 @@
 package ir.function;
 
 import ir.BasicBlock;
-import ir.entity.register.*;
+import ir.entity.MemStack;
+import ir.entity.MemStack.*;
 import ir.irType.*;
 
 import java.util.ArrayList;
@@ -15,11 +16,11 @@ public class Function {
     //返回值类型
     public IRType retType;
     //返回值存放位置
-    public Register retReg = null;
+    public MemStack retReg = null;
     //函数名
     public String funcName;
     //参数表
-    public ArrayList<Register> parameterList = new ArrayList<>();
+    public ArrayList<MemStack> parameterList = new ArrayList<>();
 
     public BasicBlock entry = null;
     public LinkedHashMap<String, BasicBlock> blockMap = new LinkedHashMap<>();

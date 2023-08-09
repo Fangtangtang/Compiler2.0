@@ -1,7 +1,7 @@
 package ir.stmt.instruction;
 
 import ir.IRVisitor;
-import ir.entity.register.Register;
+import ir.entity.*;
 
 import java.util.ArrayList;
 
@@ -12,27 +12,27 @@ import java.util.ArrayList;
  * call void @<FunctionName>(<arguments>)
  */
 public class Call extends Instruction {
-    public ArrayList<Register> parameterList = new ArrayList<>();
-    public Register resultReg = null;
+    public ArrayList<MemStack> parameterList = new ArrayList<>();
+    public MemStack resultStorage = null;
     public String funcName;
 
     public Call(String funcName,
-                Register register) {
+                MemStack memStack) {
         this.funcName = funcName;
-        this.resultReg = register;
+        this.resultStorage = memStack;
     }
 
     @Override
     public void print() {
         StringBuilder str = new StringBuilder();
-        if (resultReg == null) {
+        if (resultStorage == null) {
             str.append("call void");
         } else {
-            str.append(resultReg.toString()).append(" = call ").append(resultReg.type);
+            str.append(resultStorage.toString()).append(" = call ").append(resultStorage.type);
         }
         str.append(" @").append(funcName).append(" ");
-        for (Register register : parameterList) {
-            str.append(register.toString()).append(' ');
+        for (MemStack memStack : parameterList) {
+            str.append(memStack.toString()).append(' ');
         }
         System.out.println(str.toString());
     }

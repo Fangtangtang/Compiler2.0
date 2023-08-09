@@ -1,7 +1,7 @@
 package ir.stmt.instruction;
 
 import ir.IRVisitor;
-import ir.entity.register.Register;
+import ir.entity.*;
 import ir.irType.PtrType;
 import utility.error.InternalException;
 
@@ -12,22 +12,22 @@ import utility.error.InternalException;
  * <result> = load <ty>, ptr <pointer>
  */
 public class Load extends Instruction {
-    public Register resultReg;
-    public Register pointerReg;
+    public MemStack resultStorage;
+    public MemStack pointerStorage;
 
-    public Load(Register resultReg,
-                Register pointerReg) {
-        if (!(pointerReg.type instanceof PtrType)) {
+    public Load(MemStack resultStorage,
+                MemStack pointerStorage) {
+        if (!(pointerStorage.type instanceof PtrType)) {
             throw new InternalException("should load from a pointer");
         }
-        this.resultReg = resultReg;
-        this.pointerReg = pointerReg;
+        this.resultStorage = resultStorage;
+        this.pointerStorage = pointerStorage;
     }
 
     @Override
     public void print() {
-        System.out.println(resultReg.toString() + " = load " + resultReg.type.toString()
-                + ", ptr " + pointerReg.toString());
+        System.out.println(resultStorage.toString() + " = load " + resultStorage.type.toString()
+                + ", ptr " + pointerStorage.toString());
     }
 
     @Override

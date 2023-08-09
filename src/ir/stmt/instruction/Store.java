@@ -2,7 +2,7 @@ package ir.stmt.instruction;
 
 import ir.IRVisitor;
 import ir.entity.Entity;
-import ir.entity.register.Register;
+import ir.entity.*;
 import ir.irType.PtrType;
 import utility.error.InternalException;
 
@@ -13,21 +13,21 @@ import utility.error.InternalException;
  */
 public class Store extends Instruction {
     public Entity value;
-    public Register pointerReg;
+    public MemStack pointerStorage;
 
     public Store(Entity value,
-                 Register pointerReg) {
-        if (!(pointerReg.type instanceof PtrType)) {
+                 MemStack pointerStorage) {
+        if (!(pointerStorage.type instanceof PtrType)) {
             throw new InternalException("should store to pointer");
         }
         this.value = value;
-        this.pointerReg = pointerReg;
+        this.pointerStorage = pointerStorage;
     }
 
     @Override
     public void print() {
         System.out.println("store " + value.type.toString() + " " + value.toString()
-                + ", ptr " + pointerReg.toString());
+                + ", ptr " + pointerStorage.toString());
     }
 
     @Override

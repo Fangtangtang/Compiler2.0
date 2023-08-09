@@ -1,7 +1,7 @@
 package ir.stmt.instruction;
 
 import ir.IRVisitor;
-import ir.entity.register.*;
+import ir.entity.*;
 import ir.irType.*;
 
 /**
@@ -13,17 +13,17 @@ import ir.irType.*;
  */
 public class Alloca extends Instruction {
 
-    public Register resultReg;
+    public Entity result;
     public IRType irType;
 
-    public Alloca(Register register) {
-        this.resultReg = register;
-        this.irType = ((PtrType) register.type).type;
+    public Alloca(Entity result) {
+        this.result = result;
+        this.irType = ((PtrType) result.type).type;
     }
 
     @Override
     public void print() {
-        System.out.println(resultReg.toString() + " = alloca " + irType.toString());
+        System.out.println(result.toString() + " = alloca " + irType.toString());
     }
 
     @Override

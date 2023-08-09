@@ -3,7 +3,7 @@ package ir.stmt.instruction;
 import ast.expr.CmpExprNode;
 import ir.IRVisitor;
 import ir.entity.*;
-import ir.entity.register.*;
+import ir.entity.*;
 import utility.error.InternalException;
 
 /**
@@ -17,15 +17,15 @@ public class Icmp extends Instruction {
         eq, ne
     }
 
-    public Register resultReg;
+    public MemStack resultStorage;
     public Entity op1, op2;
     public Cond cond;
 
     public Icmp(CmpExprNode.CmpOperator operator,
-                Register resultReg,
+                MemStack resultStorage,
                 Entity op1,
                 Entity op2) {
-        this.resultReg = resultReg;
+        this.resultStorage = resultStorage;
         this.op1 = op1;
         this.op2 = op2;
         switch (operator) {
@@ -42,7 +42,7 @@ public class Icmp extends Instruction {
 
     @Override
     public void print() {
-        System.out.println(resultReg.toString() + " = icmp " + cond.name() + " "
+        System.out.println(resultStorage.toString() + " = icmp " + cond.name() + " "
                 + op1.type.toString() + ' ' + op1.toString() + ", " + op2.toString());
     }
 

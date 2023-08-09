@@ -2,8 +2,7 @@ package ir.stmt.instruction;
 
 import ast.expr.BinaryExprNode;
 import ir.IRVisitor;
-import ir.entity.Entity;
-import ir.entity.register.Register;
+import ir.entity.*;
 import utility.error.InternalException;
 
 /**
@@ -18,15 +17,15 @@ public class Binary extends Instruction {
         and, xor, or
     }
 
-    public Register resultReg;
+    public MemStack resultStorage;
     public Entity op1, op2;
     public Operator operator;
 
     public Binary(BinaryExprNode.BinaryOperator operator,
-                  Register resultReg,
+                  MemStack resultStorage,
                   Entity op1,
                   Entity op2) {
-        this.resultReg = resultReg;
+        this.resultStorage = resultStorage;
         this.op1 = op1;
         this.op2 = op2;
         switch (operator) {
@@ -46,7 +45,7 @@ public class Binary extends Instruction {
 
     @Override
     public void print() {
-        System.out.println(resultReg.toString() + " = icmp " + operator.name() + " "
+        System.out.println(resultStorage.toString() + " = icmp " + operator.name() + " "
                 + op1.type.toString() + ' ' + op1.toString() + ", " + op2.toString());
     }
 
