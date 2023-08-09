@@ -1,12 +1,9 @@
 package ir.function;
 
 import ir.BasicBlock;
-import ir.entity.MemStack;
-import ir.entity.MemStack.*;
+import ir.entity.ptr.Ptr;
 import ir.irType.*;
-
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.*;
 
 /**
  * @author F
@@ -15,15 +12,13 @@ import java.util.LinkedHashMap;
 public class Function {
     //返回值类型
     public IRType retType;
-    //返回值存放位置
-    public MemStack retReg = null;
     //函数名
     public String funcName;
     //参数表
-    public ArrayList<MemStack> parameterList = new ArrayList<>();
+    public ArrayList<Ptr> parameterList = new ArrayList<>();
 
     public BasicBlock entry = null;
-    public LinkedHashMap<String, BasicBlock> blockMap = new LinkedHashMap<>();
+    public HashMap<String, BasicBlock> blockMap = new HashMap<>();
 
     public Function(IRType retType,
                     String funcName) {

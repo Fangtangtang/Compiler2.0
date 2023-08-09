@@ -25,12 +25,12 @@ public class Binary extends Instruction {
         and, xor, or
     }
 
-    public Entity result;
+    public Ptr result;
     public Entity op1, op2;
     public Operator operator;
 
     public Binary(BinaryExprNode.BinaryOperator operator,
-                  Storage result,
+                  Ptr result,
                   Entity op1,
                   Entity op2) {
         this.result = result;
@@ -53,15 +53,9 @@ public class Binary extends Instruction {
 
     @Override
     public void print() {
-        String ty;
-        if (result instanceof GlobalPtr ptr) {
-            ty = ptr.storage.toString();
-        } else {
-            ty = ((LocalPtr) result).storage.toString();
-        }
         System.out.println(result.toString()
                 + " = " + operator.name()
-                + " " + ty + ' '
+                + " " + result.storage.toString() + ' '
                 + op1.toString() + ", " + op2.toString());
     }
 

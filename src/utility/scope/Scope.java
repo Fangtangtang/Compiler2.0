@@ -29,6 +29,22 @@ public abstract class Scope {
         return parent;
     }
 
+//    public ClassScope getParentClassScope() {
+//        if (this instanceof BlockScope) {
+//            return ((BlockScope) this).parentClassScope;
+//        }
+//        if (this instanceof LoopScope) {
+//            return ((LoopScope) this).parentClassScope;
+//        }
+//        if (this instanceof FuncScope) {
+//            return ((FuncScope) this).parentClassScope;
+//        }
+//        if (this instanceof ClassScope) {
+//            return (ClassScope) this;
+//        }
+//        return null;
+//    }
+
     //变量名和类名（SymbolTable中）可以重复
     public void addIdentifier(String name, Type type, Position pos) {
         //当前作用域内已定义

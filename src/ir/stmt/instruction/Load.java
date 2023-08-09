@@ -19,31 +19,19 @@ import utility.error.InternalException;
  * + ------------------------------------
  */
 public class Load extends Instruction {
-    public Entity resultPtr;
-    public Entity pointer;
+    public Ptr resultPtr;
+    public Ptr pointer;
 
-    public Load(Entity resultPtr,
-                Entity pointer) {
-        if (!(pointer instanceof GlobalPtr || pointer instanceof LocalPtr)) {
-            throw new InternalException("should load from a pointer");
-        }
-        if (!(resultPtr instanceof GlobalPtr || resultPtr instanceof LocalPtr)) {
-            throw new InternalException("should load to a pointer");
-        }
+    public Load(Ptr resultPtr,
+                Ptr pointer) {
         this.resultPtr = resultPtr;
         this.pointer = pointer;
     }
 
     @Override
     public void print() {
-        String ty;
-        if (resultPtr instanceof GlobalPtr ptr) {
-            ty = ptr.storage.toString();
-        } else {
-            ty = ((LocalPtr) resultPtr).storage.toString();
-        }
         System.out.println(resultPtr.toString() + " = load "
-                + ty + ", ptr " + pointer.toString());
+                +  resultPtr.storage.toString() + ", ptr " + pointer.toString());
     }
 
     @Override

@@ -2,10 +2,7 @@ package ir.stmt.instruction;
 
 import ir.IRVisitor;
 import ir.entity.Entity;
-import ir.entity.*;
-import ir.entity.ptr.GlobalPtr;
-import ir.entity.ptr.LocalPtr;
-import ir.irType.PtrType;
+import ir.entity.ptr.*;
 import utility.error.InternalException;
 
 /**
@@ -25,26 +22,17 @@ import utility.error.InternalException;
  */
 public class Store extends Instruction {
     public Entity value;
-    public Entity pointer;
+    public Ptr pointer;
 
     public Store(Entity value,
-                 Entity pointer) {
-        if (!(pointer instanceof GlobalPtr || pointer instanceof LocalPtr)) {
-            throw new InternalException("should store to a pointer");
-        }
+                 Ptr pointer) {
         this.value = value;
         this.pointer = pointer;
     }
 
     @Override
     public void print() {
-        String ty;
-        if (pointer instanceof GlobalPtr ptr) {
-            ty = ptr.storage.toString();
-        } else {
-            ty = ((LocalPtr) pointer).storage.toString();
-        }
-        System.out.println("store " + ty + " " + value.toString()
+        System.out.println("store " + pointer.storage.toString() + " " + value.toString()
                 + ", ptr " + pointer.toString());
     }
 

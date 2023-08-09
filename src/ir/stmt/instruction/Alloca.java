@@ -4,6 +4,7 @@ import ir.IRVisitor;
 import ir.entity.*;
 import ir.entity.ptr.GlobalPtr;
 import ir.entity.ptr.LocalPtr;
+import ir.entity.ptr.Ptr;
 import utility.error.InternalException;
 
 
@@ -21,23 +22,15 @@ import utility.error.InternalException;
  * type为指针指向对象的类型
  */
 public class Alloca extends Instruction {
-    public Entity result;
+    public Ptr result;
 
-    public Alloca(Entity result) {
+    public Alloca(Ptr result) {
         this.result = result;
     }
 
     @Override
     public void print() {
-        StringBuilder str = new StringBuilder(result.toString() + " = alloca ");
-        if (result instanceof LocalPtr ptr) {
-            str.append(ptr.storage.toString());
-        } else if (result instanceof GlobalPtr ptr) {
-            str.append(ptr.storage.toString());
-        } else {
-            throw new InternalException("unexpected result in alloca");
-        }
-        System.out.println(str.toString());
+        System.out.println(result.toString() + " = alloca " + result.storage.toString());
     }
 
     @Override

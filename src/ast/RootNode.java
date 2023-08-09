@@ -17,8 +17,6 @@ import java.util.*;
 public class RootNode extends ASTNode {
     public ArrayList<ASTNode> declarations = new ArrayList<>();
 
-//    public ArrayList<ClassDefNode> classDefs = new ArrayList<>();
-
     public RootNode(Position pos) {
         super(pos);
     }

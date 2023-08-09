@@ -1,6 +1,7 @@
 package ir;
 
 
+import ir.entity.ptr.GlobalPtr;
 import ir.function.*;
 import ir.irType.*;
 import ir.irType.IntType;
@@ -19,7 +20,6 @@ import java.util.*;
  * IR的根，相当于全局
  * 在IRBuilder工作，先扫一遍全局和symbol table
  * 将全局的类、函数、变量（原本已经收集于symbol table）收集在IRRoot下
- * TODO：变量
  */
 public class IRRoot {
     // 类
@@ -30,6 +30,8 @@ public class IRRoot {
     //转为函数名（避免重名后）到函数的映射
     public HashMap<String, Function> funcDef = new HashMap<>();
 
+
+    public HashMap<String, GlobalPtr> globalVar = new HashMap<>();
 
     /**
      * 将AST上的符号表重新转化为IR上的相应类型
@@ -62,6 +64,11 @@ public class IRRoot {
             FunctionType functionType = (FunctionType) entry.getValue();
             addFunc("array." + name, functionType);
         }
+        //添加变量的初始化函数
+        Function function = new Function(
+                new VoidType(),
+                "_var_initializer"
+        );
     }
 
     /**

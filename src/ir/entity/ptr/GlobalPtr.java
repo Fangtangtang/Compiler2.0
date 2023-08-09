@@ -7,19 +7,14 @@ import ir.irType.PtrType;
  * @author F
  * 全局的指针，指向存储全局变量的固定空间
  */
-public class GlobalPtr extends Entity {
-    private final String identity;
-    public final Storage storage;
-
+public class GlobalPtr extends Ptr {
     public GlobalPtr(Storage storage,
                      String identity) {
-        super(new PtrType());
-        this.storage = storage;
-        this.identity = identity;
+        super(storage, identity);
     }
 
     @Override
     public String toString() {
-        return "@" + identity;
+        return "@" + this.identity;
     }
 }
