@@ -11,7 +11,9 @@ import java.util.HashMap;
  * @author F
  * 作用域抽象类
  * 所有的Scope共用一个在symbol collect阶段收集的symbol table
+ * sematic:
  * name2type:Identifier ->  Type
+ * ir:
  * nameMap:name ->  rename
  * name2mem:Identifier  ->  Storage（内存空间）
  * 所有作用域：用双亲表示法表示的树，Scope为结点类

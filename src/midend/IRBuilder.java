@@ -34,7 +34,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
 
     //全局变量的初始化块；负责变量的空间申请
     public Pair<BasicBlock, BasicBlock> globalInitBlock =
-            new Pair<>(new BasicBlock("global_var_def"), new BasicBlock("global_val_init"));
+            new Pair<>(new BasicBlock("global_var_def"), new BasicBlock("global_var_init"));
 
     //当前的初始化块,
     private BasicBlock currentInitBlock;
@@ -76,6 +76,8 @@ public class IRBuilder implements ASTVisitor<Entity> {
 
     public IRBuilder(SymbolTable symbolTable) {
         irRoot = new IRRoot(symbolTable);
+        irRoot.globalVarDefBlock = globalInitBlock.getFirst();
+        irRoot.globalVarInitBlock = globalInitBlock.getSecond();
     }
 
     /**
@@ -88,6 +90,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
      * - 找到main，将所有全局变量的初始化函数加到main的entry
      *
      * @param node RootNode
+     * @return null
      */
     @Override
     public Entity visit(RootNode node) {
@@ -99,6 +102,17 @@ public class IRBuilder implements ASTVisitor<Entity> {
         return null;
     }
 
+    /**
+     * BlockStmtNode
+     * 用{}显式表示为作用域块
+     * 进入时构建BlockScope
+     * （将亲代的funcScope、loopScope加入）
+     * 进而访问子结点
+     * 退出返回到上层作用域
+     *
+     * @param node BlockStmtNode
+     * @return null
+     */
     @Override
     public Entity visit(BlockStmtNode node) {
 

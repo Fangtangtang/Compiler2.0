@@ -1,7 +1,6 @@
 package ir;
 
 
-import ir.entity.ptr.GlobalPtr;
 import ir.function.*;
 import ir.irType.*;
 import ir.irType.IntType;
@@ -10,8 +9,6 @@ import ir.irType.VoidType;
 import utility.SymbolTable;
 import utility.error.InternalException;
 import utility.type.*;
-import utility.type.ArrayType;
-
 import java.util.*;
 
 
@@ -30,9 +27,7 @@ public class IRRoot {
     //转为函数名（避免重名后）到函数的映射
     public HashMap<String, Function> funcDef = new HashMap<>();
 
-
-    public HashMap<String, GlobalPtr> globalVar = new HashMap<>();
-
+    public BasicBlock globalVarDefBlock,globalVarInitBlock;
     /**
      * 将AST上的符号表重新转化为IR上的相应类型
      *
