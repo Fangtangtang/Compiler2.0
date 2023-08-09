@@ -4,28 +4,28 @@ package utility;
  * @author F
  * 数据对
  */
-public class Pair<K, V> {
-    private K key;
-    private V value;
+public class Pair<F, S> {
+    private F first;
+    private S second;
 
-    public Pair(K key, V value) {
-        this.key = key;
-        this.value = value;
+    public Pair(F first, S second) {
+        this.first = first;
+        this.second = second;
     }
 
-    public K getKey() {
-        return key;
+    public F getFirst() {
+        return first;
     }
 
-    public V getValue() {
-        return value;
+    public S getSecond() {
+        return second;
     }
 
-    public void setKey(K key) {
-        this.key = key;
+    public void setFey(F first) {
+        this.first = first;
     }
 
-    public void setValue(V value) {
-        this.value = value;
+    public void setSecond(S second) {
+        this.second = second;
     }
 }

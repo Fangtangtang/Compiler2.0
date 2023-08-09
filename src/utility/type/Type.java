@@ -1,5 +1,7 @@
 package utility.type;
 
+import ir.irType.IRType;
+
 import java.util.HashMap;
 
 /**

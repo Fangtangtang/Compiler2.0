@@ -5,6 +5,7 @@ import ir.entity.*;
 import ir.entity.ptr.GlobalPtr;
 import ir.entity.ptr.LocalPtr;
 import ir.entity.ptr.Ptr;
+import ir.irType.IRType;
 import utility.error.InternalException;
 
 
@@ -24,8 +25,14 @@ import utility.error.InternalException;
 public class Alloca extends Instruction {
     public Ptr result;
 
-    public Alloca(Ptr result) {
-        this.result = result;
+    public Alloca(boolean isGlobal,
+                  IRType irType,
+                  String identifier) {
+        if (isGlobal) {
+            this.result = new GlobalPtr(new Storage(irType), identifier);
+        } else {
+            this.result = new LocalPtr(new Storage(irType), identifier);
+        }
     }
 
     @Override

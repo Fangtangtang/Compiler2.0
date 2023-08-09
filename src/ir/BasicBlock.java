@@ -13,7 +13,7 @@ import java.util.LinkedList;
  * 成员tailStmt：语句块的终结语句
  */
 public class BasicBlock {
-    //每个基本块的唯一标识符
+    //每个基本块的标识符，本函数内唯一
     public String label;
 
     private final LinkedList<Stmt> statements = new LinkedList<>();

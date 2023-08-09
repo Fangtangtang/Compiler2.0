@@ -39,45 +39,6 @@ public class SemanticChecker implements ASTVisitor<Type> {
      */
     Type currentClass = null;
 
-    private ClassScope getParentClassScope() {
-        if (currentScope instanceof BlockScope) {
-            return ((BlockScope) currentScope).parentClassScope;
-        }
-        if (currentScope instanceof LoopScope) {
-            return ((LoopScope) currentScope).parentClassScope;
-        }
-        if (currentScope instanceof FuncScope) {
-            return ((FuncScope) currentScope).parentClassScope;
-        }
-        if (currentScope instanceof ClassScope) {
-            return (ClassScope) currentScope;
-        }
-        return null;
-    }
-
-    private FuncScope getParentFuncScope() {
-        if (currentScope instanceof FuncScope) {
-            return (FuncScope) currentScope;
-        }
-        if (currentScope instanceof BlockScope) {
-            return ((BlockScope) currentScope).parentFuncScope;
-        }
-        if (currentScope instanceof LoopScope) {
-            return ((LoopScope) currentScope).parentFuncScope;
-        }
-        return null;
-    }
-
-    private LoopScope getParentLoopScope() {
-        if (currentScope instanceof BlockScope) {
-            return ((BlockScope) currentScope).parentLoopScope;
-        }
-        if (currentScope instanceof LoopScope) {
-            return (LoopScope) currentScope;
-        }
-        return null;
-    }
-
     public SemanticChecker() {
     }
 
@@ -113,9 +74,9 @@ public class SemanticChecker implements ASTVisitor<Type> {
      */
     @Override
     public Type visit(BlockStmtNode node) {
-        ClassScope classScope = getParentClassScope();
-        FuncScope funcScope = getParentFuncScope();
-        LoopScope loopScope = getParentLoopScope();
+        ClassScope classScope = currentScope.getParentClassScope();
+        FuncScope funcScope = currentScope.getParentFuncScope();
+        LoopScope loopScope = currentScope.getParentLoopScope();
         currentScope = new BlockScope(currentScope, funcScope, loopScope, classScope);
         node.statements.forEach(
                 stmt -> stmt.accept(this)
@@ -134,7 +95,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
      */
     @Override
     public Type visit(BreakStmtNode node) {
-        LoopScope loopScope = getParentLoopScope();
+        LoopScope loopScope = currentScope.getParentLoopScope();
         //break不在循环块中
         if (loopScope == null) {
             throw new SemanticException(node.pos, "invalid break statement");
@@ -152,7 +113,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
      */
     @Override
     public Type visit(ConstructorDefStmtNode node) {
-        ClassScope classScope = getParentClassScope();
+        ClassScope classScope = currentScope.getParentClassScope();
         //返回类型为自定义类，无参数
         currentScope = new FuncScope(
                 currentScope,
@@ -176,7 +137,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
      */
     @Override
     public Type visit(ContinueStmtNode node) {
-        LoopScope loopScope = getParentLoopScope();
+        LoopScope loopScope = currentScope.getParentLoopScope();
         //break不在循环块中
         if (loopScope == null) {
             throw new SemanticException(node.pos, "invalid continue statement");
@@ -208,8 +169,8 @@ public class SemanticChecker implements ASTVisitor<Type> {
      */
     @Override
     public Type visit(ForStmtNode node) {
-        ClassScope classScope = getParentClassScope();
-        FuncScope funcScope = getParentFuncScope();
+        ClassScope classScope = currentScope.getParentClassScope();
+        FuncScope funcScope = currentScope.getParentFuncScope();
         if (funcScope == null) {
             throw new SemanticException(node.pos, "for loop should be in function");
         }
@@ -292,9 +253,9 @@ public class SemanticChecker implements ASTVisitor<Type> {
         if (node.trueStatement instanceof BlockStmtNode) {
             node.trueStatement.accept(this);
         } else {
-            ClassScope classScope = getParentClassScope();
-            FuncScope funcScope = getParentFuncScope();
-            LoopScope loopScope = getParentLoopScope();
+            ClassScope classScope = currentScope.getParentClassScope();
+            FuncScope funcScope = currentScope.getParentFuncScope();
+            LoopScope loopScope = currentScope.getParentLoopScope();
             currentScope = new BlockScope(currentScope, funcScope, loopScope, classScope);
             if (node.trueStatement != null) {
                 node.trueStatement.accept(this);
@@ -306,9 +267,9 @@ public class SemanticChecker implements ASTVisitor<Type> {
             if (node.falseStatement instanceof BlockStmtNode) {
                 node.falseStatement.accept(this);
             } else {
-                ClassScope classScope = getParentClassScope();
-                FuncScope funcScope = getParentFuncScope();
-                LoopScope loopScope = getParentLoopScope();
+                ClassScope classScope = currentScope.getParentClassScope();
+                FuncScope funcScope = currentScope.getParentFuncScope();
+                LoopScope loopScope = currentScope.getParentLoopScope();
                 currentScope = new BlockScope(currentScope, funcScope, loopScope, classScope);
                 node.falseStatement.accept(this);
                 currentScope = currentScope.getParent();
@@ -331,7 +292,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
      */
     @Override
     public Type visit(ReturnStmtNode node) {
-        FuncScope funcScope = getParentFuncScope();
+        FuncScope funcScope = currentScope.getParentFuncScope();
         //是否在函数作用域内
         if (funcScope == null) {
             throw new SemanticException(node.pos, "invalid return statement");
@@ -384,8 +345,8 @@ public class SemanticChecker implements ASTVisitor<Type> {
      */
     @Override
     public Type visit(WhileStmtNode node) {
-        ClassScope classScope = getParentClassScope();
-        FuncScope funcScope = getParentFuncScope();
+        ClassScope classScope = currentScope.getParentClassScope();
+        FuncScope funcScope = currentScope.getParentFuncScope();
         if (funcScope == null) {
             throw new SemanticException(node.pos, "for loop should be in function");
         }
@@ -675,7 +636,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
      */
     @Override
     public Type visit(PointerExprNode node) {
-        ClassScope classScope = getParentClassScope();
+        ClassScope classScope = currentScope.getParentClassScope();
         if (classScope == null) {
             throw new SemanticException(node.pos, "'this' should appear in class declaration");
         }
