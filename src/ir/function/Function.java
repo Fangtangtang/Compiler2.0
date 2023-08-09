@@ -21,8 +21,14 @@ public class Function {
     //参数表
     public ArrayList<Register> parameterList = new ArrayList<>();
 
-    public BasicBlock entry;
+    public BasicBlock entry = null;
     public LinkedHashMap<String, BasicBlock> blockMap = new LinkedHashMap<>();
+
+    public Function(IRType retType,
+                    String funcName) {
+        this.retType = retType;
+        this.funcName = funcName;
+    }
 
     public Function(IRType retType,
                     String funcName,

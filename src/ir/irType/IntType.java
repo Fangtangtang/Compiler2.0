@@ -26,7 +26,7 @@ public class IntType extends IRType {
         int size;
         String name;
         if (typeName.equals(TypeName.BOOL)) {
-            size = 8;
+            size = 4;
             name = "bool";
         } else if (typeName.equals(TypeName.CHAR)) {
             size = 8;

@@ -20,7 +20,6 @@ public class SymbolTable {
     /**
      * 添加内置类
      * void int bool string null
-     * TODO:null type?
      */
     private void addBuildInClass() {
         symbolTable.put("void", new VoidType());

@@ -28,7 +28,7 @@ import java.util.Objects;
 public class SymbolCollector extends ASTBaseVisitor<Type> {
     //自定义类，
     //指向main中同一个symbolTable
-    private SymbolTable symbolTable;
+    private final SymbolTable symbolTable;
 
     public SymbolCollector(SymbolTable symbolTable) {
         this.symbolTable = symbolTable;

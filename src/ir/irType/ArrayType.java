@@ -2,22 +2,26 @@ package ir.irType;
 
 /**
  * @author F
- * IR一维数组
+ * IR一维数组(一长串的空间)
  * 基本元素的类型和数组长度
  * 高维的数组由数组嵌套得到
  */
 public class ArrayType extends IRType {
     private final IRType type;
 
-    private final int size;
+    //数组维度
+    private final int dimension;
 
-    public ArrayType(IRType type, int size) {
+    //数组大小
+    public int size;
+
+    public ArrayType(IRType type, int dimension) {
         this.type = type;
-        this.size = size;
+        this.dimension = dimension;
     }
 
     @Override
     public String toString() {
-        return "[" + size + " x " + type.toString() + "]";
+        return "[" + dimension + " x " + type.toString() + "]";
     }
 }
