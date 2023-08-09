@@ -6,7 +6,10 @@ package ir.irType;
  * type指针指向对象的类型
  */
 public class PtrType extends IRType {
-    public IRType type;
+    public IRType type = null;
+
+    public PtrType() {
+    }
 
     public PtrType(IRType type) {
         this.type = type;
@@ -14,6 +17,6 @@ public class PtrType extends IRType {
 
     @Override
     public String toString() {
-        return type.toString() + "*";
+        return "ptr";
     }
 }

@@ -3,13 +3,21 @@ package ir.stmt.instruction;
 import ast.expr.CmpExprNode;
 import ir.IRVisitor;
 import ir.entity.*;
-import ir.entity.*;
 import utility.error.InternalException;
 
 /**
  * @author F
  * 二元大小比较
  * <result> = icmp <cond> <ty> <op1>, <op2>
+ * +--------------------------------------
+ * |
+ * |    bool c=a==b;    ->  %0 = load i32, ptr %a, align 4
+ * |                        %1 = load i32, ptr %b, align 4
+ * |                        %cmp = icmp eq i32 %0, %1
+ * |                        %frombool = zext i1 %cmp to i8
+ * |                        store i8 %frombool, ptr %c, align 1
+ * |
+ * + -----------------------------------------
  */
 public class Icmp extends Instruction {
     public enum Cond {
@@ -17,15 +25,15 @@ public class Icmp extends Instruction {
         eq, ne
     }
 
-    public MemStack resultStorage;
+    public Entity result;
     public Entity op1, op2;
     public Cond cond;
 
     public Icmp(CmpExprNode.CmpOperator operator,
-                MemStack resultStorage,
+                Storage result,
                 Entity op1,
                 Entity op2) {
-        this.resultStorage = resultStorage;
+        this.result = result;
         this.op1 = op1;
         this.op2 = op2;
         switch (operator) {
@@ -42,7 +50,7 @@ public class Icmp extends Instruction {
 
     @Override
     public void print() {
-        System.out.println(resultStorage.toString() + " = icmp " + cond.name() + " "
+        System.out.println(result.toString() + " = icmp " + cond.name() + " "
                 + op1.type.toString() + ' ' + op1.toString() + ", " + op2.toString());
     }
 

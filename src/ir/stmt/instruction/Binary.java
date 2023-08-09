@@ -3,12 +3,20 @@ package ir.stmt.instruction;
 import ast.expr.BinaryExprNode;
 import ir.IRVisitor;
 import ir.entity.*;
+import ir.entity.ptr.*;
 import utility.error.InternalException;
 
 /**
  * @author F
  * 二元运算指令
  * <result> = <operator> <type> <operand1>, <operand2>
+ * +------------------------------------------
+ * |
+ * |    int a=b+1;  ->  %0 = load i32, ptr %b
+ * |                    %add = add i32 %0, 1
+ * |                    store i32 %add, ptr %a
+ * |
+ * + --------------------------------------------
  */
 public class Binary extends Instruction {
     public enum Operator {
@@ -17,15 +25,15 @@ public class Binary extends Instruction {
         and, xor, or
     }
 
-    public MemStack resultStorage;
+    public Entity result;
     public Entity op1, op2;
     public Operator operator;
 
     public Binary(BinaryExprNode.BinaryOperator operator,
-                  MemStack resultStorage,
+                  Storage result,
                   Entity op1,
                   Entity op2) {
-        this.resultStorage = resultStorage;
+        this.result = result;
         this.op1 = op1;
         this.op2 = op2;
         switch (operator) {
@@ -45,8 +53,16 @@ public class Binary extends Instruction {
 
     @Override
     public void print() {
-        System.out.println(resultStorage.toString() + " = icmp " + operator.name() + " "
-                + op1.type.toString() + ' ' + op1.toString() + ", " + op2.toString());
+        String ty;
+        if (result instanceof GlobalPtr ptr) {
+            ty = ptr.storage.toString();
+        } else {
+            ty = ((LocalPtr) result).storage.toString();
+        }
+        System.out.println(result.toString()
+                + " = " + operator.name()
+                + " " + ty + ' '
+                + op1.toString() + ", " + op2.toString());
     }
 
     @Override

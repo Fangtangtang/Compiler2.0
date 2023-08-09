@@ -12,14 +12,14 @@ import java.util.ArrayList;
  * call void @<FunctionName>(<arguments>)
  */
 public class Call extends Instruction {
-    public ArrayList<MemStack> parameterList = new ArrayList<>();
-    public MemStack resultStorage = null;
+    public ArrayList<Storage> parameterList = new ArrayList<>();
+    public Storage resultStorage = null;
     public String funcName;
 
     public Call(String funcName,
-                MemStack memStack) {
+                Storage storage) {
         this.funcName = funcName;
-        this.resultStorage = memStack;
+        this.resultStorage = storage;
     }
 
     @Override
@@ -31,8 +31,8 @@ public class Call extends Instruction {
             str.append(resultStorage.toString()).append(" = call ").append(resultStorage.type);
         }
         str.append(" @").append(funcName).append(" ");
-        for (MemStack memStack : parameterList) {
-            str.append(memStack.toString()).append(' ');
+        for (Storage storage : parameterList) {
+            str.append(storage.toString()).append(' ');
         }
         System.out.println(str.toString());
     }
