@@ -19,11 +19,10 @@ public class Main {
     //程序的入口点
     //可能会抛出任何类型的异常
     public static void main(String[] args) throws Exception {
-//       String fileName = "C:/Users/21672/Desktop/mx_raw/sema/class-package/class-4.mx";
-       String fileName = "C:/Users/21672/Desktop/mx_raw/sema/class-package/class-10.mx";
+//        String fileName ="C:/Users/21672/Desktop/mx_raw/sema/function-package/function-6.mx";
 
-//        String fileName = "testcases/function/error.mx";
-
+        String fileName = "testcases/function/error.mx";
+//        String fileName ="C:/Users/21672/Desktop/mx_raw/sema/ternary-package/ternary-expression-3.mx";
         InputStream inputStream = new FileInputStream(fileName);
 
         try {

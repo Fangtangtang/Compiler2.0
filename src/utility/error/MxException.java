@@ -11,6 +11,11 @@ abstract public class MxException extends RuntimeException {
     private final Position pos;
     private final String message;
 
+    public MxException(String message) {
+        this.pos = new Position(0, 0);
+        this.message = message;
+    }
+
     public MxException(Position pos, String message) {
         this.pos = pos;
         this.message = message;

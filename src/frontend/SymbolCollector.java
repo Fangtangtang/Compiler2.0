@@ -64,14 +64,17 @@ public class SymbolCollector extends ASTBaseVisitor<Type> {
     public Type visit(ClassDefNode node) {
         ClassType classType = (ClassType) symbolTable.getSymbol(node.name);
         for (ASTNode childNode : node.members) {
-            //类的成员函数
+            //类的成员函数，不可与类的构造函数重名
             if (childNode instanceof FuncDefStmtNode tmp) {
                 if (classType.classMembers.containsKey(tmp.name)) {
                     throw new SemanticException(tmp.pos, "multiple definition of " + tmp.name + " in class");
                 }
+                if (tmp.name.equals(node.name)) {
+                    throw new SemanticException(tmp.pos, "invalid class constructor");
+                }
                 classType.classMembers.put(tmp.name, visit(tmp));
             }
-            //类的成员变量
+            //类的成员变量，可与类的构造函数重名
             else if (childNode instanceof VarDefStmtNode tmp) {
                 tmp.varDefUnitNodes.forEach(
                         var -> {
@@ -82,7 +85,7 @@ public class SymbolCollector extends ASTBaseVisitor<Type> {
                         }
                 );
             } else if (childNode instanceof ConstructorDefStmtNode) {
-                if(!((ConstructorDefStmtNode)childNode).name.equals(node.name)){
+                if (!((ConstructorDefStmtNode) childNode).name.equals(node.name)) {
                     throw new SemanticException(childNode.pos, "mismatched constructor name");
                 }
                 classType.constructor = new FunctionType();
