@@ -25,12 +25,12 @@ public class Binary extends Instruction {
         and, xor, or
     }
 
-    public Ptr result;
+    public LocalTmpVar result;
     public Entity op1, op2;
     public Operator operator;
 
     public Binary(BinaryExprNode.BinaryOperator operator,
-                  Ptr result,
+                  LocalTmpVar result,
                   Entity op1,
                   Entity op2) {
         this.result = result;
@@ -55,7 +55,7 @@ public class Binary extends Instruction {
     public void print() {
         System.out.println(result.toString()
                 + " = " + operator.name()
-                + " " + result.storage.toString() + ' '
+                + " " + result.toString() + ' '
                 + op1.toString() + ", " + op2.toString());
     }
 

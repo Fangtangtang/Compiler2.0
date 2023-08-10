@@ -24,19 +24,19 @@ import ir.entity.var.*;
  * + ------------------------------------
  */
 public class Load extends Instruction {
-    public LocalTmpVar resultPtr;
+    public LocalTmpVar result;
     public Ptr pointer;
 
-    public Load(LocalTmpVar resultPtr,
+    public Load(LocalTmpVar result,
                 Ptr pointer) {
-        this.resultPtr = resultPtr;
+        this.result = result;
         this.pointer = pointer;
     }
 
     @Override
     public void print() {
-        System.out.println(resultPtr.toString() + " = load "
-                +  resultPtr.toString() + ", ptr " + pointer.toString());
+        System.out.println(result.toString() + " = load "
+                +  result.toString() + ", ptr " + pointer.toString());
     }
 
     @Override

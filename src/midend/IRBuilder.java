@@ -5,13 +5,12 @@ import ast.expr.*;
 import ast.expr.ConstantExprNode.*;
 import ast.other.*;
 import ast.stmt.*;
-import ir.BasicBlock;
-import ir.entity.Entity;
-import ir.entity.Storage;
-import ir.entity.constant.Constant;
-import ir.IRRoot;
+import ir.entity.*;
+import ir.entity.constant.*;
+import ir.*;
+import ir.entity.var.*;
 import ir.function.Function;
-import ir.irType.PtrType;
+import ir.irType.*;
 import ir.stmt.instruction.*;
 import ir.stmt.terminal.*;
 import utility.*;
@@ -405,14 +404,89 @@ public class IRBuilder implements ASTVisitor<Entity> {
 
     }
 
+    /**
+     * BinaryExprNode
+     * 二元算数计算
+     * 转化为binary指令
+     * 字面量\localTmpVar直接运算，
+     * 变量先load到localTmpVar  | %0 = load i32, ptr |
+     * 运算结果放到localTmpVar
+     * TODO:在VarNameExprNode处理Ptr，保证返回的都是const或tmp
+     *
+     * @param node BinaryExprNode
+     * @return result(localTmpVar)
+     */
     @Override
     public Entity visit(BinaryExprNode node) {
-
+        Entity left = node.lhs.accept(this);
+        Entity right = node.rhs.accept(this);
+        //处理ptr
+        if (left instanceof Ptr) {
+            LocalTmpVar tmp = new LocalTmpVar(((Ptr) left).storage.type);
+            currentBlock.pushBack(
+                    new Load(tmp, (Ptr) left)
+            );
+            left = tmp;
+        }
+        if (right instanceof Ptr) {
+            LocalTmpVar tmp = new LocalTmpVar(((Ptr) right).storage.type);
+            currentBlock.pushBack(
+                    new Load(tmp, (Ptr) right)
+            );
+            right = tmp;
+        }
+        //IR运算语句
+        LocalTmpVar result = new LocalTmpVar(left.type);
+        currentBlock.pushBack(
+                new Binary(node.operator,
+                        result,
+                        left,
+                        right
+                )
+        );
+        return result;
     }
 
+    /**
+     * CmpExprNode
+     * 二元比较表达式
+     * 转化为icmp指令
+     * 字面量\localTmpVar直接运算，
+     * 变量先load到localTmpVar  | %0 = load i32, ptr |
+     * 运算结果放到localTmpVar
+     *
+     * @param node CmpExprNode
+     * @return result
+     */
     @Override
     public Entity visit(CmpExprNode node) {
-
+        Entity left = node.lhs.accept(this);
+        Entity right = node.rhs.accept(this);
+        //处理ptr
+        if (left instanceof Ptr) {
+            LocalTmpVar tmp = new LocalTmpVar(((Ptr) left).storage.type);
+            currentBlock.pushBack(
+                    new Load(tmp, (Ptr) left)
+            );
+            left = tmp;
+        }
+        if (right instanceof Ptr) {
+            LocalTmpVar tmp = new LocalTmpVar(((Ptr) right).storage.type);
+            currentBlock.pushBack(
+                    new Load(tmp, (Ptr) right)
+            );
+            right = tmp;
+        }
+        //IR比较语句
+        LocalTmpVar result = new LocalTmpVar(new IntType(IntType.TypeName.BOOL));
+        currentBlock.pushBack(
+                new Icmp(node.operator,
+                        result,
+                        left,
+                        right
+                )
+        );
+        return result;
     }
 
     @Override
@@ -460,29 +534,64 @@ public class IRBuilder implements ASTVisitor<Entity> {
 
     }
 
+    /**
+     * VarNameExprNode
+     * 变量名localPtr、globalPtr
+     * 从rename2mem找到重命名后的变量指向的地址
+     * 将地址返回
+     * @param node VarNameExprNode
+     * @return entity
+     */
     @Override
     public Entity visit(VarNameExprNode node) {
 
     }
 
+    /**
+     * BoolConstantExprNode
+     * bool类型的常量
+     *
+     * @param node BoolConstantExprNode
+     * @return constBool
+     */
     @Override
     public Entity visit(BoolConstantExprNode node) {
-
+        return new ConstBool(((BoolConstantExprNode) node).value);
     }
 
+    /**
+     * IntConstantExprNode
+     * 整型常量
+     *
+     * @param node IntConstantExprNode
+     * @return constInt
+     */
     @Override
     public Entity visit(IntConstantExprNode node) {
-
+        return new ConstInt(((IntConstantExprNode) node).value);
     }
 
+    /**
+     * NullConstantExprNode
+     * 空指针
+     *
+     * @param node NullConstantExprNode
+     * @return Null
+     */
     @Override
     public Entity visit(NullConstantExprNode node) {
-
+        return new Null();
     }
 
+    /**
+     * StrConstantExprNode
+     *
+     * @param node StrConstantExprNode
+     * @return constString
+     */
     @Override
     public Entity visit(StrConstantExprNode node) {
-
+        return new ConstString(((StrConstantExprNode) node).value);
     }
 
     @Override

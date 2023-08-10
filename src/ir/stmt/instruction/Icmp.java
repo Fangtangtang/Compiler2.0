@@ -26,12 +26,12 @@ public class Icmp extends Instruction {
         eq, ne
     }
 
-    public Ptr result;
+    public LocalTmpVar result;
     public Entity op1, op2;
     public Cond cond;
 
     public Icmp(CmpExprNode.CmpOperator operator,
-                Ptr result,
+                LocalTmpVar result,
                 Entity op1,
                 Entity op2) {
         this.result = result;
@@ -51,14 +51,11 @@ public class Icmp extends Instruction {
 
     @Override
     public void print() {
-        String ty;
-        if (op1 instanceof Ptr ptr) {
-            ty = ptr.storage.toString();
-        } else {
-            ty = op1.type.toString();
-        }
-        System.out.println(result.toString() + " = icmp " + cond.name() + " "
-                + ty + ' ' + op1.toString() + ", " + op2.toString());
+        System.out.println(result.toString()
+                + " = " + cond.name()
+                + " " + result.toString() + ' '
+                + op1.toString() + ", " + op2.toString());
+
     }
 
     @Override

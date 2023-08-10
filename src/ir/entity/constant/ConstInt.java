@@ -6,13 +6,14 @@ import ir.irType.IntType;
 /**
  * @author F
  * 整型常量
+ * 数值暂时存为string
  * i32
  */
 public class ConstInt extends Constant {
 
-    private final int value;
+    private final String value;
 
-    public ConstInt(int value) {
+    public ConstInt(String value) {
         super(new IntType(IntType.TypeName.INT));
         this.value = value;
     }
