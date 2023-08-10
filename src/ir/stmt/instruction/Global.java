@@ -2,7 +2,7 @@ package ir.stmt.instruction;
 
 import ir.IRVisitor;
 import ir.entity.constant.Constant;
-import ir.entity.ptr.GlobalPtr;
+import ir.entity.var.GlobalVar;
 import ir.irType.IRType;
 
 /**
@@ -17,13 +17,13 @@ import ir.irType.IRType;
  */
 public class Global extends Instruction {
 
-    public GlobalPtr result;
+    public GlobalVar result;
 
     //若用字面量初始化，直接初始化
     //否则，用0或null
     public Global(Constant constant,
                   String identifier) {
-        result = new GlobalPtr(constant, identifier);
+        result = new GlobalVar(constant, identifier);
     }
 
     @Override

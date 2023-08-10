@@ -13,20 +13,27 @@ import java.util.HashMap;
  * 所有的Scope共用一个在symbol collect阶段收集的symbol table
  * sematic:
  * name2type:Identifier ->  Type
- * ir:
- * nameMap:name ->  rename
- * name2mem:Identifier  ->  Storage（内存空间）
  * 所有作用域：用双亲表示法表示的树，Scope为结点类
  */
 public abstract class Scope {
     public static SymbolTable symbolTable;
     private final Scope parent;
+    //给scope命名，用于IR调试
+    public String name = "";
+    //每次new新的scope前，currentScope自增1
+    public int cntSon = 0;
     public HashMap<String, Type> name2type = new HashMap<>();
-    public HashMap<String, String> nameMap = new HashMap<>();
-    public HashMap<String, Storage> name2mem = new HashMap<>();
 
     public Scope(Scope parent) {
         this.parent = parent;
+    }
+
+    //构建用于IRBuilder的Scope
+    public Scope(Scope parent, String str) {
+        this.parent = parent;
+        if (parent != null) {
+            this.name = parent.name + "_" + str + parent.cntSon;
+        }
     }
 
     public Scope getParent() {

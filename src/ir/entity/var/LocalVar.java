@@ -1,4 +1,4 @@
-package ir.entity.ptr;
+package ir.entity.var;
 
 import ir.entity.*;
 import ir.irType.PtrType;
@@ -7,10 +7,10 @@ import ir.irType.PtrType;
  * @author F
  * 局部的指针，指向存储局部变量的固定空间
  */
-public class LocalPtr extends Ptr {
+public class LocalVar extends Ptr {
 
 
-    public LocalPtr(Storage storage,
+    public LocalVar(Storage storage,
                     String identity) {
         super(storage, identity);
     }

@@ -2,7 +2,7 @@ package ir.stmt.instruction;
 
 import ir.IRVisitor;
 import ir.entity.*;
-import ir.entity.ptr.LocalPtr;
+import ir.entity.var.*;
 import ir.irType.IRType;
 
 
@@ -16,15 +16,15 @@ import ir.irType.IRType;
  * | int b;     ->  %b = alloca i32,
  * |
  * +---------------------------------
- * result为指针类型(LocalPtr)
+ * result为指针类型(LocalVar)
  * type为指针指向对象的类型
  */
 public class Alloca extends Instruction {
-    public LocalPtr result;
+    public LocalVar result;
 
     public Alloca(IRType irType,
                   String identifier) {
-        this.result = new LocalPtr(new Storage(irType), identifier);
+        this.result = new LocalVar(new Storage(irType), identifier);
     }
 
     @Override

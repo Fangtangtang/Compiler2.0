@@ -10,4 +10,7 @@ public class GlobalScope extends Scope {
     public GlobalScope() {
         super(null);
     }
+    public GlobalScope(String str){
+        super(null,"");
+    }
 }

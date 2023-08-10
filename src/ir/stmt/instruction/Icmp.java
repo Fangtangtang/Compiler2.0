@@ -3,7 +3,7 @@ package ir.stmt.instruction;
 import ast.expr.CmpExprNode;
 import ir.IRVisitor;
 import ir.entity.*;
-import ir.entity.ptr.*;
+import ir.entity.var.*;
 import utility.error.InternalException;
 
 /**

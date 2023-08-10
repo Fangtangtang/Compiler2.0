@@ -1,9 +1,7 @@
 package ir.stmt.instruction;
 
 import ir.IRVisitor;
-import ir.entity.*;
-import ir.entity.ptr.*;
-import utility.error.InternalException;
+import ir.entity.var.*;
 
 
 /**
@@ -16,13 +14,20 @@ import utility.error.InternalException;
  * |    %0 = load i32, ptr %b
  * |    store i32 %0, ptr %a
  * |
+ * |    char a;
+ * |    char b = a;
+ * |    %a = alloca i8, align 1
+ * |    %b = alloca i8, align 1
+ * |    %0 = load i8, ptr %a, align 1 //局部变量，char型
+ * |    store i8 %0, ptr %b, align 1
+ * |
  * + ------------------------------------
  */
 public class Load extends Instruction {
-    public Ptr resultPtr;
+    public LocalTmpVar resultPtr;
     public Ptr pointer;
 
-    public Load(Ptr resultPtr,
+    public Load(LocalTmpVar resultPtr,
                 Ptr pointer) {
         this.resultPtr = resultPtr;
         this.pointer = pointer;
@@ -31,7 +36,7 @@ public class Load extends Instruction {
     @Override
     public void print() {
         System.out.println(resultPtr.toString() + " = load "
-                +  resultPtr.storage.toString() + ", ptr " + pointer.toString());
+                +  resultPtr.toString() + ", ptr " + pointer.toString());
     }
 
     @Override

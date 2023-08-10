@@ -1,10 +1,7 @@
 package ir.stmt.instruction;
 
 import ir.IRVisitor;
-import ir.entity.*;
-import ir.entity.ptr.GlobalPtr;
-import ir.entity.ptr.LocalPtr;
-import ir.entity.ptr.Ptr;
+import ir.entity.var.Ptr;
 
 import java.util.ArrayList;
 

@@ -40,38 +40,8 @@ public class IRBuilder implements ASTVisitor<Entity> {
     private BasicBlock currentInitBlock;
 //            =new Pair<>(new BasicBlock("var_def"), new BasicBlock("val_init"));
 
-    //计数id重复次数，更换id，避免重名
-    private final HashMap<String, Integer> idCounter = new HashMap<>();
-
-    /**
-     * 将name转化，避免重名
-     * - 全局\类成员不重命名
-     * - 普通变量更名
-     * 如果当前作用域中已经为该变量重命名，直接取rename
-     * 否则创建新名，加入map
-     *
-     * @param name currentName
-     * @return rename
-     */
     private String rename(String name) {
-        if (currentScope instanceof GlobalScope
-                || currentScope instanceof ClassScope) {
-            return name;
-        }
-        if (currentScope.nameMap.containsKey(name)) {
-            return currentScope.nameMap.get(name);
-        }
-        Integer cnt;
-        if (idCounter.containsKey(name)) {
-            cnt = idCounter.get(name);
-            cnt += 1;
-        } else {
-            cnt = 1;
-            idCounter.put(name, cnt);
-        }
-        String rename = "_" + name + "_" + cnt.toString();
-        currentScope.nameMap.put(name, rename);
-        return rename;
+        return currentScope.name + name;
     }
 
     public IRBuilder(SymbolTable symbolTable) {
@@ -94,7 +64,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
      */
     @Override
     public Entity visit(RootNode node) {
-        currentScope = new GlobalScope();
+        currentScope = new GlobalScope("");
         node.declarations.forEach(
                 def -> def.accept(this)
         );
@@ -301,8 +271,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
             //调用Global指令为全局变量分配空间
             Global stmt = new Global(constant, name);
             globalInitBlock.getFirst().pushBack(stmt);
-            //向Scope中加入该全局变量
-            currentScope.name2mem.put(name, stmt.result.storage);
             //非字面量初始化
             //在全局的初始化函数中加入赋值语句
             if (entity != null && !(entity instanceof Constant)) {
@@ -318,8 +286,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
             //普通局部变量，Alloca分配空间
             Alloca stmt = new Alloca(constant.type, name);
             currentInitBlock.pushBack(stmt);
-            //向Scope中加入该局部变量
-            currentScope.name2mem.put(name, stmt.result.storage);
             //若有初始化语句，在走到该部分时用赋值语句
             if (node.initExpr != null) {
                 node.initExpr.accept(this);

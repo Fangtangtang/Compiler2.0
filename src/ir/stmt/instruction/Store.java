@@ -2,8 +2,7 @@ package ir.stmt.instruction;
 
 import ir.IRVisitor;
 import ir.entity.Entity;
-import ir.entity.ptr.*;
-import utility.error.InternalException;
+import ir.entity.var.*;
 
 /**
  * @author F

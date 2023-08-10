@@ -1,4 +1,4 @@
-package ir.entity.ptr;
+package ir.entity.var;
 
 import ir.entity.Entity;
 import ir.entity.Storage;
