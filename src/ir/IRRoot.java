@@ -151,11 +151,7 @@ public class IRRoot {
                         }
                     }
                     //自定义类的构造函数
-                    if (classType.constructor != null) {
-                        addFunc(typeName, classType.constructor);
-                    } else {
-                        addFunc(typeName, new FunctionType(type));
-                    }
+                    addFunc(typeName, Objects.requireNonNullElseGet(classType.constructor, () -> new FunctionType(type)));
                 } else {
                     throw new InternalException("unexpected type");
                 }
@@ -173,5 +169,8 @@ public class IRRoot {
                 funcName
         );
         funcDef.put(funcName, function);
+    }
+    public Function getFunc(String funcName){
+        return funcDef.get(funcName);
     }
 }

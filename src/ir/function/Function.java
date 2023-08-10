@@ -1,6 +1,7 @@
 package ir.function;
 
 import ir.BasicBlock;
+import ir.entity.Entity;
 import ir.entity.var.Ptr;
 import ir.irType.*;
 
@@ -16,7 +17,7 @@ public class Function {
     //函数名
     public String funcName;
     //参数表
-    public ArrayList<Ptr> parameterList = new ArrayList<>();
+    public ArrayList<Entity> parameterList = new ArrayList<>();
     //计数，确保block不重名
     public Integer cnt = 0;
     public BasicBlock entry = null;

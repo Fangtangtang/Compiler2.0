@@ -21,17 +21,17 @@ import ir.entity.var.*;
  */
 public class Store extends Instruction {
     public Entity value;
-    public Ptr pointer;
+    public Entity pointer;
 
     public Store(Entity value,
-                 Ptr pointer) {
+                 Entity pointer) {
         this.value = value;
         this.pointer = pointer;
     }
 
     @Override
     public void print() {
-        System.out.println("store " + pointer.storage.toString() + " " + value.toString()
+        System.out.println("store " + value.toString() + " " + value.toString()
                 + ", ptr " + pointer.toString());
     }
 

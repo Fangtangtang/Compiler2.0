@@ -2,3 +2,4 @@ testcases/
 test.sh
 .idea
 out/
+src/LocalJudge.java
