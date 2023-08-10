@@ -13,7 +13,7 @@ import ir.irType.IRType;
  * + --------------------------------
  * |
  * | char a;    ->  %a = alloca i8
- * | int b;     ->  %b = alloca i32,
+ * | int b;     ->  %b = alloca i32
  * |
  * +---------------------------------
  * result为指针类型(LocalVar)

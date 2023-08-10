@@ -1,8 +1,9 @@
 package ir.function;
 
 import ir.BasicBlock;
-import ir.entity.ptr.Ptr;
+import ir.entity.var.Ptr;
 import ir.irType.*;
+
 import java.util.*;
 
 /**
@@ -16,7 +17,8 @@ public class Function {
     public String funcName;
     //参数表
     public ArrayList<Ptr> parameterList = new ArrayList<>();
-
+    //计数，确保block不重名
+    public Integer cnt = 0;
     public BasicBlock entry = null;
     public HashMap<String, BasicBlock> blockMap = new HashMap<>();
 

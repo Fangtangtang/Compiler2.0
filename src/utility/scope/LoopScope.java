@@ -12,10 +12,11 @@ import ast.*;
  * 记录所在的func，loop即为自身
  */
 public class LoopScope extends Scope {
+    public int label;
     public FuncScope parentFuncScope = null;
     public ClassScope parentClassScope = null;
-    public ExprNode condition = null;
-    public ExprNode step = null;
+    public boolean hasCond = true;
+    public boolean hasInc = true;
 
     public LoopScope(Scope parent,
                      ExprNode condition,
@@ -23,8 +24,12 @@ public class LoopScope extends Scope {
                      FuncScope parentFuncScope,
                      ClassScope parentClassScope) {
         super(parent);
-        this.condition = condition;
-        this.step = step;
+        if (condition == null) {
+            hasCond = false;
+        }
+        if (step == null) {
+            hasInc = false;
+        }
         this.parentFuncScope = parentFuncScope;
         this.parentClassScope = parentClassScope;
     }

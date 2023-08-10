@@ -54,6 +54,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
     @Override
     public Type visit(RootNode node) {
         currentScope = new GlobalScope();
+        node.scope = currentScope;
         node.declarations.forEach(
                 def -> def.accept(this)
         );
@@ -78,6 +79,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
         FuncScope funcScope = currentScope.getParentFuncScope();
         LoopScope loopScope = currentScope.getParentLoopScope();
         currentScope = new BlockScope(currentScope, funcScope, loopScope, classScope);
+        node.scope = currentScope;
         node.statements.forEach(
                 stmt -> stmt.accept(this)
         );
@@ -121,6 +123,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
                 null,
                 classScope
         );
+        node.scope=currentScope;
         ((FuncScope) currentScope).isConstructor = true;
         visit(node.suite);
         currentScope = currentScope.getParent();
@@ -175,6 +178,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
             throw new SemanticException(node.pos, "for loop should be in function");
         }
         currentScope = new LoopScope(currentScope, node.condition, node.step, funcScope, classScope);
+        node.scope=currentScope;
         if (node.initializationStmt != null) {
             node.initializationStmt.accept(this);
         }
@@ -227,6 +231,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
                 type.parameters,
                 classScope
         );
+        node.scope=currentScope;
         visit(node.functionBody);
         if (!((FuncScope) currentScope).hasReturn && !flag) {
             throw new SemanticException(node.pos, "invalid function without return");
@@ -257,6 +262,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
             FuncScope funcScope = currentScope.getParentFuncScope();
             LoopScope loopScope = currentScope.getParentLoopScope();
             currentScope = new BlockScope(currentScope, funcScope, loopScope, classScope);
+            node.scope=currentScope;
             if (node.trueStatement != null) {
                 node.trueStatement.accept(this);
             }
@@ -271,6 +277,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
                 FuncScope funcScope = currentScope.getParentFuncScope();
                 LoopScope loopScope = currentScope.getParentLoopScope();
                 currentScope = new BlockScope(currentScope, funcScope, loopScope, classScope);
+                node.scope=currentScope;
                 node.falseStatement.accept(this);
                 currentScope = currentScope.getParent();
             }
@@ -357,6 +364,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
                 funcScope,
                 classScope
         );
+        node.scope=currentScope;
         if (!(node.condition.accept(this) instanceof BoolType)) {
             throw new SemanticException(node.condition.pos, "condition expr should be bool");
         }
@@ -710,7 +718,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
         //通过currentClass找，类成员
         if (currentClass instanceof ClassType) {
             node.exprType = ((ClassType) currentClass).classMembers.get(node.name);
-            if(node.exprType==null){
+            if (node.exprType == null) {
                 throw new SemanticException(node.pos, "type have no member");
             }
             if (!(node.exprType instanceof FunctionType)) {
@@ -724,7 +732,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
             } else {
                 throw new SemanticException(node.pos, "type have no member");
             }
-            if(node.exprType==null){
+            if (node.exprType == null) {
                 throw new SemanticException(node.pos, "type have no member");
             }
         }
@@ -765,6 +773,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
     public Type visit(ClassDefNode node) {
         currentScope = new ClassScope(currentScope,
                 (ClassType) Scope.symbolTable.getSymbol(node.name, node.pos));
+        node.scope=currentScope;
         node.members.forEach(
                 stmt -> stmt.accept(this)
         );

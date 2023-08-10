@@ -21,7 +21,7 @@ public class Pair<F, S> {
         return second;
     }
 
-    public void setFey(F first) {
+    public void setFirst(F first) {
         this.first = first;
     }
 

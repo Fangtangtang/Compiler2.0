@@ -23,7 +23,6 @@ import java.util.Objects;
  * 扫两遍
  * - 收集所有的类名
  * - 收集所有函数、类的成员，并检查函数的返回类型、参数类型
- * TODO：变量名和类名可以重复什么意思
  */
 public class SymbolCollector extends ASTBaseVisitor<Type> {
     //自定义类，
