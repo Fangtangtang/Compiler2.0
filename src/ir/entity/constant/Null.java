@@ -5,6 +5,7 @@ import ir.irType.NullType;
 
 /**
  * @author F
+ * 空值常量
  * null
  */
 public class Null extends Constant {

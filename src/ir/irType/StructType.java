@@ -9,7 +9,7 @@ import java.util.*;
  * name -> index -> IRType （接近LLVM IR的输出）
  */
 public class StructType extends IRType {
-    private final String name;
+    public String name;
     private final HashMap<String, Integer> members = new HashMap<>();
 
     private final ArrayList<IRType> memberTypes = new ArrayList<>();

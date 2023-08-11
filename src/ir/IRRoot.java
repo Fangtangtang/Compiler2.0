@@ -9,6 +9,7 @@ import ir.irType.VoidType;
 import utility.SymbolTable;
 import utility.error.InternalException;
 import utility.type.*;
+
 import java.util.*;
 
 
@@ -27,7 +28,8 @@ public class IRRoot {
     //转为函数名（避免重名后）到函数的映射
     public HashMap<String, Function> funcDef = new HashMap<>();
 
-    public BasicBlock globalVarDefBlock,globalVarInitBlock;
+    public BasicBlock globalVarDefBlock, globalVarInitBlock;
+
     /**
      * 将AST上的符号表重新转化为IR上的相应类型
      *
@@ -143,14 +145,21 @@ public class IRRoot {
             }
             default -> {
                 if (type instanceof ClassType classType) {
-                    //自定义类的所有函数
+                    StructType currentStruct = (StructType) types.get(classType.name);
                     for (Map.Entry<String, Type> entry : classType.classMembers.entrySet()) {
                         String name = entry.getKey();
-                        if (entry.getValue() instanceof FunctionType functionType) {
+                        Type memberType = entry.getValue();
+                        //自定义类的所有函数
+                        if (memberType instanceof FunctionType functionType) {
                             addFunc(typeName + "." + name, functionType);
                         }
+                        //自定义类的所有成员变量
+                        else {
+                            currentStruct.addMember(name, type2irType(memberType));
+                        }
                     }
-                    //自定义类的构造函数
+                    //自定义类的构造函数（同类名）
+                    //无参数，默认加一个this
                     addFunc(typeName, Objects.requireNonNullElseGet(classType.constructor, () -> new FunctionType(type)));
                 } else {
                     throw new InternalException("unexpected type");
@@ -170,7 +179,8 @@ public class IRRoot {
         );
         funcDef.put(funcName, function);
     }
-    public Function getFunc(String funcName){
+
+    public Function getFunc(String funcName) {
         return funcDef.get(funcName);
     }
 }
