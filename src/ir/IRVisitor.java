@@ -36,4 +36,6 @@ public interface IRVisitor {
     void visit(Trunc stmt);
 
     void visit(Zext stmt);
+
+    void visit(Phi stmt);
 }

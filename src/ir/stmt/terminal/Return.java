@@ -2,6 +2,7 @@ package ir.stmt.terminal;
 
 import ir.IRVisitor;
 import ir.entity.Entity;
+import ir.entity.Storage;
 import ir.irType.VoidType;
 
 /**
@@ -13,6 +14,11 @@ import ir.irType.VoidType;
 public class Return extends TerminalStmt {
 
     public Entity value;
+
+    public Return() {
+        super();
+        this.value = new Storage(new VoidType());
+    }
 
     public Return(Entity value) {
         super();

@@ -55,6 +55,8 @@ public class IRRoot {
                 addType(name, type);
             }
         }
+        //特殊函数main，直接覆盖原先建的main
+        funcDef.put("main", new MainFunc());
         //添加array的方法
         for (Map.Entry<String, Type> entry : utility.type.ArrayType.members.entrySet()) {
             String name = entry.getKey();
