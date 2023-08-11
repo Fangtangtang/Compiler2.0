@@ -18,6 +18,7 @@ import utility.error.InternalException;
 import utility.scope.*;
 import utility.type.Type;
 
+import java.beans.Introspector;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,6 +36,17 @@ public class IRBuilder implements ASTVisitor<Entity> {
     //IR上不需要新建Scope，直接使用ASTNode存下来的scope
     Scope currentScope = null;
     Function currentFunction = null;
+    //计数，确保函数block不重名
+    Integer funcBlockCounter = 0;
+    //当前的逻辑运算符
+    //确保在进入一串逻辑运算前被清空
+    LogicExprNode.LogicOperator operator = null;
+    //operator更换++（包括null->有）
+    //右式为LogicExprNode，++
+    //作为label，每次在结点里记下label再访问儿子
+    Integer logicExprCounter = 0;
+    //label到end块的映射
+    HashMap<Integer, BasicBlock> logicBlockMap;
     //当前的类
     StructType currentClass = null;
     //当前类的构造函数
@@ -188,7 +200,10 @@ public class IRBuilder implements ASTVisitor<Entity> {
      */
     @Override
     public Entity visit(ExprStmtNode node) {
-        node.exprList.forEach(expr -> expr.accept(this));
+        node.exprList.forEach(expr -> {
+            operator = null;
+            expr.accept(this);
+        });
         return null;
     }
 
@@ -209,7 +224,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         Entity entity = null;
         //作为当前block的特殊标识符
         LoopScope loopScope = (LoopScope) currentScope;
-        loopScope.label = currentFunction.cnt++;
+        loopScope.label = funcBlockCounter++;
         //loop的组分
         BasicBlock condBlock = null, incBlock = null;
         BasicBlock bodyBlock = new BasicBlock("loop.body" + loopScope.label),
@@ -227,6 +242,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                     new Jump(condBlock)
             );
             currentBlock = condBlock;
+            operator = null;
             entity = node.condition.accept(this);
             currentBlock.pushBack(
                     new Branch(entity, bodyBlock, endBlock)
@@ -249,6 +265,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                     new Jump(incBlock)
             );
             currentBlock = incBlock;
+            operator = null;
             node.step.accept(this);
         }
         currentBlock.pushBack(
@@ -281,6 +298,10 @@ public class IRBuilder implements ASTVisitor<Entity> {
      */
     @Override
     public Entity visit(FuncDefStmtNode node) {
+        //清空所有函数构建中的辅助变量
+        funcBlockCounter = 0;
+        logicExprCounter = 0;
+        logicBlockMap = new HashMap<>();
         Entity entity = node.returnType.accept(this);
         ClassScope classScope = null;
         //参数复制、局部变量定义
@@ -340,7 +361,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
      */
     @Override
     public Entity visit(IfStmtNode node) {
-        int label = currentFunction.cnt++;
+        int label = funcBlockCounter++;
         BasicBlock trueStmtBlock = new BasicBlock("if.then" + label);
         BasicBlock falseStmtBlock = null;
         BasicBlock endBlock = new BasicBlock("if.end" + label);
@@ -350,6 +371,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             next = falseStmtBlock;
         }
         //cond：在上一个块里
+        operator = null;
         Entity entity = node.condition.accept(this);
         currentBlock.pushBack(
                 new Branch(entity, trueStmtBlock, next)
@@ -390,6 +412,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
     public Entity visit(ReturnStmtNode node) {
         //带有返回值
         if (node.expression != null) {
+            operator = null;
             Entity val = node.expression.accept(this);
             currentBlock.pushBack(
                     new Store(val, currentFunction.retVal)
@@ -431,7 +454,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         Entity entity = null;
         //作为当前block的特殊标识符
         LoopScope loopScope = (LoopScope) currentScope;
-        loopScope.label = currentFunction.cnt++;
+        loopScope.label = funcBlockCounter++;
         BasicBlock condBlock = new BasicBlock("loop.cond" + loopScope.label);
         BasicBlock bodyBlock = new BasicBlock("loop.body" + loopScope.label);
         BasicBlock endBlock = new BasicBlock("loop.end" + loopScope.label);
@@ -439,6 +462,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 new Jump(condBlock)
         );
         currentBlock = condBlock;
+        operator = null;
         entity = node.condition.accept(this);
         currentBlock.pushBack(
                 new Branch(entity, bodyBlock, endBlock)
@@ -474,6 +498,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
     @Override
     public Entity visit(AssignExprNode node) {
         Entity left = node.lhs.accept(this);
+        operator = null;
         Entity right = node.rhs.accept(this);
         if (right instanceof Ptr) {
             LocalTmpVar tmp = new LocalTmpVar(((Ptr) right).storage.type);
@@ -543,7 +568,9 @@ public class IRBuilder implements ASTVisitor<Entity> {
      */
     @Override
     public Entity visit(CmpExprNode node) {
+        operator = null;
         Entity left = node.lhs.accept(this);
+        operator = null;
         Entity right = node.rhs.accept(this);
         //处理ptr
         if (left instanceof Ptr) {
@@ -581,13 +608,111 @@ public class IRBuilder implements ASTVisitor<Entity> {
      * LogicExprNode
      * 逻辑运算语句
      * 需要支持短路求值（跳转语句）
+     * 使用phi指令，提前退出，都退到end
+     * （phi仅使用两个label，如果提前退出，都为同一个结果，使用一个虚拟label表示）
+     * - 只有根有end、返回result
      *
      * @param node LogicExprNode
-     * @return result
+     * @return result\null
      */
     @Override
     public Entity visit(LogicExprNode node) {
+        //换符号，换根
+        if (!node.operator.equals(operator)) {
+            ++logicExprCounter;
+            operator = node.operator;
+        }
+        int label = logicExprCounter;
+        int exprLabel = funcBlockCounter++;//子跳转
+        //用到的块
+        BasicBlock endBlock;
+        boolean rootFlag = false;//表示为连续逻辑计算的根结点
+        if (logicBlockMap.containsKey(label)) {
+            endBlock = logicBlockMap.get(label);
+        } else {
+            endBlock = new BasicBlock("logic.end" + label);
+            logicBlockMap.put(label, endBlock);
+            rootFlag = true;
+        }
+        BasicBlock nextBlock = new BasicBlock("logic.next" + exprLabel);
+        Entity entity = node.lhs.accept(this);
+        if (entity != null) {
+            LocalTmpVar leftToBool = toBool(entity);
+            //结束当前块，跳转
+            if (node.operator.equals(LogicExprNode.LogicOperator.AndAnd)) {
+                currentBlock.pushBack(
+                        new Branch(leftToBool, nextBlock, endBlock)
+                );
+            } else {
+                currentBlock.pushBack(
+                        new Branch(leftToBool, endBlock, nextBlock)
+                );
+            }
+            currentBlock = nextBlock;
+        }
+        //右儿子
+        //如果是LogicExprNode，计数
+        if (node.rhs instanceof LogicExprNode) {
+            ++logicExprCounter;
+        }
+        LocalTmpVar rightToBool = toBool(node.rhs.accept(this));
+        if (rootFlag) {//当前为根
+            currentBlock.pushBack(
+                    new Jump(endBlock)
+            );
+            String str = currentBlock.label;
+            currentBlock = endBlock;
+            LocalTmpVar result = new LocalTmpVar(new IntType(IntType.TypeName.TMP_BOOL));
+            if (node.operator.equals(LogicExprNode.LogicOperator.AndAnd)) {
+                currentBlock.pushBack(
+                        new Phi(result,
+                                new ConstBool(true), rightToBool,
+                                "virtual_block", str)
+                );
+            } else {
+                currentBlock.pushBack(
+                        new Phi(result,
+                                new ConstBool(false), rightToBool,
+                                "virtual_block", str)
+                );
+            }
+            return result;
+        } else {//当前非根
+            exprLabel = funcBlockCounter++;
+            nextBlock = new BasicBlock("logic.next" + exprLabel);
+            if (node.operator.equals(LogicExprNode.LogicOperator.AndAnd)) {
+                currentBlock.pushBack(
+                        new Branch(rightToBool, nextBlock, endBlock)
+                );
+            } else {
+                currentBlock.pushBack(
+                        new Branch(rightToBool, endBlock, nextBlock)
+                );
+            }
+            currentBlock = nextBlock;
+            return null;
+        }
+    }
 
+    private LocalTmpVar toBool(Entity entity) {
+        LocalTmpVar tmp, toBool;
+        if (entity instanceof Ptr) {
+            tmp = new LocalTmpVar(((Ptr) entity).storage.type);
+            currentBlock.pushBack(
+                    new Load(tmp, entity)
+            );
+        } else {
+            tmp = (LocalTmpVar) entity;
+        }
+        if (tmp.type.equals(new IntType(IntType.TypeName.BOOL))) {
+            toBool = new LocalTmpVar(new IntType(IntType.TypeName.TMP_BOOL));
+            currentBlock.pushBack(
+                    new Trunc(toBool, tmp)
+            );
+        } else {
+            toBool = tmp;
+        }
+        return toBool;
     }
 
     /**
@@ -604,6 +729,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
      */
     @Override
     public Entity visit(LogicPrefixExprNode node) {
+        operator = null;
         Entity entity = node.expression.accept(this);
         if (entity instanceof Ptr) {
             LocalTmpVar tmp = new LocalTmpVar(((Ptr) entity).storage.type);
@@ -741,21 +867,24 @@ public class IRBuilder implements ASTVisitor<Entity> {
      */
     @Override
     public Entity visit(TernaryExprNode node) {
-        int label = currentFunction.cnt++;
+        int label = funcBlockCounter++;
         BasicBlock trueStmtBlock = new BasicBlock("cond.true" + label);
         BasicBlock falseStmtBlock = new BasicBlock("cond.false" + label);
         BasicBlock endBlock = new BasicBlock("cond.end" + label);
         //cond：在上一个块里
+        operator = null;
         Entity entity = node.condition.accept(this);
         currentBlock.pushBack(
                 new Branch(entity, trueStmtBlock, falseStmtBlock)
         );
         currentBlock = trueStmtBlock;
+        operator = null;
         Storage trueAns = (Storage) node.trueExpr.accept(this);
         currentBlock.pushBack(
                 new Jump(endBlock)
         );
         currentBlock = falseStmtBlock;
+        operator = null;
         Storage falseAns = (Storage) node.falseExpr.accept(this);
         currentBlock.pushBack(
                 new Jump(endBlock)
@@ -910,6 +1039,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             if (node.initExpr != null) {
                 //如果为字面量，返回constant,直接初始化
                 //否则返回在初始化函数中用赋值语句初始化
+                operator = null;
                 entity = node.initExpr.accept(this);
                 if (entity instanceof Constant) {
                     initVar = (Storage) entity;
@@ -939,6 +1069,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
              */
             if (node.initExpr != null) {
                 currentBlock = currentConstructor.entry;
+                operator = null;
                 entity = node.initExpr.accept(this);
                 currentBlock.pushBack(
                         new Store(entity, )
@@ -953,6 +1084,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             rename2mem.put(name, stmt.result);
             //若有初始化语句，在走到该部分时用赋值语句
             if (node.initExpr != null) {
+                operator = null;
                 node.initExpr.accept(this);
             }
         }

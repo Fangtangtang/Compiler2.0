@@ -7,6 +7,7 @@ import ir.entity.var.LocalTmpVar;
 /**
  * @author F
  * 通过跳转来源给变量赋值
+ * 暂存前驱基本块，用于后继判断来源
  * <result> = phi <ty> [ <val0>, <label0>], ...
  * +------------------------------------------------
  * |

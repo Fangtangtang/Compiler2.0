@@ -28,35 +28,6 @@ public class Main {
 
         try {
             compile(inputStream);
-            //AST root
-//            RootNode astRoot;
-//
-//            //char -> lexer
-//            MxLexer lexer = new MxLexer(CharStreams.fromStream(inputStream));
-//            lexer.removeErrorListeners();
-//            lexer.addErrorListener(new MxErrorListener());//            //lexer -> token
-//            CommonTokenStream tokens = new CommonTokenStream(lexer);
-//            //token -> parser
-//            MxParser parser = new MxParser(tokens);
-//            parser.removeErrorListeners();
-//            parser.addErrorListener(new MxErrorListener());
-//            //parse tree
-//            ParseTree parseTreeRoot = parser.program();
-//
-//            ASTBuilder astBuilder = new ASTBuilder();
-//            astRoot = (RootNode) astBuilder.visit(parseTreeRoot);
-//
-////            ASTPrinter printer = new ASTPrinter();
-////            printer.visit(astRoot);
-//
-//            Scope.symbolTable = new SymbolTable();
-//            SymbolCollector symbolCollector = new SymbolCollector(Scope.symbolTable);
-//            symbolCollector.visit(astRoot);
-//
-////            Scope.symbolTable.print();
-//            SemanticChecker semanticChecker=new SemanticChecker();
-//            semanticChecker.visit(astRoot);
-
         } catch (MxException exception) {
             System.err.println(exception.toString());
             throw new RuntimeException();

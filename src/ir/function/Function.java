@@ -20,8 +20,6 @@ public class Function {
     public String funcName;
     //参数表
     public ArrayList<Entity> parameterList = new ArrayList<>();
-    //计数，确保block不重名
-    public Integer cnt = 0;
     public LocalVar retVal;
     public BasicBlock entry = null;
     //每个函数以自己的return块结尾

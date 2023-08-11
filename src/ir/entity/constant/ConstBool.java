@@ -12,7 +12,7 @@ public class ConstBool extends Constant {
     private final boolean value;
 
     public ConstBool(boolean value) {
-        super(new IntType(IntType.TypeName.BOOL));
+        super(new IntType(IntType.TypeName.TMP_BOOL));
         this.value = value;
     }
 
