@@ -32,7 +32,8 @@ public class Main {
 //
 //            //char -> lexer
 //            MxLexer lexer = new MxLexer(CharStreams.fromStream(inputStream));
-//            //lexer -> token
+//            lexer.removeErrorListeners();
+//            lexer.addErrorListener(new MxErrorListener());//            //lexer -> token
 //            CommonTokenStream tokens = new CommonTokenStream(lexer);
 //            //token -> parser
 //            MxParser parser = new MxParser(tokens);

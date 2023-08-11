@@ -14,8 +14,8 @@ import ir.irType.IRType;
  */
 public class Storage extends Entity {
     //总数目
-    private static int cnt = -1;
-    private final int index;
+    public static int cnt = -1;
+    public final int index;
 
     //由类型能确定占多少空间
     //指针指向的对象在内存中占空间的量

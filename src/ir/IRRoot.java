@@ -74,7 +74,7 @@ public class IRRoot {
      * @param type Type
      * @return IRType
      */
-    private IRType type2irType(Type type) {
+    public IRType type2irType(Type type) {
         if (type instanceof utility.type.IntType) {
             return types.get("int");
         } else if (type instanceof BoolType) {

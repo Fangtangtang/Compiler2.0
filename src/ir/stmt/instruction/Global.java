@@ -1,9 +1,13 @@
 package ir.stmt.instruction;
 
 import ir.IRVisitor;
+import ir.entity.Storage;
 import ir.entity.constant.Constant;
 import ir.entity.var.GlobalVar;
+import ir.irType.ArrayType;
 import ir.irType.IRType;
+import ir.irType.PtrType;
+import ir.irType.StructType;
 
 /**
  * @author F
@@ -21,14 +25,25 @@ public class Global extends Instruction {
 
     //若用字面量初始化，直接初始化
     //否则，用0或null
-    public Global(Constant constant,
+    public Global(Storage constant,
                   String identifier) {
         result = new GlobalVar(constant, identifier);
     }
 
     @Override
     public void print() {
-        System.out.println(result.toString() + " = global " + result.storage.toString());
+        String str;
+        if (result.storage instanceof Constant) {
+            str = result.storage.toString();
+        } else if (result.storage.type instanceof PtrType) {
+            str = "ptr null";
+        } else if (result.storage.type instanceof StructType
+                || result.storage.type instanceof ArrayType) {
+            str = result.storage.type + " zeroinitializer";
+        } else {
+            str = result.storage.type + " 0";
+        }
+        System.out.println(result.toString() + " = global " + str);
     }
 
     @Override

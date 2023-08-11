@@ -14,6 +14,7 @@ import ir.irType.*;
 import ir.stmt.instruction.*;
 import ir.stmt.terminal.*;
 import utility.*;
+import utility.error.InternalException;
 import utility.scope.*;
 import utility.type.Type;
 
@@ -432,7 +433,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         if (right instanceof Ptr) {
             LocalTmpVar tmp = new LocalTmpVar(((Ptr) right).storage.type);
             currentBlock.pushBack(
-                    new Load(tmp, (Ptr) right)
+                    new Load(tmp, right)
             );
             right = tmp;
         }
@@ -461,14 +462,14 @@ public class IRBuilder implements ASTVisitor<Entity> {
         if (left instanceof Ptr) {
             LocalTmpVar tmp = new LocalTmpVar(((Ptr) left).storage.type);
             currentBlock.pushBack(
-                    new Load(tmp, (Ptr) left)
+                    new Load(tmp, left)
             );
             left = tmp;
         }
         if (right instanceof Ptr) {
             LocalTmpVar tmp = new LocalTmpVar(((Ptr) right).storage.type);
             currentBlock.pushBack(
-                    new Load(tmp, (Ptr) right)
+                    new Load(tmp, right)
             );
             right = tmp;
         }
@@ -503,14 +504,14 @@ public class IRBuilder implements ASTVisitor<Entity> {
         if (left instanceof Ptr) {
             LocalTmpVar tmp = new LocalTmpVar(((Ptr) left).storage.type);
             currentBlock.pushBack(
-                    new Load(tmp, (Ptr) left)
+                    new Load(tmp, left)
             );
             left = tmp;
         }
         if (right instanceof Ptr) {
             LocalTmpVar tmp = new LocalTmpVar(((Ptr) right).storage.type);
             currentBlock.pushBack(
-                    new Load(tmp, (Ptr) right)
+                    new Load(tmp, right)
             );
             right = tmp;
         }
@@ -551,9 +552,64 @@ public class IRBuilder implements ASTVisitor<Entity> {
 
     }
 
+    /**
+     * PrefixExprNode
+     * 前缀++ --，返回自增自减后的值
+     * -取负数
+     * ~按位取反
+     *
+     * @param node PrefixExprNode
+     * @return result
+     */
     @Override
     public Entity visit(PrefixExprNode node) {
-
+        Entity entity = node.expression.accept(this);
+        LocalTmpVar result = new LocalTmpVar(entity.type);
+        //++\--需要存原始值作为返回值
+        if (node.operator == PrefixExprNode.PrefixOperator.PlusPlus ||
+                node.operator == PrefixExprNode.PrefixOperator.MinusMinus) {
+            LocalTmpVar tmp = new LocalTmpVar(entity.type);
+            currentBlock.pushBack(
+                    new Load(tmp, entity)
+            );
+            Entity right = new ConstInt("1");
+            BinaryExprNode.BinaryOperator operator =
+                    node.operator == PrefixExprNode.PrefixOperator.PlusPlus ?
+                            BinaryExprNode.BinaryOperator.Plus :
+                            BinaryExprNode.BinaryOperator.Minus;
+            //运算
+            currentBlock.pushBack(
+                    new Binary(operator, result, tmp, right)
+            );
+            //赋值给a
+            currentBlock.pushBack(
+                    new Store(result, entity)
+            );
+            return result;
+        }
+        //-取相反数
+        if (entity instanceof Ptr) {
+            LocalTmpVar tmp = new LocalTmpVar(((Ptr) entity).storage.type);
+            currentBlock.pushBack(
+                    new Load(tmp, entity)
+            );
+            entity = tmp;
+        }
+        if (node.operator == PrefixExprNode.PrefixOperator.Minus) {
+            Entity left = new ConstInt("0");
+            currentBlock.pushBack(
+                    new Binary(BinaryExprNode.BinaryOperator.Minus,
+                            result, left, entity)
+            );
+            return result;
+        }
+        //按位取反
+        Entity right = new ConstInt("-1");
+        currentBlock.pushBack(
+                new Binary(BinaryExprNode.BinaryOperator.Xor,
+                        result, entity, right)
+        );
+        return result;
     }
 
     @Override
@@ -561,9 +617,33 @@ public class IRBuilder implements ASTVisitor<Entity> {
 
     }
 
+    /**
+     * SuffixExprNode
+     * 返回原先值
+     *
+     * @param node SuffixExprNode
+     * @return tmp
+     */
     @Override
     public Entity visit(SuffixExprNode node) {
-
+        Entity entity = node.expression.accept(this);
+        LocalTmpVar result = new LocalTmpVar(entity.type);
+        LocalTmpVar tmp = new LocalTmpVar(entity.type);
+        currentBlock.pushBack(
+                new Load(tmp, entity)
+        );
+        Entity right = new ConstInt("1");
+        BinaryExprNode.BinaryOperator operator =
+                node.operator == SuffixExprNode.SuffixOperator.PlusPlus ?
+                        BinaryExprNode.BinaryOperator.Plus :
+                        BinaryExprNode.BinaryOperator.Minus;
+        currentBlock.pushBack(
+                new Binary(operator, result, tmp, result)
+        );
+        currentBlock.pushBack(
+                new Store(result, entity)
+        );
+        return tmp;
     }
 
     @Override
@@ -658,25 +738,34 @@ public class IRBuilder implements ASTVisitor<Entity> {
      * TypeNode
      * 处理AST上的type
      * 转化为IR上的type的空值常量
+     *
      * @param node TypeNode
      * @return constant/
      */
     @Override
     public Entity visit(TypeNode node) {
-        if(node.type instanceof utility.type.IntType){
+        if (node.type instanceof utility.type.IntType) {
             return new ConstInt("0");
         }
-        if(node.type instanceof utility.type.BoolType){
+        if (node.type instanceof utility.type.BoolType) {
             return new ConstBool(true);
         }
-        if (node.type instanceof utility.type.NullType){
+        if (node.type instanceof utility.type.NullType) {
             return new Null();
         }
-        if (node.type instanceof utility.type.StringType){
+        if (node.type instanceof utility.type.StringType) {
             return new ConstString("");
         }
-        if (node.type instanceof utility.type.ClassType){
-            return new
+        if (node.type instanceof utility.type.ArrayType arrayType) {
+            return new Storage(
+                    new ArrayType(irRoot.type2irType(arrayType.eleType),
+                            arrayType.dimensions)
+            );
+        }
+        if (node.type instanceof utility.type.ClassType classType) {
+            return new Storage(irRoot.types.get(classType.name));
+        } else {
+            throw new InternalException("unexpected type in typeNode");
         }
     }
 
@@ -691,23 +780,25 @@ public class IRBuilder implements ASTVisitor<Entity> {
     @Override
     public Entity visit(VarDefUnitNode node) {
         String name;
-        //entity为该类的0或null常量
-        Constant constant = (Constant) node.typeNode.accept(this);
+        //变量类型
+        IRType irType = node.typeNode.accept(this).type;
         Entity entity = null;
         //global var
         if (currentScope instanceof GlobalScope) {
             name = rename(node.name);
+            //标明类型的空间，无初始值
+            Storage initVar = new Storage(irType);
             //have init?
             if (node.initExpr != null) {
                 //如果为字面量，返回constant,直接初始化
                 //否则返回在初始化函数中用赋值语句初始化
                 entity = node.initExpr.accept(this);
                 if (entity instanceof Constant) {
-                    constant = (Constant) entity;
+                    initVar = (Storage) entity;
                 }
             }
             //调用Global指令为全局变量分配空间
-            Global stmt = new Global(constant, name);
+            Global stmt = new Global(initVar, name);
             globalInitBlock.getFirst().pushBack(stmt);
             //将rename -> mem映射存入map
             rename2mem.put(name, stmt.result);
@@ -732,13 +823,13 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 currentBlock = currentConstructor.entry;
                 entity = node.initExpr.accept(this);
                 currentBlock.pushBack(
-                        new Store(entity,)
+                        new Store(entity, )
                 );
             }
         } else {
             name = rename(node.name);
             //普通局部变量，Alloca分配空间
-            Alloca stmt = new Alloca(constant.type, name);
+            Alloca stmt = new Alloca(irType, name);
             currentInitBlock.pushBack(stmt);
             //将rename -> mem映射存入map
             rename2mem.put(name, stmt.result);

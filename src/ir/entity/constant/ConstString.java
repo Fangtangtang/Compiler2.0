@@ -8,18 +8,16 @@ import ir.irType.PtrType;
 /**
  * @author F
  * 字符串常量
- * IR类型：指向字符数组的指针
+ * IR类型：字符数组
  */
 public class ConstString extends Constant {
 
     private final String value;
 
     public ConstString(String value) {
-        super(new PtrType(
-                new ArrayType(
-                        new IntType(IntType.TypeName.CHAR),
-                        value.length()
-                )
+        super(new ArrayType(
+                new IntType(IntType.TypeName.CHAR),
+                value.length()
         ));
         this.value = value;
     }

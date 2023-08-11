@@ -6,10 +6,10 @@ import ir.irType.NullType;
 /**
  * @author F
  * 空值常量
- * null
+ * 默认为null型
+ * 可以指定为其他类型（array\ptr\struct）的空值
  */
 public class Null extends Constant {
-
     public Null() {
         super(new NullType());
     }

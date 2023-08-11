@@ -1,6 +1,7 @@
 package ir.stmt.instruction;
 
 import ir.IRVisitor;
+import ir.entity.Entity;
 import ir.entity.var.*;
 
 
@@ -25,10 +26,10 @@ import ir.entity.var.*;
  */
 public class Load extends Instruction {
     public LocalTmpVar result;
-    public Ptr pointer;
+    public Entity pointer;
 
     public Load(LocalTmpVar result,
-                Ptr pointer) {
+                Entity pointer) {
         this.result = result;
         this.pointer = pointer;
     }

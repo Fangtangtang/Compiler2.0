@@ -12,4 +12,9 @@ public class LocalTmpVar extends Storage {
     public LocalTmpVar(IRType type) {
         super(type);
     }
+
+    @Override
+    public String toString() {
+        return "%" + this.index;
+    }
 }

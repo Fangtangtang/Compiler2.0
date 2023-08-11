@@ -33,4 +33,7 @@ public interface IRVisitor {
 
     void visit(BasicBlock stmt);
 
+    void visit(Trunc stmt);
+
+    void visit(Zext stmt);
 }

@@ -5,7 +5,7 @@ import utility.error.*;
 /**
  * @author F
  * IR的integer
- * i8：bool
+ * i8：bool实际为i1，使用i8方便取数和对齐
  * i8：char
  * i32：int
  */
@@ -26,7 +26,7 @@ public class IntType extends IRType {
         int size;
         String name;
         if (typeName.equals(TypeName.BOOL)) {
-            size = 4;
+            size = 8;
             name = "bool";
         } else if (typeName.equals(TypeName.CHAR)) {
             size = 8;

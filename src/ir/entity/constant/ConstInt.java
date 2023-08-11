@@ -7,6 +7,7 @@ import ir.irType.IntType;
  * @author F
  * 整型常量
  * 数值暂时存为string
+ * 特殊：-1，2^31
  * i32
  */
 public class ConstInt extends Constant {
