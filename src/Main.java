@@ -22,8 +22,9 @@ public class Main {
 //        String fileName ="C:/Users/21672/Desktop/mx_raw/sema/function-package/function-6.mx";
 
 //        String fileName = "testcases/function/error.mx";
-        String fileName ="C:/Users/21672/Desktop/mx_raw/sema/symbol-package/symbol-2.mx";
-        InputStream inputStream = new FileInputStream(fileName);
+//        String fileName ="C:/Users/21672/Desktop/mx_raw/sema/symbol-package/symbol-2.mx";
+
+        InputStream inputStream = System.in;
 
         try {
             compile(inputStream);
