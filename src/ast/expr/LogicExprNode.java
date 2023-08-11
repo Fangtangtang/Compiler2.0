@@ -2,6 +2,11 @@ package ast.expr;
 
 import ast.ASTVisitor;
 import ast.ExprNode;
+import ast.stmt.IfStmtNode;
+import ir.BasicBlock;
+import ir.entity.Entity;
+import ir.stmt.terminal.Branch;
+import ir.stmt.terminal.Jump;
 import utility.Position;
 import utility.type.BoolType;
 
@@ -35,5 +40,36 @@ public class LogicExprNode extends ExprNode {
         return visitor.visit(this);
     }
 
-
 }
+
+//    @Override
+//    public Entity visit(IfStmtNode node) {
+//        int label = currentFunction.cnt++;
+//        BasicBlock trueStmtBlock = new BasicBlock("if.then" + label);
+//        BasicBlock falseStmtBlock = null;
+//        BasicBlock endBlock = new BasicBlock("if.end" + label);
+//        BasicBlock next = endBlock;
+//        if (node.falseStatement != null) {
+//            falseStmtBlock = new BasicBlock("if.else" + label);
+//            next = falseStmtBlock;
+//        }
+//        //cond：在上一个块里
+//        Entity entity = node.condition.accept(this);
+//        currentBlock.pushBack(
+//                new Branch(entity, trueStmtBlock, next)
+//        );
+//        currentBlock = trueStmtBlock;
+//        node.trueStatement.accept(this);
+//        currentBlock.pushBack(
+//                new Jump(endBlock)
+//        );
+//        if (node.falseStatement != null) {
+//            currentBlock = falseStmtBlock;
+//            node.falseStatement.accept(this);
+//            currentBlock.pushBack(
+//                    new Jump(endBlock)
+//            );
+//        }
+//        currentBlock = endBlock;
+//        return null;
+//    }

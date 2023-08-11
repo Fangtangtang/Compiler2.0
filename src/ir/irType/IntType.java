@@ -12,7 +12,8 @@ import utility.error.*;
 public class IntType extends IRType {
 
     public enum TypeName {
-        BOOL, CHAR, INT
+        BOOL, CHAR, INT,
+        TMP_BOOL    //作为localTmpVar的bool型，经历过trunc
     }
 
     TypeName typeName;
@@ -34,6 +35,9 @@ public class IntType extends IRType {
         } else if (typeName.equals(TypeName.INT)) {
             size = 32;
             name = "int";
+        } else if (typeName.equals(TypeName.TMP_BOOL)) {
+            size = 1;
+            name = "bool";
         } else {
             throw new InternalException("unexpected IR int");
         }

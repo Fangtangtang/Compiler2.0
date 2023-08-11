@@ -17,6 +17,7 @@ import utility.error.InternalException;
  * |                    store i32 %add, ptr %a
  * |
  * + --------------------------------------------
+ * TODO:小心数位 xor
  */
 public class Binary extends Instruction {
     public enum Operator {
