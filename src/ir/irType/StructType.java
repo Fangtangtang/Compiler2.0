@@ -10,9 +10,9 @@ import java.util.*;
  */
 public class StructType extends IRType {
     public String name;
-    private final HashMap<String, Integer> members = new HashMap<>();
+    public HashMap<String, Integer> members = new HashMap<>();
 
-    private final ArrayList<IRType> memberTypes = new ArrayList<>();
+    public ArrayList<IRType> memberTypes = new ArrayList<>();
 
     public StructType(String name) {
         this.name = name;

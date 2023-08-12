@@ -4,6 +4,8 @@ import ir.BasicBlock;
 import ir.entity.*;
 import ir.entity.var.*;
 import ir.irType.*;
+import ir.stmt.instruction.Load;
+import ir.stmt.terminal.Return;
 
 import java.util.*;
 
@@ -26,25 +28,52 @@ public class Function {
     //存放一些需要使用名字索引的block
     public HashMap<String, BasicBlock> blockMap = new HashMap<>();
 
-    public Function(String funcName){
-        blockMap.put("return",ret);
-        this.funcName=funcName;
+    public Function(String funcName) {
+        blockMap.put("return", ret);
+        this.funcName = funcName;
     }
 
     public Function(IRType retType,
                     String funcName) {
-        blockMap.put("return",ret);
-        this.retType=retType;
+        blockMap.put("return", ret);
+        this.retType = retType;
         this.funcName = funcName;
+        if (retType instanceof VoidType) {
+            ret.pushBack(
+                    new Return()
+            );
+        } else {
+            LocalTmpVar tmp = new LocalTmpVar(retType);
+            ret.pushBack(
+                    new Load(tmp, retVal)
+            );
+            ret.pushBack(
+                    new Return(tmp)
+            );
+        }
+
     }
 
     public Function(IRType retType,
                     String funcName,
                     BasicBlock entryBlock) {
-        blockMap.put("return",ret);
-        this.retType=retType;
+        blockMap.put("return", ret);
+        this.retType = retType;
         this.funcName = funcName;
         this.entry = entryBlock;
         blockMap.put(entryBlock.label, entryBlock);
+        if (retType instanceof VoidType) {
+            ret.pushBack(
+                    new Return()
+            );
+        } else {
+            LocalTmpVar tmp = new LocalTmpVar(retType);
+            ret.pushBack(
+                    new Load(tmp, retVal)
+            );
+            ret.pushBack(
+                    new Return(tmp)
+            );
+        }
     }
 }

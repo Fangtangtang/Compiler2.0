@@ -161,8 +161,11 @@ public class IRRoot {
                         }
                     }
                     //自定义类的构造函数（同类名）
-                    //无参数，默认加一个this
-                    addFunc(typeName, Objects.requireNonNullElseGet(classType.constructor, () -> new FunctionType(type)));
+                    //无参数，返回void
+                    Function function = new Function(
+                            new VoidType(), typeName
+                    );
+                    funcDef.put(typeName, function);
                 } else {
                     throw new InternalException("unexpected type");
                 }
@@ -172,7 +175,7 @@ public class IRRoot {
 
     /**
      * @param funcName 函数名
-     * @param type     函数信息
+     * @param type 函数信息
      */
     private void addFunc(String funcName, FunctionType type) {
         Function function = new Function(

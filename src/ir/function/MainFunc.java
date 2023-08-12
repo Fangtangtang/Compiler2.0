@@ -3,9 +3,12 @@ package ir.function;
 import ir.BasicBlock;
 import ir.entity.Storage;
 import ir.entity.constant.ConstInt;
+import ir.entity.var.LocalTmpVar;
 import ir.entity.var.LocalVar;
 import ir.irType.IntType;
 import ir.irType.VoidType;
+import ir.stmt.instruction.Load;
+import ir.stmt.terminal.Return;
 
 /**
  * @author F
@@ -18,6 +21,13 @@ public class MainFunc extends Function {
     public MainFunc() {
         super("main");
         retVal = new LocalVar(new ConstInt("0"), "retVal");
+        LocalTmpVar tmp = new LocalTmpVar(retType);
+        ret.pushBack(
+                new Load(tmp, retVal)
+        );
+        ret.pushBack(
+                new Return(tmp)
+        );
     }
 
     public MainFunc(BasicBlock entryBlock) {

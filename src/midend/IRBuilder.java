@@ -279,6 +279,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
      * 函数名与类名相同
      * 唯一的参数：this
      * 函数的入口为var_def，var_def跳转到start
+     * 返回void
      *
      * @param node ConstructorDefStmtNode
      * @return null
@@ -292,7 +293,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         currentBlock = new BasicBlock("start");
         currentFunction.blockMap.put("start", currentBlock);
         node.suite.accept(this);
-        currentInitBlock.pushBack(
+        currentBlock.pushBack(
                 new Jump(currentFunction.blockMap.get("return"))
         );
         currentInitBlock.pushBack(
@@ -1056,6 +1057,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             return rename2mem.get(name);
         }
         //类的成员变量名
+        //非下标访问（类内）
         //TODO:类成员的下标访问
 
 
@@ -1111,14 +1113,40 @@ public class IRBuilder implements ASTVisitor<Entity> {
     /**
      * ClassDefNode
      * 类定义
-     * TODO：进入类定义时构建构造函数（参数this）
+     * 进入类的作用域
+     * TODO：进入类定义时构建构造函数，为类分配空间（应该需要考虑调用内建函数？）
      *
      * @param node ClassDefNode
      * @return null
      */
     @Override
     public Entity visit(ClassDefNode node) {
-
+        currentScope = node.scope;
+        currentClass = (StructType) irRoot.types.get(node.name);
+        boolean hasConstructor=false;
+        StmtNode stmt;
+        for (int i=0;i<node.members.size();++i){
+            stmt=node.members.get(i);
+            if (stmt instanceof FuncDefStmtNode) {
+                stmt.accept(this);
+            } else if (stmt instanceof ConstructorDefStmtNode){
+                stmt.accept(this);
+                hasConstructor=true;
+            }
+        }
+        //如果没有构造函数，加入默认的构造函数
+        if(!hasConstructor){
+            getCurrentFunc(node.name);
+            //添加隐含的this参数
+            addThisParam();
+            //直接返回
+            currentInitBlock.pushBack(
+                    new Jump(currentFunction.blockMap.get("return"))
+            );
+        }
+        currentClass = null;
+        exitScope();
+        return null;
     }
 
     @Override
