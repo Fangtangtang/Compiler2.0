@@ -9,7 +9,6 @@ import ir.irType.PtrType;
  */
 public class LocalVar extends Ptr {
 
-
     public LocalVar(Storage storage,
                     String identity) {
         super(storage, identity);

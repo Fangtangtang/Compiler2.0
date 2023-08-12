@@ -48,16 +48,18 @@ public class IRBuilder implements ASTVisitor<Entity> {
     HashMap<Integer, BasicBlock> logicBlockMap;
     //当前的类
     StructType currentClass = null;
-    //当前类的构造函数
-    Function currentConstructor = null;
     //当前块
     BasicBlock currentBlock = null;
+    //当前的函数名
     String callFuncName;
+    //当前的变量，尤其用于类成员访问
+    //应该是指向当前类的指针（内存中的指针类型）
+    Storage currentVar = null;
     //全局变量的初始化块；负责变量的空间申请
     public Pair<BasicBlock, BasicBlock> globalInitBlock =
             new Pair<>(new BasicBlock("global_var_def"), new BasicBlock("global_var_init"));
 
-    //当前的初始化块,
+    //当前的函数初始化块,
     private BasicBlock currentInitBlock;
 
     //变量名 -> <覆盖层次,对应mem空间>
@@ -158,11 +160,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 new Jump(currentFunction.blockMap.get("loop.end" + loopScope.label))
         );
         return null;
-    }
-
-    @Override
-    public Entity visit(ConstructorDefStmtNode node) {
-
     }
 
     /**
@@ -277,6 +274,51 @@ public class IRBuilder implements ASTVisitor<Entity> {
     }
 
     /**
+     * ConstructorDefStmtNode
+     * 类的构造函数定义
+     * 函数名与类名相同
+     * 唯一的参数：this
+     * 函数的入口为var_def，var_def跳转到start
+     *
+     * @param node ConstructorDefStmtNode
+     * @return null
+     */
+    @Override
+    public Entity visit(ConstructorDefStmtNode node) {
+        currentScope = node.scope;
+        getCurrentFunc(node.name);
+        //添加隐含的this参数
+        addThisParam();
+        currentBlock = new BasicBlock("start");
+        currentFunction.blockMap.put("start", currentBlock);
+        node.suite.accept(this);
+        currentInitBlock.pushBack(
+                new Jump(currentFunction.blockMap.get("return"))
+        );
+        currentInitBlock.pushBack(
+                new Jump(currentFunction.blockMap.get("start"))
+        );
+        exitScope();
+        return null;
+    }
+
+    //添加隐含的this参数
+    private void addThisParam() {
+        LocalVar var = new LocalVar(
+                new Storage(new PtrType(currentClass)),
+                "this"
+        );
+        currentFunction.parameterList.add(var);
+        rename2mem.put(var.identity, var);
+        //构建var_def
+        Alloca stmt = new Alloca(var.storage.type, "this.addr");
+        currentInitBlock.pushBack(stmt);
+        currentInitBlock.pushBack(
+                new Store(var, stmt.result)
+        );
+    }
+
+    /**
      * FuncDefStmtNode
      * 函数定义
      * 新建currentFunc，出函数定义块，置为null
@@ -288,9 +330,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
      * int和bool类型，函数参数采用值传递；
      * 其他类型，函数参数采用引用传递。（指针指向同一块内存空间）
      * 引用本身采用值传递（如果在函数里改变了指针指向，不影响函数外）
-     * TODO:参数赋值（加一个参数初始化函数）
-     * TODO:入参、虚拟寄存器？ call的时候做什么
-     * TODO:函数最后处理returnBlock（ - main和构造函数缺省的return）
      *
      * @param node FuncDefStmtNode
      * @return null
@@ -302,7 +341,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         logicExprCounter = 0;
         logicBlockMap = new HashMap<>();
         Entity entity = node.returnType.accept(this);
-        ClassScope classScope = null;
+        ClassScope classScope;
         //参数复制、局部变量定义
         //全局函数
         if (currentScope instanceof GlobalScope) {
@@ -311,34 +350,56 @@ public class IRBuilder implements ASTVisitor<Entity> {
         //类成员函数
         else {
             classScope = (ClassScope) currentScope;
-            //构造函数（有默认的）
-            if (classScope.classType.name.equals(node.name)) {
-                currentFunction = currentConstructor;
-                currentInitBlock = currentFunction.entry;
-            }
-            //其他类的成员函数
-            else {
-                getCurrentFunc(classScope.classType.name + "." + node.name);
-                //TODO:变量this.addr，为一个指向this指针的指针
-                currentInitBlock.pushBack(new Alloca(new PtrType(), "this.addr"));
-            }
+            getCurrentFunc(classScope.classType.name + "." + node.name);
+            //参数this
+            addThisParam();
         }
         //入参（参数表为VarDefUnitNode数组）
         if (node.parameterList != null) {
-            node.parameterList.varDefUnitNodes.forEach(
-                    var -> currentInitBlock.pushBack(
-                            new Alloca(var.typeNode.accept(this).type, var.name + ".addr")
-                    )
-            );
+            node.parameterList.varDefUnitNodes.forEach(this::addParam);
         }
         //函数作用域
         currentScope = node.scope;
-
+        currentBlock = new BasicBlock("start");
+        node.functionBody.accept(this);
+        currentInitBlock.pushBack(
+                new Jump(currentFunction.blockMap.get("return"))
+        );
+        currentInitBlock.pushBack(
+                new Jump(currentFunction.blockMap.get("start"))
+        );
+        exitScope();
+        return null;
     }
 
+    //添加函数参数
+    //不访问结点，直接处理
+    private void addParam(VarDefUnitNode node) {
+        Entity entity = node.typeNode.accept(this);
+        //构造局部变量，加入参数表
+        LocalVar var = new LocalVar(
+                new Storage(entity.type),
+                node.name
+        );
+        currentFunction.parameterList.add(var);
+        rename2mem.put(var.identity, var);
+        //构建var_def
+        Alloca stmt = new Alloca(var.storage.type, rename(node.name));
+        currentInitBlock.pushBack(stmt);
+        currentInitBlock.pushBack(
+                new Store(var, stmt.result)
+        );
+    }
+
+    /**
+     * 根据函数名取出函数
+     * 构建变量定义块，将其作为currentInitBlock
+     *
+     * @param funcName 转化过后的函数名
+     */
     private void getCurrentFunc(String funcName) {
-        currentInitBlock = new BasicBlock("var_def");
         currentFunction = irRoot.getFunc(funcName);
+        currentInitBlock = new BasicBlock("var_def");
         //进入函数的第一个块为变量、参数初始化
         currentFunction.entry = currentInitBlock;
         //如果有返回值，先给retVal分配空间
@@ -346,6 +407,12 @@ public class IRBuilder implements ASTVisitor<Entity> {
             Alloca stmt = new Alloca(currentFunction.retType, "retVal");
             currentInitBlock.pushBack(stmt);
             currentFunction.retVal = stmt.result;
+            //main有缺省的返回值
+            if ("main".equals(funcName)) {
+                currentInitBlock.pushBack(
+                        new Store(new ConstInt("0"), stmt.result)
+                );
+            }
         }
     }
 
@@ -623,10 +690,27 @@ public class IRBuilder implements ASTVisitor<Entity> {
      */
     @Override
     public Entity visit(FuncCallExprNode node) {
+        //得到函数名
         node.func.accept(this);
-        Function function = irRoot.getFunc(callFuncName);
-        LocalTmpVar result = new LocalTmpVar(function.retType);
-        Call stmt = new Call(function, result);
+        Function function;
+        LocalTmpVar result;
+        Call stmt;
+        //类的成员函数
+        if (currentVar != null) {
+            StructType classType = (StructType) ((PtrType) currentVar.type).type;
+            function = irRoot.getFunc(classType.name + "." + callFuncName);
+            result = new LocalTmpVar(function.retType);
+            stmt = new Call(function, result);
+            //第一个参数为this
+            stmt.parameterList.add(currentVar);
+            currentVar = null;
+        }
+        //普通函数
+        else {
+            function = irRoot.getFunc(callFuncName);
+            result = new LocalTmpVar(function.retType);
+            stmt = new Call(function, result);
+        }
         node.parameterList.forEach(
                 parameter -> stmt.parameterList.add(
                         (Storage) parameter.accept(this)
@@ -786,9 +870,18 @@ public class IRBuilder implements ASTVisitor<Entity> {
         return result;
     }
 
+    /**
+     * MemberVisExprNode
+     * 类成员访问
+     *
+     * @param node MemberVisExprNode
+     * @return result
+     */
     @Override
     public Entity visit(MemberVisExprNode node) {
-
+        //左式，取值结果为指向class的指针
+        currentVar = getValue(node.lhs.accept(this));
+        return node.rhs.accept(this);
     }
 
     @Override
@@ -847,9 +940,25 @@ public class IRBuilder implements ASTVisitor<Entity> {
         return result;
     }
 
+    /**
+     * PointerExprNode
+     * this指针
+     * 仅出现在类成员函数中
+     * 函数有一个变量this.addr
+     * 返回指向当前类型的指针
+     *
+     * @param node PointerExprNode
+     * @return result
+     */
     @Override
     public Entity visit(PointerExprNode node) {
-
+        Ptr ptr = rename2mem.get("this.addr");
+        //指向当前类的指针
+        LocalTmpVar result = new LocalTmpVar(new PtrType(currentClass));
+        currentBlock.pushBack(
+                new Load(result, ptr)
+        );
+        return result;
     }
 
     /**
@@ -940,10 +1049,16 @@ public class IRBuilder implements ASTVisitor<Entity> {
      */
     @Override
     public Entity visit(VarNameExprNode node) {
+        //变量名
+        if (varMap.containsKey(node.name)) {
+            //该变量在当前的重命名
+            String name = varMap.get(node.name) + node.name;
+            return rename2mem.get(name);
+        }
+        //类的成员变量名
+        //TODO:类成员的下标访问
 
-        //该变量在当前的重命名
-        String name = varMap.get(node.name) + node.name;
-        return rename2mem.get(name);
+
     }
 
     /**
@@ -1054,8 +1169,10 @@ public class IRBuilder implements ASTVisitor<Entity> {
      * 开空间+可能有初始化,
      * - 全局变量，加到IRRoot下
      * - 局部变量:若被常量初始化，加入init
+     * （类成员已经在ipRoot中收集，且类成员默认初始化表达式为未定义行为）
      *
      * @param node VarDefUnitNode
+     * @return null
      */
     @Override
     public Entity visit(VarDefUnitNode node) {
@@ -1091,24 +1208,8 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 );
             }
         }
-        //类成员变量
-        //IRRoot中structType只有类名含有所有变量
-        //如果有初始化，加入构造函数
-        else if (currentScope instanceof ClassScope) {
-            /*
-                %b = getelementptr inbounds %class.A, ptr %this1, i32 0, i32 1
-                store i32 1, ptr %b, align 4
-                TODO:构造函数
-             */
-            if (node.initExpr != null) {
-                currentBlock = currentConstructor.entry;
-                operator = null;
-                entity = node.initExpr.accept(this);
-                currentBlock.pushBack(
-                        new Store(entity, )
-                );
-            }
-        } else {
+        //局部变量
+        else {
             name = rename(node.name);
             //普通局部变量，Alloca分配空间
             Alloca stmt = new Alloca(irType, name);
