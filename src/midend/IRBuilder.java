@@ -18,7 +18,6 @@ import utility.error.InternalException;
 import utility.scope.*;
 import utility.type.Type;
 
-import java.beans.Introspector;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,7 +29,7 @@ import java.util.Map;
  * - 最终应该维护好block
  */
 public class IRBuilder implements ASTVisitor<Entity> {
-    private IRRoot irRoot;
+    private final IRRoot irRoot;
 
     //当前作用域
     //IR上不需要新建Scope，直接使用ASTNode存下来的scope
@@ -478,9 +477,39 @@ public class IRBuilder implements ASTVisitor<Entity> {
         return null;
     }
 
+    /**
+     * ArrayVisExprNode
+     * 数组下标访问，层层嵌套
+     * 对每一层[]调用getelementptr
+     *
+     * @param node ArrayVisExprNode
+     * @return result
+     */
     @Override
     public Entity visit(ArrayVisExprNode node) {
+        //取出数组名
+        Entity array = node.arrayName.accept(this);
+        LocalTmpVar arrayName;
+        if (array instanceof Ptr ptr) {
+            arrayName = new LocalTmpVar(ptr.storage.type);
+            currentBlock.pushBack(
+                    new Load(arrayName, ptr)
+            );
+        } else if (array instanceof LocalTmpVar) {
+            arrayName = (LocalTmpVar) array;
+        } else {
+            throw new InternalException("unexpected array name");
+        }
+        //一一访问下标，层层解析
+        node.indexList.forEach(
+                indexExpr -> {
+                    Entity entity = indexExpr.accept(this);
 
+                    if (entity instanceof Constant) {
+
+                    }
+                }
+        );
     }
 
     /**
@@ -500,15 +529,23 @@ public class IRBuilder implements ASTVisitor<Entity> {
         Entity left = node.lhs.accept(this);
         operator = null;
         Entity right = node.rhs.accept(this);
+        if (right instanceof Constant) {
+            currentBlock.pushBack(
+                    new Store(right, left)
+            );
+            return null;
+        }
+        LocalTmpVar tmp;
         if (right instanceof Ptr) {
-            LocalTmpVar tmp = new LocalTmpVar(((Ptr) right).storage.type);
+            tmp = new LocalTmpVar(((Ptr) right).storage.type);
             currentBlock.pushBack(
                     new Load(tmp, right)
             );
-            right = tmp;
+        } else {
+            tmp = (LocalTmpVar) right;
         }
         currentBlock.pushBack(
-                new Store(right, left)
+                new Store(tmp, left)
         );
         return null;
     }
@@ -528,28 +565,34 @@ public class IRBuilder implements ASTVisitor<Entity> {
     public Entity visit(BinaryExprNode node) {
         Entity left = node.lhs.accept(this);
         Entity right = node.rhs.accept(this);
+        LocalTmpVar leftTmp, rightTmp;
+        Storage lhs, rhs;
         //处理ptr
         if (left instanceof Ptr) {
-            LocalTmpVar tmp = new LocalTmpVar(((Ptr) left).storage.type);
+            leftTmp = new LocalTmpVar(((Ptr) left).storage.type);
             currentBlock.pushBack(
-                    new Load(tmp, left)
+                    new Load(leftTmp, left)
             );
-            left = tmp;
+            lhs = leftTmp;
+        } else {
+            lhs = (Storage) left;
         }
         if (right instanceof Ptr) {
-            LocalTmpVar tmp = new LocalTmpVar(((Ptr) right).storage.type);
+            rightTmp = new LocalTmpVar(((Ptr) right).storage.type);
             currentBlock.pushBack(
-                    new Load(tmp, right)
+                    new Load(rightTmp, right)
             );
-            right = tmp;
+            rhs = rightTmp;
+        } else {
+            rhs = (Storage) right;
         }
         //IR运算语句
-        LocalTmpVar result = new LocalTmpVar(left.type);
+        LocalTmpVar result = new LocalTmpVar(lhs.type);
         currentBlock.pushBack(
                 new Binary(node.operator,
                         result,
-                        left,
-                        right
+                        lhs,
+                        rhs
                 )
         );
         return result;
@@ -572,28 +615,34 @@ public class IRBuilder implements ASTVisitor<Entity> {
         Entity left = node.lhs.accept(this);
         operator = null;
         Entity right = node.rhs.accept(this);
+        LocalTmpVar leftTmp, rightTmp;
+        Storage lhs, rhs;
         //处理ptr
         if (left instanceof Ptr) {
-            LocalTmpVar tmp = new LocalTmpVar(((Ptr) left).storage.type);
+            leftTmp = new LocalTmpVar(((Ptr) left).storage.type);
             currentBlock.pushBack(
-                    new Load(tmp, left)
+                    new Load(leftTmp, left)
             );
-            left = tmp;
+            lhs = leftTmp;
+        } else {
+            lhs = (Storage) left;
         }
         if (right instanceof Ptr) {
-            LocalTmpVar tmp = new LocalTmpVar(((Ptr) right).storage.type);
+            rightTmp = new LocalTmpVar(((Ptr) right).storage.type);
             currentBlock.pushBack(
-                    new Load(tmp, right)
+                    new Load(rightTmp, right)
             );
-            right = tmp;
+            rhs = rightTmp;
+        } else {
+            rhs = (Storage) right;
         }
         //IR比较语句
         LocalTmpVar result = new LocalTmpVar(new IntType(IntType.TypeName.BOOL));
         currentBlock.pushBack(
                 new Icmp(node.operator,
                         result,
-                        left,
-                        right
+                        lhs,
+                        rhs
                 )
         );
         return result;
@@ -731,17 +780,28 @@ public class IRBuilder implements ASTVisitor<Entity> {
     public Entity visit(LogicPrefixExprNode node) {
         operator = null;
         Entity entity = node.expression.accept(this);
+        LocalTmpVar result = new LocalTmpVar(new IntType(IntType.TypeName.TMP_BOOL));
+        if (entity instanceof Constant) {//常量
+            currentBlock.pushBack(
+                    new Binary(
+                            BinaryExprNode.BinaryOperator.Xor,
+                            result, entity, new ConstBool(true)
+                    )
+            );
+            return result;
+        }
+        LocalTmpVar tmp;
         if (entity instanceof Ptr) {
-            LocalTmpVar tmp = new LocalTmpVar(((Ptr) entity).storage.type);
+            tmp = new LocalTmpVar(((Ptr) entity).storage.type);
             currentBlock.pushBack(
                     new Load(tmp, entity)
             );
-            entity = tmp;
+        } else {
+            tmp = (LocalTmpVar) entity;
         }
-        LocalTmpVar result = new LocalTmpVar(new IntType(IntType.TypeName.TMP_BOOL));
         LocalTmpVar toBool = new LocalTmpVar(new IntType(IntType.TypeName.TMP_BOOL));
         currentBlock.pushBack(
-                new Trunc(toBool, (Storage) entity)
+                new Trunc(toBool, (Storage) tmp)
         );
         currentBlock.pushBack(
                 new Binary(
@@ -778,10 +838,15 @@ public class IRBuilder implements ASTVisitor<Entity> {
         //++\--需要存原始值作为返回值
         if (node.operator == PrefixExprNode.PrefixOperator.PlusPlus ||
                 node.operator == PrefixExprNode.PrefixOperator.MinusMinus) {
-            LocalTmpVar tmp = new LocalTmpVar(entity.type);
-            currentBlock.pushBack(
-                    new Load(tmp, entity)
-            );
+            LocalTmpVar tmp;
+            if (entity instanceof Ptr) {
+                tmp = new LocalTmpVar(entity.type);
+                currentBlock.pushBack(
+                        new Load(tmp, entity)
+                );
+            } else {
+                tmp = (LocalTmpVar) entity;
+            }
             Entity right = new ConstInt("1");
             BinaryExprNode.BinaryOperator operator =
                     node.operator == PrefixExprNode.PrefixOperator.PlusPlus ?
@@ -797,19 +862,23 @@ public class IRBuilder implements ASTVisitor<Entity> {
             );
             return result;
         }
+        LocalTmpVar tmp;
+        Storage value;
         //-取相反数
         if (entity instanceof Ptr) {
-            LocalTmpVar tmp = new LocalTmpVar(((Ptr) entity).storage.type);
+            tmp = new LocalTmpVar(((Ptr) entity).storage.type);
             currentBlock.pushBack(
                     new Load(tmp, entity)
             );
-            entity = tmp;
+            value = tmp;
+        } else {
+            value = (Storage) entity;
         }
         if (node.operator == PrefixExprNode.PrefixOperator.Minus) {
             Entity left = new ConstInt("0");
             currentBlock.pushBack(
                     new Binary(BinaryExprNode.BinaryOperator.Minus,
-                            result, left, entity)
+                            result, left, value)
             );
             return result;
         }
@@ -817,7 +886,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         Entity right = new ConstInt("-1");
         currentBlock.pushBack(
                 new Binary(BinaryExprNode.BinaryOperator.Xor,
-                        result, entity, right)
+                        result, value, right)
         );
         return result;
     }
@@ -838,10 +907,15 @@ public class IRBuilder implements ASTVisitor<Entity> {
     public Entity visit(SuffixExprNode node) {
         Entity entity = node.expression.accept(this);
         LocalTmpVar result = new LocalTmpVar(entity.type);
-        LocalTmpVar tmp = new LocalTmpVar(entity.type);
-        currentBlock.pushBack(
-                new Load(tmp, entity)
-        );
+        LocalTmpVar tmp;
+        if (entity instanceof Ptr) {
+            tmp = new LocalTmpVar(entity.type);
+            currentBlock.pushBack(
+                    new Load(tmp, entity)
+            );
+        } else {
+            tmp = (LocalTmpVar) entity;
+        }
         Entity right = new ConstInt("1");
         BinaryExprNode.BinaryOperator operator =
                 node.operator == SuffixExprNode.SuffixOperator.PlusPlus ?
@@ -978,7 +1052,10 @@ public class IRBuilder implements ASTVisitor<Entity> {
 
     @Override
     public Entity visit(InitNode node) {
-
+        node.varDefUnitNodes.forEach(
+                var -> var.accept(this)
+        );
+        return null;
     }
 
     /**
