@@ -52,7 +52,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
     Function currentConstructor = null;
     //当前块
     BasicBlock currentBlock = null;
-
+    String callFuncName;
     //全局变量的初始化块；负责变量的空间申请
     public Pair<BasicBlock, BasicBlock> globalInitBlock =
             new Pair<>(new BasicBlock("global_var_def"), new BasicBlock("global_var_init"));
@@ -535,15 +535,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             );
             return null;
         }
-        LocalTmpVar tmp;
-        if (right instanceof Ptr) {
-            tmp = new LocalTmpVar(((Ptr) right).storage.type);
-            currentBlock.pushBack(
-                    new Load(tmp, right)
-            );
-        } else {
-            tmp = (LocalTmpVar) right;
-        }
+        Storage tmp = getValue(right);
         currentBlock.pushBack(
                 new Store(tmp, left)
         );
@@ -565,27 +557,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
     public Entity visit(BinaryExprNode node) {
         Entity left = node.lhs.accept(this);
         Entity right = node.rhs.accept(this);
-        LocalTmpVar leftTmp, rightTmp;
-        Storage lhs, rhs;
-        //处理ptr
-        if (left instanceof Ptr) {
-            leftTmp = new LocalTmpVar(((Ptr) left).storage.type);
-            currentBlock.pushBack(
-                    new Load(leftTmp, left)
-            );
-            lhs = leftTmp;
-        } else {
-            lhs = (Storage) left;
-        }
-        if (right instanceof Ptr) {
-            rightTmp = new LocalTmpVar(((Ptr) right).storage.type);
-            currentBlock.pushBack(
-                    new Load(rightTmp, right)
-            );
-            rhs = rightTmp;
-        } else {
-            rhs = (Storage) right;
-        }
+        Storage lhs = getValue(left), rhs = getValue(right);
         //IR运算语句
         LocalTmpVar result = new LocalTmpVar(lhs.type);
         currentBlock.pushBack(
@@ -615,27 +587,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         Entity left = node.lhs.accept(this);
         operator = null;
         Entity right = node.rhs.accept(this);
-        LocalTmpVar leftTmp, rightTmp;
-        Storage lhs, rhs;
-        //处理ptr
-        if (left instanceof Ptr) {
-            leftTmp = new LocalTmpVar(((Ptr) left).storage.type);
-            currentBlock.pushBack(
-                    new Load(leftTmp, left)
-            );
-            lhs = leftTmp;
-        } else {
-            lhs = (Storage) left;
-        }
-        if (right instanceof Ptr) {
-            rightTmp = new LocalTmpVar(((Ptr) right).storage.type);
-            currentBlock.pushBack(
-                    new Load(rightTmp, right)
-            );
-            rhs = rightTmp;
-        } else {
-            rhs = (Storage) right;
-        }
+        Storage lhs = getValue(left), rhs = getValue(right);
         //IR比较语句
         LocalTmpVar result = new LocalTmpVar(new IntType(IntType.TypeName.BOOL));
         currentBlock.pushBack(
@@ -648,9 +600,39 @@ public class IRBuilder implements ASTVisitor<Entity> {
         return result;
     }
 
+    private Storage getValue(Entity entity) {
+        LocalTmpVar tmp;
+        if (entity instanceof Ptr) {
+            tmp = new LocalTmpVar(((Ptr) entity).storage.type);
+            currentBlock.pushBack(
+                    new Load(tmp, entity)
+            );
+            return tmp;
+        } else {
+            return (Storage) entity;
+        }
+    }
+
+    /**
+     * FuncCallExprNode
+     * 函数调用
+     * 先访问函数名结点，将名称转化后存到builder的私有成员中
+     *
+     * @param node FuncCallExprNode
+     * @return result
+     */
     @Override
     public Entity visit(FuncCallExprNode node) {
-
+        node.func.accept(this);
+        Function function = irRoot.getFunc(callFuncName);
+        LocalTmpVar result = new LocalTmpVar(function.retType);
+        Call stmt = new Call(function, result);
+        node.parameterList.forEach(
+                parameter -> stmt.parameterList.add(
+                        (Storage) parameter.accept(this)
+                ));
+        currentBlock.pushBack(stmt);
+        return result;
     }
 
     /**
@@ -790,18 +772,10 @@ public class IRBuilder implements ASTVisitor<Entity> {
             );
             return result;
         }
-        LocalTmpVar tmp;
-        if (entity instanceof Ptr) {
-            tmp = new LocalTmpVar(((Ptr) entity).storage.type);
-            currentBlock.pushBack(
-                    new Load(tmp, entity)
-            );
-        } else {
-            tmp = (LocalTmpVar) entity;
-        }
+        Storage tmp = getValue(entity);
         LocalTmpVar toBool = new LocalTmpVar(new IntType(IntType.TypeName.TMP_BOOL));
         currentBlock.pushBack(
-                new Trunc(toBool, (Storage) tmp)
+                new Trunc(toBool, tmp)
         );
         currentBlock.pushBack(
                 new Binary(
@@ -838,15 +812,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         //++\--需要存原始值作为返回值
         if (node.operator == PrefixExprNode.PrefixOperator.PlusPlus ||
                 node.operator == PrefixExprNode.PrefixOperator.MinusMinus) {
-            LocalTmpVar tmp;
-            if (entity instanceof Ptr) {
-                tmp = new LocalTmpVar(entity.type);
-                currentBlock.pushBack(
-                        new Load(tmp, entity)
-                );
-            } else {
-                tmp = (LocalTmpVar) entity;
-            }
+            Storage tmp = getValue(entity);
             Entity right = new ConstInt("1");
             BinaryExprNode.BinaryOperator operator =
                     node.operator == PrefixExprNode.PrefixOperator.PlusPlus ?
@@ -862,18 +828,8 @@ public class IRBuilder implements ASTVisitor<Entity> {
             );
             return result;
         }
-        LocalTmpVar tmp;
-        Storage value;
+        Storage value = getValue(entity);
         //-取相反数
-        if (entity instanceof Ptr) {
-            tmp = new LocalTmpVar(((Ptr) entity).storage.type);
-            currentBlock.pushBack(
-                    new Load(tmp, entity)
-            );
-            value = tmp;
-        } else {
-            value = (Storage) entity;
-        }
         if (node.operator == PrefixExprNode.PrefixOperator.Minus) {
             Entity left = new ConstInt("0");
             currentBlock.pushBack(

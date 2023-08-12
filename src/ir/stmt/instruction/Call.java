@@ -1,7 +1,10 @@
 package ir.stmt.instruction;
 
 import ir.IRVisitor;
+import ir.entity.Storage;
+import ir.entity.var.LocalTmpVar;
 import ir.entity.var.Ptr;
+import ir.function.Function;
 
 import java.util.ArrayList;
 
@@ -18,28 +21,26 @@ import java.util.ArrayList;
  * +------------------------------------------------------------
  */
 public class Call extends Instruction {
-    public ArrayList<Ptr> parameterList = new ArrayList<>();
-    public Ptr result = null;
-    public String funcName;
+    public ArrayList<Storage> parameterList = new ArrayList<>();
+    public Function function;
+    public LocalTmpVar result;
 
-    public Call(String funcName,
-                Ptr result) {
-        this.funcName = funcName;
+    public Call(Function function,
+                LocalTmpVar result) {
+        this.function = function;
         this.result = result;
     }
 
     @Override
     public void print() {
-        StringBuilder str = new StringBuilder();
-        if (result == null) {
-            str.append("call void");
-        } else {
-            str.append(result.toString()).append(" = call ").append( result.storage.toString());
-        }
-        str.append(" @").append(funcName).append(" ");
-        for (Ptr parameter : parameterList) {
-            str.append(parameter.toString()).append(' ');
-        }
+        StringBuilder str = new StringBuilder(
+                result.toString() + " = call " + function.retType
+                        + "@" + function.funcName + "("
+        );
+        parameterList.forEach(
+                parameter -> str.append(parameter.type).append(" ")
+        );
+        str.append(")");
         System.out.println(str.toString());
     }
 
