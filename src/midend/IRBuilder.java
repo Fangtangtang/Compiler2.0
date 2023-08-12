@@ -927,16 +927,15 @@ public class IRBuilder implements ASTVisitor<Entity> {
      */
     @Override
     public Entity visit(NewExprNode node) {
-        Function function = irRoot.getFunc("_malloc");
         //实例化类对象
         if (node.dimension == 0) {
             StructType type = (StructType) node.typeNode.accept(this).type;
             LocalTmpVar result = new LocalTmpVar(new PtrType(type));
             currentBlock.pushBack(
-                    new Call(function, result, new ConstInt(type.size.toString()))
+                    new Malloc(result, new ConstInt(type.size.toString()))
             );
             //调用构造函数初始化
-            function = irRoot.getFunc(type.name);
+            Function function = irRoot.getFunc(type.name);
             LocalTmpVar initialized = new LocalTmpVar(new PtrType(type));
             currentBlock.pushBack(
                     new Call(function, initialized, result)

@@ -38,4 +38,6 @@ public interface IRVisitor {
     void visit(Zext stmt);
 
     void visit(Phi stmt);
+
+    void visit(Malloc stmt);
 }
