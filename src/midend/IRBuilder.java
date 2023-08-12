@@ -580,16 +580,31 @@ public class IRBuilder implements ASTVisitor<Entity> {
         } else {
             throw new InternalException("unexpected array name");
         }
-        //一一访问下标，层层解析
-        node.indexList.forEach(
-                indexExpr -> {
-                    Entity entity = indexExpr.accept(this);
-
-                    if (entity instanceof Constant) {
-
-                    }
-                }
-        );
+        ArrayType ptr = (ArrayType) arrayName.type;
+        ArrayType cur = ptr;
+        Entity idx;
+        LocalTmpVar prev = arrayName, result = null;
+        for (int i = 1; i <= node.indexList.size(); ++i) {
+            idx = getValue(node.indexList.get(i - 1).accept(this));
+            //访问到基本元素
+            if (ptr.dimension == i) {
+                result = new LocalTmpVar(ptr.type);
+                currentBlock.pushBack(
+                        new GetElementPtr(result, prev, idx)
+                );
+                return result;
+            }
+            //仍然访问到数组
+            else {
+                cur = new ArrayType(cur.type, cur.dimension - 1);
+                result = new LocalTmpVar(cur);
+                currentBlock.pushBack(
+                        new GetElementPtr(result, prev, idx)
+                );
+                prev = result;
+            }
+        }
+        return result;
     }
 
     /**

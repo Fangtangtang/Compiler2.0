@@ -8,10 +8,10 @@ package ir.irType;
  * 高维的数组由数组嵌套得到
  */
 public class ArrayType extends IRType {
-    private final IRType type;
+    public IRType type;
 
     //数组维度
-    private final int dimension;
+    public int dimension;
 
     //数组大小
     public int size;
