@@ -19,15 +19,8 @@ import ir.stmt.terminal.Return;
 public class MainFunc extends Function {
 
     public MainFunc() {
-        super("main");
-        retVal = new LocalVar(new ConstInt("0"), "retVal");
-        LocalTmpVar tmp = new LocalTmpVar(retType);
-        ret.pushBack(
-                new Load(tmp, retVal)
-        );
-        ret.pushBack(
-                new Return(tmp)
-        );
+        super(new IntType(IntType.TypeName.INT), "main");
+        this.retVal.storage = new ConstInt("0");
     }
 
     public MainFunc(BasicBlock entryBlock) {

@@ -16,8 +16,8 @@ public class BasicBlock {
     //每个基本块的标识符，本函数内唯一
     public String label;
 
-    private final LinkedList<Stmt> statements = new LinkedList<>();
-    private TerminalStmt tailStmt = null;
+    public LinkedList<Stmt> statements = new LinkedList<>();
+    public TerminalStmt tailStmt = null;
 
     public BasicBlock(String label) {
         this.label = label;
@@ -37,7 +37,7 @@ public class BasicBlock {
             if (tailStmt == null) {
                 tailStmt = terminalStmt;
             } else {
-                throw new InternalException("basic block " + label + "has multiple exits");
+                throw new InternalException("basic block " + label + " has multiple exits");
             }
         }
     }

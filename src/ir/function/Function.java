@@ -24,19 +24,14 @@ public class Function {
     public LocalVar retVal;
     public BasicBlock entry = null;
     //每个函数以自己的return块结尾
-    public BasicBlock ret = new BasicBlock("return");
-    //存放一些需要使用名字索引的block
-    public HashMap<String, BasicBlock> blockMap = new HashMap<>();
-
-    public Function(String funcName) {
-        blockMap.put("return", ret);
-        this.funcName = funcName;
-    }
+    public BasicBlock ret;
+    public LinkedHashMap<String, BasicBlock> blockMap = new LinkedHashMap<>();
 
     public Function(IRType retType,
                     String funcName) {
-        blockMap.put("return", ret);
+        this.ret = new BasicBlock(funcName + "_return");
         this.retType = retType;
+        this.retVal = new LocalVar(new Storage(retType), "retVal");
         this.funcName = funcName;
         if (retType instanceof VoidType) {
             ret.pushBack(
@@ -45,7 +40,7 @@ public class Function {
         } else {
             LocalTmpVar tmp = new LocalTmpVar(retType);
             ret.pushBack(
-                    new Load(tmp, retVal)
+                    new Load(tmp, this.retVal)
             );
             ret.pushBack(
                     new Return(tmp)
@@ -57,8 +52,9 @@ public class Function {
     public Function(IRType retType,
                     String funcName,
                     BasicBlock entryBlock) {
-        blockMap.put("return", ret);
+        this.ret = new BasicBlock(funcName + "_return");
         this.retType = retType;
+        this.retVal = new LocalVar(new Storage(retType), "retVal");
         this.funcName = funcName;
         this.entry = entryBlock;
         blockMap.put(entryBlock.label, entryBlock);
@@ -69,7 +65,7 @@ public class Function {
         } else {
             LocalTmpVar tmp = new LocalTmpVar(retType);
             ret.pushBack(
-                    new Load(tmp, retVal)
+                    new Load(tmp, this.retVal)
             );
             ret.pushBack(
                     new Return(tmp)

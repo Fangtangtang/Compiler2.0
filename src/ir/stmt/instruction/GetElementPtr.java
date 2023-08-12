@@ -2,7 +2,6 @@ package ir.stmt.instruction;
 
 import ir.IRVisitor;
 import ir.entity.*;
-import ir.entity.var.*;
 
 /**
  * @author F

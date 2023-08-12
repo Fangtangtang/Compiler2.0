@@ -1,5 +1,6 @@
 import ast.*;
 import frontend.*;
+import midend.IRBuilder;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 import parser.*;
@@ -21,10 +22,11 @@ public class Main {
     public static void main(String[] args) throws Exception {
 //        String fileName ="C:/Users/21672/Desktop/mx_raw/sema/function-package/function-6.mx";
 
-//        String fileName = "testcases/function/error.mx";
+        String fileName = "testcases/sema/basic-package/basic-2.mx";
 //        String fileName ="C:/Users/21672/Desktop/mx_raw/sema/symbol-package/symbol-2.mx";
 
-        InputStream inputStream = System.in;
+//        InputStream inputStream = System.in;
+        InputStream inputStream = new FileInputStream(fileName);
 
         try {
             compile(inputStream);
@@ -61,10 +63,14 @@ public class Main {
         SymbolCollector symbolCollector = new SymbolCollector(Scope.symbolTable);
         symbolCollector.visit(astRoot);
 
-//            Scope.symbolTable.print();
         SemanticChecker semanticChecker = new SemanticChecker();
         semanticChecker.visit(astRoot);
 
+        IRBuilder irBuilder = new IRBuilder(Scope.symbolTable);
+        irBuilder.visit(astRoot);
+
+        IRPrinter printer = new IRPrinter();
+        printer.visit(irBuilder.irRoot);
     }
 }
 

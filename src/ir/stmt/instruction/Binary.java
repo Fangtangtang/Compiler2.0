@@ -56,7 +56,7 @@ public class Binary extends Instruction {
     public void print() {
         System.out.println(result.toString()
                 + " = " + operator.name()
-                + " " + result.toString() + ' '
+                + " " + result.type.toString() + ' '
                 + op1.toString() + ", " + op2.toString());
     }
 

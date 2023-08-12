@@ -1,5 +1,6 @@
 package ir;
 
+import ir.function.Function;
 import ir.stmt.instruction.*;
 import ir.stmt.terminal.*;
 
@@ -8,6 +9,9 @@ import ir.stmt.terminal.*;
  * 访问IR的接口
  */
 public interface IRVisitor {
+    void visit(IRRoot root);
+    void visit(BasicBlock basicBlock);
+    void visit(Function function);
 
     void visit(Alloca stmt);
 
@@ -30,8 +34,6 @@ public interface IRVisitor {
     void visit(Jump stmt);
 
     void visit(Return stmt);
-
-    void visit(BasicBlock stmt);
 
     void visit(Trunc stmt);
 

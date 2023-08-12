@@ -21,6 +21,6 @@ public class Jump extends TerminalStmt {
 
     @Override
     public void accept(IRVisitor irVisitor) {
-
+        irVisitor.visit(this);
     }
 }

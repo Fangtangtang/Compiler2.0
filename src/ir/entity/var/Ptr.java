@@ -9,8 +9,8 @@ import ir.irType.PtrType;
  * alloca变量时得到的指针
  */
 public abstract class Ptr extends Storage {
-    public final String identity;
-    public final Storage storage;
+    public String identity;
+    public Storage storage;
 
     public Ptr(Storage storage,
                String identity) {

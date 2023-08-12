@@ -4,7 +4,6 @@ import ast.ASTVisitor;
 import ast.ExprNode;
 import ast.other.TypeNode;
 import utility.Position;
-import utility.type.Type;
 
 import java.util.ArrayList;
 

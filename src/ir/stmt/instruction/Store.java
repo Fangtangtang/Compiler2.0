@@ -31,7 +31,7 @@ public class Store extends Instruction {
 
     @Override
     public void print() {
-        System.out.println("store " + value.toString() + " " + value.toString()
+        System.out.println("store " + value.toString()
                 + ", ptr " + pointer.toString());
     }
 
