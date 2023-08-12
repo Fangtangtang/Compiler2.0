@@ -1,5 +1,7 @@
 package ir.irType;
 
+import ir.entity.Entity;
+
 /**
  * @author F
  * 指向数组的指针
@@ -14,11 +16,17 @@ public class ArrayType extends IRType {
     public int dimension;
 
     //数组大小
-    public int size;
+    public Entity size;
 
     public ArrayType(IRType type, int dimension) {
         this.type = type;
         this.dimension = dimension;
+    }
+
+    public ArrayType(IRType type, int dimension, Entity size) {
+        this.type = type;
+        this.dimension = dimension;
+        this.size = size;
     }
 
     @Override

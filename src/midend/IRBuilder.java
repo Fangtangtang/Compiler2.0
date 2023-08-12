@@ -18,10 +18,7 @@ import utility.error.InternalException;
 import utility.scope.*;
 import utility.type.Type;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 
 /**
@@ -943,43 +940,103 @@ public class IRBuilder implements ASTVisitor<Entity> {
             return initialized;
         }
         //实例化数组
-        //一层层构建(BFS?)
         //分配到size给出的，余下的当成指针
         else {
             ArrayType type = (ArrayType) node.typeNode.accept(this).type;
             //先将dimensions中的元素取出来
             ArrayList<Storage> indexList = new ArrayList<>();
+//            indexList.add(new ConstInt("1"));
             for (int i = 0; i < node.dimensions.size(); ++i) {
                 indexList.add(
                         getValue(node.dimensions.get(i).accept(this))
                 );
             }
+            //最外一层，指向指针数组的指针
             LocalTmpVar result = new LocalTmpVar(new PtrType(type));
-            createArray(indexList, node.dimension, result);
+            createArray(indexList, node.dimension, 1, result);
             return result;
         }
     }
 
+    //递归建立数组
+    //手动循环
     private void createArray(ArrayList<Storage> indexList,
                              int dimension,
+                             int layer,
                              LocalTmpVar root) {
-        //存放未分配空间的数组的双端队列
-        ArrayDeque<Pair<LocalTmpVar, Integer>> deque = new ArrayDeque<>();
-        int totalLayer = indexList.size();
-        deque.add(new Pair<>(root, 0));
-        Pair<LocalTmpVar, Integer> cur;
-        while (!deque.isEmpty()) {
-            //弹出并返回队首元素
-            cur = deque.poll();
-            //构建到最后一层
-            if (cur.getSecond().equals(totalLayer - 1)) {
-
-            }
-            //未构建到底层
-            else {
-
-            }
+        IRType type = ((PtrType) root.type).type;
+        //非基本元素
+        if (layer != dimension) {
+            type = new ArrayType(type, dimension - layer);
         }
+        //给当前层分配空间
+        currentBlock.pushBack(
+                new Malloc(root, indexList.get(layer - 1))
+        );
+        //最末一层，终止递归
+        if (layer == indexList.size()) {
+            return;
+        }
+        //手写IR上for循环向下递归
+        int label = funcBlockCounter++;
+        BasicBlock condBlock = new BasicBlock("loop.cond" + label),
+                incBlock = new BasicBlock("loop.inc" + label),
+                bodyBlock = new BasicBlock("loop.body" + label),
+                endBlock = new BasicBlock("loop.end" + label);
+        //int i=0;
+        LocalVar i;//允许被通用的局部变量
+        if (rename2mem.containsKey("i")) {
+            i = (LocalVar) rename2mem.get("i");
+        } else {
+            Alloca stmt = new Alloca(new IntType(IntType.TypeName.INT), "i");
+            i = stmt.result;
+            rename2mem.put("i", i);
+            currentInitBlock.pushBack(stmt);
+        }
+        currentBlock.pushBack(
+                new Store(new ConstInt("0"), i)
+        );
+        currentBlock.pushBack(
+                new Jump(condBlock)
+        );
+        //i<size;
+        currentBlock = condBlock;
+        LocalTmpVar cmpResult = new LocalTmpVar(new IntType(IntType.TypeName.BOOL));
+        currentBlock.pushBack(
+                new Icmp(CmpExprNode.CmpOperator.Less,
+                        cmpResult,
+                        getValue(i),
+                        getValue(indexList.get(layer - 1)))
+        );
+        currentBlock.pushBack(
+                new Branch(cmpResult, bodyBlock, endBlock)
+        );
+        //循环体
+        currentBlock = bodyBlock;
+        LocalTmpVar newRoot = new LocalTmpVar(new PtrType(type));
+        currentBlock.pushBack(
+                new GetElementPtr(newRoot, root, i)
+        );
+        createArray(indexList, dimension, layer + 1, newRoot);
+        currentBlock.pushBack(
+                new Jump(incBlock)
+        );
+        //step
+        currentBlock = incBlock;
+        LocalTmpVar addResult = new LocalTmpVar(new IntType(IntType.TypeName.INT));
+        currentBlock.pushBack(
+                new Binary(BinaryExprNode.BinaryOperator.Plus,
+                        addResult,
+                        getValue(i),
+                        new ConstInt("1"))
+        );
+        currentBlock.pushBack(
+                new Store(addResult, i)
+        );
+        currentBlock.pushBack(
+                new Jump(condBlock)
+        );
+        currentBlock = endBlock;
     }
 
     /**
