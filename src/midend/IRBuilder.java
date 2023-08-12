@@ -217,12 +217,12 @@ public class IRBuilder implements ASTVisitor<Entity> {
     @Override
     public Entity visit(ForStmtNode node) {
         currentScope = node.scope;
-        Entity entity = null;
+        Entity entity;
         //作为当前block的特殊标识符
         LoopScope loopScope = (LoopScope) currentScope;
         loopScope.label = funcBlockCounter++;
         //loop的组分
-        BasicBlock condBlock = null, incBlock = null;
+        BasicBlock condBlock, incBlock;
         BasicBlock bodyBlock = new BasicBlock("loop.body" + loopScope.label),
                 endBlock = new BasicBlock("loop.end" + loopScope.label);
         //init加在currentBlock
@@ -312,11 +312,24 @@ public class IRBuilder implements ASTVisitor<Entity> {
         currentFunction.parameterList.add(var);
         rename2mem.put(var.identity, var);
         //构建var_def
+        //%this.addr = alloca ptr
         Alloca stmt = new Alloca(var.storage.type, "this.addr");
         currentInitBlock.pushBack(stmt);
+        //store ptr %this, ptr %this.addr
         currentInitBlock.pushBack(
                 new Store(var, stmt.result)
         );
+        //%this1 = load ptr, ptr %this.addr
+        var = new LocalVar(
+                new Storage(new PtrType(currentClass)),
+                "this1"
+        );
+        currentInitBlock.pushBack(
+                new Load(var, stmt.result)
+        );
+        //一个函数中加一次this1
+        //换函数时，如果有新的this，覆盖
+        rename2mem.put(var.identity, var);
     }
 
     /**
@@ -341,7 +354,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
         funcBlockCounter = 0;
         logicExprCounter = 0;
         logicBlockMap = new HashMap<>();
-        Entity entity = node.returnType.accept(this);
         ClassScope classScope;
         //参数复制、局部变量定义
         //全局函数
@@ -518,7 +530,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
     @Override
     public Entity visit(WhileStmtNode node) {
         currentScope = node.scope;
-        Entity entity = null;
+        Entity entity;
         //作为当前block的特殊标识符
         LoopScope loopScope = (LoopScope) currentScope;
         loopScope.label = funcBlockCounter++;
@@ -945,21 +957,14 @@ public class IRBuilder implements ASTVisitor<Entity> {
      * PointerExprNode
      * this指针
      * 仅出现在类成员函数中
-     * 函数有一个变量this.addr
-     * 返回指向当前类型的指针
+     * 一个类函数仅有一个this1
      *
      * @param node PointerExprNode
      * @return result
      */
     @Override
     public Entity visit(PointerExprNode node) {
-        Ptr ptr = rename2mem.get("this.addr");
-        //指向当前类的指针
-        LocalTmpVar result = new LocalTmpVar(new PtrType(currentClass));
-        currentBlock.pushBack(
-                new Load(result, ptr)
-        );
-        return result;
+        return rename2mem.get("this1");
     }
 
     /**
@@ -988,7 +993,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                         BinaryExprNode.BinaryOperator.Plus :
                         BinaryExprNode.BinaryOperator.Minus;
         currentBlock.pushBack(
-                new Binary(operator, result, tmp, result)
+                new Binary(operator, result, tmp, right)
         );
         currentBlock.pushBack(
                 new Store(result, entity)
@@ -1043,24 +1048,63 @@ public class IRBuilder implements ASTVisitor<Entity> {
      * 变量名localPtr、globalPtr
      * 从rename2mem找到重命名后的变量ptr返回
      * 不可以返回storage（可能是赋值语句的left）
-     * TODO:类成员、函数
      *
      * @param node VarNameExprNode
-     * @return ptr
+     * @return ptr\result(ptrType)
      */
     @Override
     public Entity visit(VarNameExprNode node) {
+        //类成员.访问，作为右式
+        if (currentVar != null) {
+            StructType structType = (StructType) currentVar.type;
+            Integer index = structType.members.get(node.name);
+            //成员变量
+            if (index >= 0) {
+                IRType type = structType.memberTypes.get(index);
+                LocalTmpVar result = new LocalTmpVar(new PtrType(type));
+                currentBlock.pushBack(
+                        new GetElementPtr(result, currentVar, new ConstInt(index.toString()))
+                );
+                currentVar = null;
+                return result;
+            }
+            //成员方法
+            callFuncName = node.name;
+            return null;
+        }
         //变量名
         if (varMap.containsKey(node.name)) {
             //该变量在当前的重命名
             String name = varMap.get(node.name) + node.name;
             return rename2mem.get(name);
         }
-        //类的成员变量名
-        //非下标访问（类内）
-        //TODO:类成员的下标访问
-
-
+        //类的成员直接访问
+        //仅可能出现在类的成员函数中
+        //相当于this.xx
+        if (currentClass != null && currentClass.members.containsKey(node.name)) {
+            //先取this
+            Ptr this1 = rename2mem.get("this1");
+            //判断为成员变量还是方法
+            Integer index = currentClass.members.get(node.name);
+            //成员变量
+            if (index >= 0) {
+                IRType type = currentClass.memberTypes.get(index);
+                LocalTmpVar result = new LocalTmpVar(new PtrType(type));
+                currentBlock.pushBack(
+                        new GetElementPtr(result, this1, new ConstInt(index.toString()))
+                );
+                return result;
+            }
+            //成员方法
+            else {
+                currentVar = this1;
+                callFuncName = node.name;
+                return null;
+            }
+        }
+        //普通函数
+        callFuncName = node.name;
+        return null;
     }
 
     /**
@@ -1123,19 +1167,19 @@ public class IRBuilder implements ASTVisitor<Entity> {
     public Entity visit(ClassDefNode node) {
         currentScope = node.scope;
         currentClass = (StructType) irRoot.types.get(node.name);
-        boolean hasConstructor=false;
+        boolean hasConstructor = false;
         StmtNode stmt;
-        for (int i=0;i<node.members.size();++i){
-            stmt=node.members.get(i);
+        for (int i = 0; i < node.members.size(); ++i) {
+            stmt = node.members.get(i);
             if (stmt instanceof FuncDefStmtNode) {
                 stmt.accept(this);
-            } else if (stmt instanceof ConstructorDefStmtNode){
+            } else if (stmt instanceof ConstructorDefStmtNode) {
                 stmt.accept(this);
-                hasConstructor=true;
+                hasConstructor = true;
             }
         }
         //如果没有构造函数，加入默认的构造函数
-        if(!hasConstructor){
+        if (!hasConstructor) {
             getCurrentFunc(node.name);
             //添加隐含的this参数
             addThisParam();

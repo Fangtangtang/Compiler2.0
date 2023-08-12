@@ -8,7 +8,7 @@ import ir.irType.PtrType;
  * @author F
  * alloca变量时得到的指针
  */
-public abstract class Ptr extends Entity {
+public abstract class Ptr extends Storage {
     public final String identity;
     public final Storage storage;
 

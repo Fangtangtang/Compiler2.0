@@ -154,6 +154,7 @@ public class IRRoot {
                         //自定义类的所有函数
                         if (memberType instanceof FunctionType functionType) {
                             addFunc(typeName + "." + name, functionType);
+                            currentStruct.members.put(name, -1);//fake index
                         }
                         //自定义类的所有成员变量
                         else {
@@ -175,7 +176,7 @@ public class IRRoot {
 
     /**
      * @param funcName 函数名
-     * @param type 函数信息
+     * @param type     函数信息
      */
     private void addFunc(String funcName, FunctionType type) {
         Function function = new Function(

@@ -25,10 +25,10 @@ import ir.entity.var.*;
  * + ------------------------------------
  */
 public class Load extends Instruction {
-    public LocalTmpVar result;
+    public Entity result;
     public Entity pointer;
 
-    public Load(LocalTmpVar result,
+    public Load(Entity result,
                 Entity pointer) {
         this.result = result;
         this.pointer = pointer;
@@ -37,7 +37,7 @@ public class Load extends Instruction {
     @Override
     public void print() {
         System.out.println(result.toString() + " = load "
-                +  result.toString() + ", ptr " + pointer.toString());
+                + result.toString() + ", ptr " + pointer.toString());
     }
 
     @Override
