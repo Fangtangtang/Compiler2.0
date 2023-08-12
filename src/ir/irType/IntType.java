@@ -24,7 +24,6 @@ public class IntType extends IRType {
 
     @Override
     public String toString() {
-        int size;
         String name;
         if (typeName.equals(TypeName.BOOL)) {
             size = 8;

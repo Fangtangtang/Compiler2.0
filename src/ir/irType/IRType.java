@@ -5,6 +5,7 @@ package ir.irType;
  * IR类型抽象类
  */
 public abstract class IRType {
+    public Integer size;
     public IRType() {
     }
 

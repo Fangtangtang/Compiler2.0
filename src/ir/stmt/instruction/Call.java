@@ -3,7 +3,6 @@ package ir.stmt.instruction;
 import ir.IRVisitor;
 import ir.entity.Storage;
 import ir.entity.var.LocalTmpVar;
-import ir.entity.var.Ptr;
 import ir.function.Function;
 
 import java.util.ArrayList;
@@ -31,6 +30,14 @@ public class Call extends Instruction {
         this.result = result;
     }
 
+    public Call(Function function,
+                LocalTmpVar result,
+                Storage parameter) {
+        this.function = function;
+        this.result = result;
+        this.parameterList.add(parameter);
+    }
+
     @Override
     public void print() {
         StringBuilder str = new StringBuilder(
@@ -41,7 +48,7 @@ public class Call extends Instruction {
                 parameter -> str.append(parameter.type).append(" ")
         );
         str.append(")");
-        System.out.println(str.toString());
+        System.out.println(str);
     }
 
     @Override

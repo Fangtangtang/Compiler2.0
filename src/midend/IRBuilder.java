@@ -18,6 +18,8 @@ import utility.error.InternalException;
 import utility.scope.*;
 import utility.type.Type;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -912,9 +914,73 @@ public class IRBuilder implements ASTVisitor<Entity> {
         return node.rhs.accept(this);
     }
 
+    /**
+     * NewExprNode
+     * 实例化对象\创建数组
+     * 调用自己写的内置函数_malloc分配空间
+     * - dimension总维数
+     * - dimensions给出实际长度的几维
+     * TODO:怎么找function
+     *
+     * @param node NewExprNode
+     * @return ptr
+     */
     @Override
     public Entity visit(NewExprNode node) {
+        Function function = irRoot.getFunc("_malloc");
+        //实例化类对象
+        if (node.dimension == 0) {
+            StructType type = (StructType) node.typeNode.accept(this).type;
+            LocalTmpVar result = new LocalTmpVar(new PtrType(type));
+            currentBlock.pushBack(
+                    new Call(function, result, new ConstInt(type.size.toString()))
+            );
+            //调用构造函数初始化
+            function = irRoot.getFunc(type.name);
+            LocalTmpVar initialized = new LocalTmpVar(new PtrType(type));
+            currentBlock.pushBack(
+                    new Call(function, initialized, result)
+            );
+            return initialized;
+        }
+        //实例化数组
+        //一层层构建(BFS?)
+        //分配到size给出的，余下的当成指针
+        else {
+            ArrayType type = (ArrayType) node.typeNode.accept(this).type;
+            //先将dimensions中的元素取出来
+            ArrayList<Storage> indexList = new ArrayList<>();
+            for (int i = 0; i < node.dimensions.size(); ++i) {
+                indexList.add(
+                        getValue(node.dimensions.get(i).accept(this))
+                );
+            }
+            LocalTmpVar result = new LocalTmpVar(new PtrType(type));
+            createArray(indexList, node.dimension, result);
+            return result;
+        }
+    }
 
+    private void createArray(ArrayList<Storage> indexList,
+                             int dimension,
+                             LocalTmpVar root) {
+        //存放未分配空间的数组的双端队列
+        ArrayDeque<Pair<LocalTmpVar, Integer>> deque = new ArrayDeque<>();
+        int totalLayer = indexList.size();
+        deque.add(new Pair<>(root, 0));
+        Pair<LocalTmpVar, Integer> cur;
+        while (!deque.isEmpty()) {
+            //弹出并返回队首元素
+            cur = deque.poll();
+            //构建到最后一层
+            if (cur.getSecond().equals(totalLayer - 1)) {
+
+            }
+            //未构建到底层
+            else {
+
+            }
+        }
     }
 
     /**
