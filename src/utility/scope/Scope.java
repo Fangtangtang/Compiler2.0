@@ -18,6 +18,8 @@ import java.util.HashMap;
 public abstract class Scope {
     public static SymbolTable symbolTable;
     private final Scope parent;
+    //作用域中是否有了提前终止语句（return、break、continue）
+    public boolean terminated = false;
     public HashMap<String, Type> name2type = new HashMap<>();
 
     public Scope(Scope parent) {

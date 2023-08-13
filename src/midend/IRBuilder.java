@@ -87,6 +87,13 @@ public class IRBuilder implements ASTVisitor<Entity> {
         terminated = false;
     }
 
+    private void enterScope(ASTNode node) {
+        currentScope = node.scope;
+        if (node.scope.getParent() != null) {
+            node.scope.terminated = node.scope.getParent().terminated;
+        }
+    }
+
     //退出当前scope时，将所有新建的变量数目--
     private void exitScope() {
         Integer num;
@@ -96,12 +103,16 @@ public class IRBuilder implements ASTVisitor<Entity> {
             num -= 1;
             varMap.put(key, num);
         }
+        //就终结符来看，函数作用域同函数体作用域
+        if (currentScope.getParent() instanceof FuncScope) {
+            currentScope.getParent().terminated = currentScope.terminated;
+        }
         currentScope = currentScope.getParent();
     }
 
     //作用域有提前终止符，该作用域后面的语句无用
     private void pushBack(Stmt stmt) {
-        if (!terminated) {
+        if (!terminated && !currentScope.terminated) {
             currentBlock.pushBack(stmt);
         }
     }
@@ -126,7 +137,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
      */
     @Override
     public Entity visit(RootNode node) {
-        currentScope = node.scope;
+        enterScope(node);
         node.declarations.forEach(
                 def -> def.accept(this)
         );
@@ -150,7 +161,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
      */
     @Override
     public Entity visit(BlockStmtNode node) {
-        currentScope = node.scope;
+        enterScope(node);
         node.statements.forEach(
                 stmt -> stmt.accept(this)
         );
@@ -173,6 +184,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 new Jump("loop.end" + loopScope.label)
         );
         terminated = true;
+        currentScope.terminated = true;
         return null;
     }
 
@@ -200,6 +212,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             );
         }
         terminated = true;
+        currentScope.terminated = true;
         return null;
     }
 
@@ -231,7 +244,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
      */
     @Override
     public Entity visit(ForStmtNode node) {
-        currentScope = node.scope;
+        enterScope(node);
         Entity entity;
         //作为当前block的特殊标识符
         LoopScope loopScope = (LoopScope) currentScope;
@@ -257,7 +270,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             operator = null;
             entity = node.condition.accept(this);
             pushBack(
-                    new Branch(entity, bodyBlock, endBlock)
+                    new Branch(entity, bodyBlock.label, endBlock.label)
             );
         } else {
             start = bodyBlock;
@@ -305,7 +318,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
      */
     @Override
     public Entity visit(ConstructorDefStmtNode node) {
-        currentScope = node.scope;
+        enterScope(node);
         getCurrentFunc(node.name);
         //添加隐含的this参数
         addThisParam();
@@ -395,7 +408,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             node.parameterList.varDefUnitNodes.forEach(this::addParam);
         }
         //函数作用域
-        currentScope = node.scope;
+        enterScope(node);
         changeBlock(new BasicBlock("start"));
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         node.functionBody.accept(this);
@@ -483,7 +496,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         operator = null;
         Entity entity = node.condition.accept(this);
         pushBack(
-                new Branch(entity, trueStmtBlock, next)
+                new Branch(entity, trueStmtBlock.label, next.label)
         );
         changeBlock(trueStmtBlock);
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
@@ -537,6 +550,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 new Jump(currentFunction.ret.label)
         );
         terminated = true;
+        currentScope.terminated = true;
         return null;
     }
 
@@ -566,7 +580,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
      */
     @Override
     public Entity visit(WhileStmtNode node) {
-        currentScope = node.scope;
+        enterScope(node);
         Entity entity;
         //作为当前block的特殊标识符
         LoopScope loopScope = (LoopScope) currentScope;
@@ -582,7 +596,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         operator = null;
         entity = node.condition.accept(this);
         pushBack(
-                new Branch(entity, bodyBlock, endBlock)
+                new Branch(entity, bodyBlock.label, endBlock.label)
         );
         changeBlock(bodyBlock);
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
@@ -824,11 +838,11 @@ public class IRBuilder implements ASTVisitor<Entity> {
             //结束当前块，跳转
             if (node.operator.equals(LogicExprNode.LogicOperator.AndAnd)) {
                 pushBack(
-                        new Branch(leftToBool, nextBlock, endBlock)
+                        new Branch(leftToBool, nextBlock.label, endBlock.label)
                 );
             } else {
                 pushBack(
-                        new Branch(leftToBool, endBlock, nextBlock)
+                        new Branch(leftToBool, endBlock.label, nextBlock.label)
                 );
             }
             changeBlock(nextBlock);
@@ -867,11 +881,11 @@ public class IRBuilder implements ASTVisitor<Entity> {
             nextBlock = new BasicBlock("logic.next" + exprLabel);
             if (node.operator.equals(LogicExprNode.LogicOperator.AndAnd)) {
                 pushBack(
-                        new Branch(rightToBool, nextBlock, endBlock)
+                        new Branch(rightToBool, nextBlock.label, endBlock.label)
                 );
             } else {
                 pushBack(
-                        new Branch(rightToBool, endBlock, nextBlock)
+                        new Branch(rightToBool, endBlock.label, nextBlock.label)
                 );
             }
             changeBlock(nextBlock);
@@ -1058,7 +1072,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                         getValue(indexList.get(layer - 1)))
         );
         pushBack(
-                new Branch(cmpResult, bodyBlock, endBlock)
+                new Branch(cmpResult, bodyBlock.label, endBlock.label)
         );
         //循环体
         currentBlock = bodyBlock;
@@ -1214,7 +1228,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         operator = null;
         Entity entity = node.condition.accept(this);
         pushBack(
-                new Branch(entity, trueStmtBlock, falseStmtBlock)
+                new Branch(entity, trueStmtBlock.label, falseStmtBlock.label)
         );
         changeBlock(trueStmtBlock);
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
@@ -1362,7 +1376,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
      */
     @Override
     public Entity visit(ClassDefNode node) {
-        currentScope = node.scope;
+        enterScope(node);
         currentClass = (StructType) irRoot.types.get(node.name);
         StmtNode stmt;
         for (int i = 0; i < node.members.size(); ++i) {

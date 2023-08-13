@@ -38,6 +38,9 @@ public class IRPrinter implements IRVisitor {
 
     @Override
     public void visit(BasicBlock basicBlock) {
+        if (basicBlock.statements.size() == 0) {
+            return;
+        }
         System.out.println(basicBlock.label + ":");
         basicBlock.statements.forEach(stmt -> stmt.accept(this));
     }

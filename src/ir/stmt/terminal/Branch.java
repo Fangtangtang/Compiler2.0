@@ -12,11 +12,11 @@ public class Branch extends TerminalStmt {
     //判断条件
     public Entity condition;
     //两个分支
-    public BasicBlock trueBranch, falseBranch;
+    public String trueBranch, falseBranch;
 
     public Branch(Entity condition,
-                  BasicBlock trueBranch,
-                  BasicBlock falseBranch) {
+                  String trueBranch,
+                  String falseBranch) {
         super();
         this.condition = condition;
         this.trueBranch = trueBranch;
@@ -27,8 +27,8 @@ public class Branch extends TerminalStmt {
     @Override
     public void print() {
         String str = "br " + condition.toString() +
-                ", label " + trueBranch.label +
-                ", label " + falseBranch.label;
+                ", label " + trueBranch +
+                ", label " + falseBranch;
         System.out.println(str);
     }
 
