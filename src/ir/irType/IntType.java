@@ -16,7 +16,7 @@ public class IntType extends IRType {
         TMP_BOOL    //作为localTmpVar的bool型，经历过trunc
     }
 
-    TypeName typeName;
+    public TypeName typeName;
 
     public IntType(TypeName typeName) {
         this.typeName = typeName;

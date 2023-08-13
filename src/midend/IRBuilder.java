@@ -685,9 +685,19 @@ public class IRBuilder implements ASTVisitor<Entity> {
             return null;
         }
         Storage tmp = getValue(right);
-        pushBack(
-                new Store(tmp, left)
-        );
+        if (tmp.type instanceof IntType && ((IntType) tmp.type).typeName.equals(IntType.TypeName.TMP_BOOL)) {
+            LocalTmpVar result = new LocalTmpVar(new IntType(IntType.TypeName.BOOL));
+            pushBack(
+                    new Zext(result, tmp)
+            );
+            pushBack(
+                    new Store(result, left)
+            );
+        } else {
+            pushBack(
+                    new Store(tmp, left)
+            );
+        }
         return null;
     }
 
@@ -738,7 +748,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         Entity right = node.rhs.accept(this);
         Storage lhs = getValue(left), rhs = getValue(right);
         //IR比较语句
-        LocalTmpVar result = new LocalTmpVar(new IntType(IntType.TypeName.BOOL));
+        LocalTmpVar result = new LocalTmpVar(new IntType(IntType.TypeName.TMP_BOOL));
         pushBack(
                 new Icmp(node.operator,
                         result,
@@ -865,13 +875,13 @@ public class IRBuilder implements ASTVisitor<Entity> {
             if (node.operator.equals(LogicExprNode.LogicOperator.AndAnd)) {
                 pushBack(
                         new Phi(result,
-                                new ConstBool(true), rightToBool,
+                                new ConstBool(false), rightToBool,
                                 "virtual_block", str)
                 );
             } else {
                 pushBack(
                         new Phi(result,
-                                new ConstBool(false), rightToBool,
+                                new ConstBool(true), rightToBool,
                                 "virtual_block", str)
                 );
             }
@@ -1233,14 +1243,14 @@ public class IRBuilder implements ASTVisitor<Entity> {
         changeBlock(trueStmtBlock);
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         operator = null;
-        Storage trueAns = (Storage) node.trueExpr.accept(this);
+        Storage trueAns = getValue(node.trueExpr.accept(this));
         pushBack(
                 new Jump(endBlock.label)
         );
         changeBlock(falseStmtBlock);
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         operator = null;
-        Storage falseAns = (Storage) node.falseExpr.accept(this);
+        Storage falseAns = getValue(node.falseExpr.accept(this));
         pushBack(
                 new Jump(endBlock.label)
         );
@@ -1474,6 +1484,13 @@ public class IRBuilder implements ASTVisitor<Entity> {
             //非字面量初始化
             //在全局的初始化函数中加入赋值语句
             if (entity != null && !(entity instanceof Constant)) {
+                if (entity.type instanceof IntType && ((IntType) entity.type).typeName.equals(IntType.TypeName.TMP_BOOL)) {
+                    LocalTmpVar tmp = new LocalTmpVar(new IntType(IntType.TypeName.BOOL));
+                    pushBack(
+                            new Zext(tmp, (Storage) entity)
+                    );
+                    entity = tmp;
+                }
                 globalInitBlock.getSecond().pushBack(
                         new Store(entity, stmt.result)
                 );
@@ -1491,9 +1508,19 @@ public class IRBuilder implements ASTVisitor<Entity> {
             if (node.initExpr != null) {
                 operator = null;
                 entity = getValue(node.initExpr.accept(this));
-                pushBack(
-                        new Store(entity, stmt.result)
-                );
+                if (entity.type instanceof IntType && ((IntType) entity.type).typeName.equals(IntType.TypeName.TMP_BOOL)) {
+                    LocalTmpVar result = new LocalTmpVar(new IntType(IntType.TypeName.BOOL));
+                    pushBack(
+                            new Zext(result, (Storage) entity)
+                    );
+                    pushBack(
+                            new Store(result, stmt.result)
+                    );
+                } else {
+                    pushBack(
+                            new Store(entity, stmt.result)
+                    );
+                }
             }
         }
         return null;
