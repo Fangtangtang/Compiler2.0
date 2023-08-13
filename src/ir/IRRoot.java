@@ -63,13 +63,8 @@ public class IRRoot {
         for (Map.Entry<String, Type> entry : utility.type.ArrayType.members.entrySet()) {
             String name = entry.getKey();
             FunctionType functionType = (FunctionType) entry.getValue();
-            addFunc("array." + name, functionType);
+            addFunc("_array_" + name, functionType);
         }
-        //添加变量的初始化函数
-        Function function = new Function(
-                new VoidType(),
-                "_var_initializer"
-        );
     }
 
     /**
@@ -114,11 +109,9 @@ public class IRRoot {
             case "int" -> types.put(typeName, new IntType(IntType.TypeName.INT));
             case "bool" -> types.put(typeName, new IntType(IntType.TypeName.BOOL));
             case "string" -> types.put(typeName,
-                    new PtrType(
-                            new ir.irType.ArrayType(
-                                    new IntType(IntType.TypeName.CHAR),
-                                    1
-                            )
+                    new ir.irType.ArrayType(
+                            new IntType(IntType.TypeName.CHAR),
+                            1
                     )
             );
             case "null" -> types.put(typeName, new NullType());
@@ -143,7 +136,7 @@ public class IRRoot {
                 for (Map.Entry<String, Type> entry : StringType.members.entrySet()) {
                     String name = entry.getKey();
                     FunctionType functionType = (FunctionType) entry.getValue();
-                    addFunc("string." + name, functionType);
+                    addFunc("_string_" + name, functionType);
                 }
                 return;
             }
@@ -163,10 +156,9 @@ public class IRRoot {
                             currentStruct.addMember(name, type2irType(memberType));
                         }
                     }
-                    //TODO:仅加入显式的构造函数
                     //自定义类的构造函数（同类名）
                     //无参数，返回void
-                    if(classType.constructor!=null) {
+                    if (classType.constructor != null) {
                         Function function = new Function(
                                 new VoidType(), typeName
                         );

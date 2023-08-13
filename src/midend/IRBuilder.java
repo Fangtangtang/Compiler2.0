@@ -55,8 +55,10 @@ public class IRBuilder implements ASTVisitor<Entity> {
     //当前的函数名
     String callFuncName;
     //当前的变量，尤其用于类成员访问
+    //特殊处理内置类array、string
     //应该是指向当前类的指针（内存中的指针类型）
     Storage currentVar = null;
+    boolean isStringMember = false;
     //全局变量的初始化块；负责变量的空间申请
     BasicBlock globalVarDefBlock = new BasicBlock("global_var_def");
     GlobalVarInitFunction globalInitFunc = new GlobalVarInitFunction();
@@ -1278,6 +1280,19 @@ public class IRBuilder implements ASTVisitor<Entity> {
     public Entity visit(VarNameExprNode node) {
         //类成员.访问，作为右式
         if (currentVar != null) {
+            if (currentVar.type instanceof ArrayType arrayType) {
+                if (arrayType.type instanceof IntType eleType) {
+                    //字符串数组：string
+                    if (eleType.typeName.equals(IntType.TypeName.CHAR)) {
+                        callFuncName = "_string_" + node.name;
+                        currentVar = null;
+                        return null;
+                    }
+                }
+                callFuncName = "_array_" + node.name;
+                currentVar = null;
+                return null;
+            }
             StructType structType = (StructType) currentVar.type;
             Integer index = structType.members.get(node.name);
             //成员变量

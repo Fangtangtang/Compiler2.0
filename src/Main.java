@@ -22,7 +22,7 @@ public class Main {
     public static void main(String[] args) throws Exception {
 //        String fileName ="C:/Users/21672/Desktop/mx_raw/sema/function-package/function-6.mx";
 
-        String fileName = "testcases/codegen/e1.mx";
+        String fileName = "testcases/primary/function/error.mx";
 //        String fileName ="C:/Users/21672/Desktop/mx_raw/sema/symbol-package/symbol-2.mx";
 
 //        InputStream inputStream = System.in;
