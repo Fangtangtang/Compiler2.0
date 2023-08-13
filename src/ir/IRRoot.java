@@ -28,7 +28,9 @@ public class IRRoot {
     //转为函数名（避免重名后）到函数的映射
     public HashMap<String, Function> funcDef = new HashMap<>();
 
-    public BasicBlock globalVarDefBlock, globalVarInitBlock;
+    public BasicBlock globalVarDefBlock;
+
+    public GlobalVarInitFunction globalVarInitFunction;
 
     /**
      * 将AST上的符号表重新转化为IR上的相应类型

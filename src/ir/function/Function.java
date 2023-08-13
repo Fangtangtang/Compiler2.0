@@ -49,28 +49,15 @@ public class Function {
 
     }
 
+    //用于global_var_init
+    //没有返回值，没有return
     public Function(IRType retType,
                     String funcName,
                     BasicBlock entryBlock) {
-        this.ret = new BasicBlock(funcName + "_return");
         this.retType = retType;
-        this.retVal = new LocalVar(new Storage(retType), "retVal");
         this.funcName = funcName;
         this.entry = entryBlock;
         blockMap.put(entryBlock.label, entryBlock);
-        if (retType instanceof VoidType) {
-            ret.pushBack(
-                    new Return()
-            );
-        } else {
-            LocalTmpVar tmp = new LocalTmpVar(retType);
-            ret.pushBack(
-                    new Load(tmp, this.retVal)
-            );
-            ret.pushBack(
-                    new Return(tmp)
-            );
-        }
     }
 
     public void printParameterList() {

@@ -10,6 +10,7 @@ import ir.entity.constant.*;
 import ir.*;
 import ir.entity.var.*;
 import ir.function.Function;
+import ir.function.GlobalVarInitFunction;
 import ir.irType.*;
 import ir.stmt.Stmt;
 import ir.stmt.instruction.*;
@@ -57,9 +58,8 @@ public class IRBuilder implements ASTVisitor<Entity> {
     //应该是指向当前类的指针（内存中的指针类型）
     Storage currentVar = null;
     //全局变量的初始化块；负责变量的空间申请
-    public Pair<BasicBlock, BasicBlock> globalInitBlock =
-            new Pair<>(new BasicBlock("global_var_def"), new BasicBlock("global_var_init"));
-
+    BasicBlock globalVarDefBlock = new BasicBlock("global_var_def");
+    GlobalVarInitFunction globalInitFunc = new GlobalVarInitFunction();
     //当前的函数初始化块,
     private BasicBlock currentInitBlock;
 
@@ -119,8 +119,8 @@ public class IRBuilder implements ASTVisitor<Entity> {
 
     public IRBuilder(SymbolTable symbolTable) {
         irRoot = new IRRoot(symbolTable);
-        irRoot.globalVarDefBlock = globalInitBlock.getFirst();
-        irRoot.globalVarInitBlock = globalInitBlock.getSecond();
+        irRoot.globalVarDefBlock = globalVarDefBlock;
+        irRoot.globalVarInitFunction = globalInitFunc;
     }
 
     /**
@@ -818,6 +818,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
      * 使用phi指令，提前退出，都退到end
      * （phi仅使用两个label，如果提前退出，都为同一个结果，使用一个虚拟label表示）
      * - 只有根有end、返回result
+     * （应该正确 但不是最优解法）
      *
      * @param node LogicExprNode
      * @return result\null
@@ -859,7 +860,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             currentFunction.blockMap.put(currentBlock.label, currentBlock);
         }
         //右儿子
-        //如果是LogicExprNode，计数
+        //如果是LogicExprNode（用括号改优先级），计数
         if (node.rhs instanceof LogicExprNode) {
             ++logicExprCounter;
         }
@@ -1337,7 +1338,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
      */
     @Override
     public Entity visit(BoolConstantExprNode node) {
-        return new ConstBool(((BoolConstantExprNode) node).value);
+        return new ConstBool(node.value);
     }
 
     /**
@@ -1349,7 +1350,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
      */
     @Override
     public Entity visit(IntConstantExprNode node) {
-        return new ConstInt(((IntConstantExprNode) node).value);
+        return new ConstInt(node.value);
     }
 
     /**
@@ -1372,7 +1373,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
      */
     @Override
     public Entity visit(StrConstantExprNode node) {
-        return new ConstString(((StrConstantExprNode) node).value);
+        return new ConstString(node.value);
     }
 
     /**
@@ -1463,6 +1464,8 @@ public class IRBuilder implements ASTVisitor<Entity> {
         Entity entity = null;
         //global var
         if (currentScope instanceof GlobalScope) {
+            currentBlock = globalInitFunc.currentBlock;
+            currentFunction = globalInitFunc;
             name = rename(node.name);
             //标明类型的空间，无初始值
             Storage initVar = new Storage(irType);
@@ -1478,7 +1481,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             }
             //调用Global指令为全局变量分配空间
             Global stmt = new Global(initVar, name);
-            globalInitBlock.getFirst().pushBack(stmt);
+            globalVarDefBlock.pushBack(stmt);
             //将rename -> mem映射存入map
             rename2mem.put(name, stmt.result);
             //非字面量初始化
@@ -1491,7 +1494,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                     );
                     entity = tmp;
                 }
-                globalInitBlock.getSecond().pushBack(
+                pushBack(
                         new Store(entity, stmt.result)
                 );
             }
