@@ -13,8 +13,12 @@ import java.util.Map;
  * 打印IR
  */
 public class IRPrinter implements IRVisitor {
+
     @Override
     public void visit(IRRoot root) {
+        visit(root.globalVarDefBlock);
+        visit(root.globalVarInitBlock);
+        System.out.println("\n");
         for (Map.Entry<String, Function> entry : root.funcDef.entrySet()) {
             Function func = entry.getValue();
             visit(func);
@@ -25,6 +29,7 @@ public class IRPrinter implements IRVisitor {
     @Override
     public void visit(Function function) {
         System.out.println(function.funcName + " " + function.retType);
+        function.printParameterList();
         for (Map.Entry<String, BasicBlock> entry : function.blockMap.entrySet()) {
             BasicBlock block = entry.getValue();
             visit(block);

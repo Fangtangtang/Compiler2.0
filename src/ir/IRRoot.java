@@ -161,12 +161,15 @@ public class IRRoot {
                             currentStruct.addMember(name, type2irType(memberType));
                         }
                     }
+                    //TODO:仅加入显式的构造函数
                     //自定义类的构造函数（同类名）
                     //无参数，返回void
-                    Function function = new Function(
-                            new VoidType(), typeName
-                    );
-                    funcDef.put(typeName, function);
+                    if(classType.constructor!=null) {
+                        Function function = new Function(
+                                new VoidType(), typeName
+                        );
+                        funcDef.put(typeName, function);
+                    }
                 } else {
                     throw new InternalException("unexpected type");
                 }

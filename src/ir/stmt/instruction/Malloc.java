@@ -26,7 +26,7 @@ public class Malloc extends Instruction {
     public void print() {
         System.out.println(
                 result + " = malloc "
-                        + length + " * " + ((PtrType) result.type).type
+                        + length + ", " + ((PtrType) result.type).type
         );
     }
 

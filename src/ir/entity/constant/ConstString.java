@@ -17,9 +17,10 @@ public class ConstString extends Constant {
     public ConstString(String value) {
         super(new ArrayType(
                 new IntType(IntType.TypeName.CHAR),
-                value.length()
+                1
         ));
-        this.value = value;
+        this.value = (!"".equals(value) && value.charAt(0) == '"') ?
+                value.substring(1, value.length() - 1) : value;
     }
 
     @Override

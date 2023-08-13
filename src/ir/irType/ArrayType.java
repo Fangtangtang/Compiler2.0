@@ -16,17 +16,17 @@ public class ArrayType extends IRType {
     public int dimension;
 
     //数组大小
-    public Entity size;
+    public Entity length;
 
     public ArrayType(IRType type, int dimension) {
         this.type = type;
         this.dimension = dimension;
     }
 
-    public ArrayType(IRType type, int dimension, Entity size) {
+    public ArrayType(IRType type, int dimension, Entity length) {
         this.type = type;
         this.dimension = dimension;
-        this.size = size;
+        this.length = length;
     }
 
     @Override

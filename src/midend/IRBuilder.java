@@ -305,6 +305,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         currentInitBlock.pushBack(
                 new Jump(currentFunction.blockMap.get("start"))
         );
+        currentFunction.blockMap.put("return", currentFunction.ret);
         exitScope();
         return null;
     }
@@ -399,7 +400,8 @@ public class IRBuilder implements ASTVisitor<Entity> {
     //不访问结点，直接处理
     private void addParam(VarDefUnitNode node) {
         Entity entity = node.typeNode.accept(this);
-        //构造局部变量，加入参数表
+        String name = rename(node.name);
+        //构造局部变量，加入参数表(参数表中的)
         LocalVar var = new LocalVar(
                 new Storage(entity.type),
                 node.name
@@ -407,11 +409,12 @@ public class IRBuilder implements ASTVisitor<Entity> {
         currentFunction.parameterList.add(var);
         rename2mem.put(var.identity, var);
         //构建var_def
-        Alloca stmt = new Alloca(var.storage.type, rename(node.name));
+        Alloca stmt = new Alloca(var.storage.type, name);
         currentInitBlock.pushBack(stmt);
         currentInitBlock.pushBack(
                 new Store(var, stmt.result)
         );
+        rename2mem.put(name, stmt.result);
     }
 
     /**
@@ -490,6 +493,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
      * 函数的return
      * - 有无返回值
      * //TODO：优化，不借助retVal、提前退出函数
+     * //TODO:同一个block中return后的部分失效，如何处理
      * 初步处理方式
      * 如果有返回值，进入函数时分配retVal空间，
      * return语句给retVal赋值，br return
@@ -506,7 +510,9 @@ public class IRBuilder implements ASTVisitor<Entity> {
         //带有返回值
         if (node.expression != null) {
             operator = null;
-            Entity val = node.expression.accept(this);
+            Entity val = getValue(
+                    node.expression.accept(this)
+            );
             currentBlock.pushBack(
                     new Store(val, currentFunction.retVal)
             );
@@ -742,7 +748,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         Call stmt;
         //类的成员函数
         if (currentVar != null) {
-            StructType classType = (StructType) ((PtrType) currentVar.type).type;
+            StructType classType =(StructType) currentVar.type;
             function = irRoot.getFunc(classType.name + "." + callFuncName);
             result = new LocalTmpVar(function.retType);
             stmt = new Call(function, result);
@@ -952,13 +958,17 @@ public class IRBuilder implements ASTVisitor<Entity> {
             currentBlock.pushBack(
                     new Malloc(result, new ConstInt(type.size.toString()))
             );
-            //调用构造函数初始化
-            Function function = irRoot.getFunc(type.name);
-            LocalTmpVar initialized = new LocalTmpVar(new PtrType(type));
-            currentBlock.pushBack(
-                    new Call(function, initialized, result)
-            );
-            return initialized;
+            //有构造函数，调用构造函数初始化
+            if (irRoot.funcDef.containsKey(type.name)) {
+                Function function = irRoot.getFunc(type.name);
+                LocalTmpVar initialized = new LocalTmpVar(new PtrType(type));
+                currentBlock.pushBack(
+                        new Call(function, initialized, result)
+                );
+                return initialized;
+            } else {
+                return result;
+            }
         }
         //实例化数组
         //分配到size给出的，余下的当成指针
@@ -966,7 +976,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
             ArrayType type = (ArrayType) node.typeNode.accept(this).type;
             //先将dimensions中的元素取出来
             ArrayList<Storage> indexList = new ArrayList<>();
-//            indexList.add(new ConstInt("1"));
             for (int i = 0; i < node.dimensions.size(); ++i) {
                 indexList.add(
                         getValue(node.dimensions.get(i).accept(this))
@@ -986,6 +995,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                              int layer,
                              LocalTmpVar root) {
         IRType type = ((PtrType) root.type).type;
+        type = ((ArrayType) type).type;
         //非基本元素
         if (layer != dimension) {
             type = new ArrayType(type, dimension - layer);
@@ -1037,8 +1047,12 @@ public class IRBuilder implements ASTVisitor<Entity> {
         currentBlock = bodyBlock;
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         LocalTmpVar newRoot = new LocalTmpVar(new PtrType(type));
+        LocalTmpVar index = new LocalTmpVar(new IntType(IntType.TypeName.INT));
         currentBlock.pushBack(
-                new GetElementPtr(newRoot, root, i)
+                new Load(index, i)
+        );
+        currentBlock.pushBack(
+                new GetElementPtr(newRoot, root, index)
         );
         createArray(indexList, dimension, layer + 1, newRoot);
         currentBlock.pushBack(
@@ -1343,18 +1357,8 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 hasConstructor = true;
             }
         }
-        //如果没有构造函数，加入默认的构造函数
-        if (!hasConstructor) {
-            getCurrentFunc(node.name);
-            //添加隐含的this参数
-            addThisParam();
-            //直接返回
-            currentInitBlock.pushBack(
-                    new Jump(currentFunction.ret)
-            );
-        }
         currentClass = null;
-        exitScope();
+        currentScope = currentScope.getParent();
         return null;
     }
 
@@ -1380,7 +1384,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             return new ConstInt("0");
         }
         if (node.type instanceof utility.type.BoolType) {
-            return new ConstBool(true);
+            return new Storage(new IntType(IntType.TypeName.BOOL));
         }
         if (node.type instanceof utility.type.NullType) {
             return new Null();
@@ -1427,9 +1431,9 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 //如果为字面量，返回constant,直接初始化
                 //否则返回在初始化函数中用赋值语句初始化
                 operator = null;
-                entity = node.initExpr.accept(this);
-                if (entity instanceof Constant) {
-                    initVar = (Storage) entity;
+                entity = getValue(node.initExpr.accept(this));
+                if (entity instanceof Constant constant) {
+                    initVar = constant;
                 }
             }
             //调用Global指令为全局变量分配空间
@@ -1456,7 +1460,10 @@ public class IRBuilder implements ASTVisitor<Entity> {
             //若有初始化语句，在走到该部分时用赋值语句
             if (node.initExpr != null) {
                 operator = null;
-                node.initExpr.accept(this);
+                entity = getValue(node.initExpr.accept(this));
+                currentBlock.pushBack(
+                        new Store(entity, stmt.result)
+                );
             }
         }
         return null;

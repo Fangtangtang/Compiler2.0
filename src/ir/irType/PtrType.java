@@ -9,9 +9,11 @@ public class PtrType extends IRType {
     public IRType type = null;
 
     public PtrType() {
+        this.size = 32;
     }
 
     public PtrType(IRType type) {
+        this.size = 32;
         this.type = type;
     }
 

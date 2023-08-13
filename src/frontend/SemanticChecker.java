@@ -772,7 +772,8 @@ public class SemanticChecker implements ASTVisitor<Type> {
     @Override
     public Type visit(ClassDefNode node) {
         currentScope = new ClassScope(currentScope,
-                (ClassType) Scope.symbolTable.getSymbol(node.name, node.pos));
+                (ClassType) Scope.symbolTable.getSymbol(node.name, node.pos)
+        );
         node.scope=currentScope;
         node.members.forEach(
                 stmt -> stmt.accept(this)

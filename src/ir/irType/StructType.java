@@ -34,10 +34,12 @@ public class StructType extends IRType {
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder();
-        str.append("class:").append(this.name).append("\n");
+        str.append("class:").append(this.name).append("\t :");
         for (String member : members.keySet()) {
             Integer index = members.get(member);
-            str.append(member).append("\t").append(memberTypes.get(index).toString()).append("\n");
+            if (index >= 0) {
+                str.append(member).append("\t").append(memberTypes.get(index).toString()).append(";");
+            }
         }
         return str.toString();
     }

@@ -42,10 +42,10 @@ public class Call extends Instruction {
     public void print() {
         StringBuilder str = new StringBuilder(
                 result.toString() + " = call " + function.retType
-                        + "@" + function.funcName + "("
+                        + "@" + function.funcName + "( "
         );
         parameterList.forEach(
-                parameter -> str.append(parameter.type).append(" ")
+                parameter -> str.append(parameter).append(" ")
         );
         str.append(")");
         System.out.println(str);

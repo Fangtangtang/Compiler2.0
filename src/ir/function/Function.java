@@ -72,4 +72,12 @@ public class Function {
             );
         }
     }
+
+    public void printParameterList() {
+        StringBuilder str=new StringBuilder("parameter:");
+        parameterList.forEach(
+                param->str.append(param.toString()).append(", ")
+        );
+        System.out.println(str);
+    }
 }
