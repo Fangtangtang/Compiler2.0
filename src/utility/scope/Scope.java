@@ -18,23 +18,13 @@ import java.util.HashMap;
 public abstract class Scope {
     public static SymbolTable symbolTable;
     private final Scope parent;
-    //给scope命名，用于IR调试
-//    public String name = "";
-//    //每次new新的scope前，currentScope自增1
-//    public int cntSon = 0;
+    //作用域中是否有了提前终止语句（return、break、continue）
+    public boolean terminated = false;
     public HashMap<String, Type> name2type = new HashMap<>();
 
     public Scope(Scope parent) {
         this.parent = parent;
     }
-
-    //构建用于IRBuilder的Scope
-//    public Scope(Scope parent, String str) {
-//        this.parent = parent;
-//        if (parent != null) {
-//            this.name = parent.name + "_" + str + parent.cntSon;
-//        }
-//    }
 
     public Scope getParent() {
         return parent;

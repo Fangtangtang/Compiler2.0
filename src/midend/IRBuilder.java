@@ -11,6 +11,7 @@ import ir.*;
 import ir.entity.var.*;
 import ir.function.Function;
 import ir.irType.*;
+import ir.stmt.Stmt;
 import ir.stmt.instruction.*;
 import ir.stmt.terminal.*;
 import utility.*;
@@ -92,6 +93,13 @@ public class IRBuilder implements ASTVisitor<Entity> {
         currentScope = currentScope.getParent();
     }
 
+    //作用域有提前终止符，该作用域后面的语句无用
+    private void pushBack(Stmt stmt) {
+        if (!currentScope.terminated) {
+           currentBlock.pushBack(stmt);
+        }
+    }
+
     public IRBuilder(SymbolTable symbolTable) {
         irRoot = new IRRoot(symbolTable);
         irRoot.globalVarDefBlock = globalInitBlock.getFirst();
@@ -155,9 +163,10 @@ public class IRBuilder implements ASTVisitor<Entity> {
     @Override
     public Entity visit(BreakStmtNode node) {
         LoopScope loopScope = currentScope.getParentLoopScope();
-        currentBlock.pushBack(
+        pushBack(
                 new Jump(currentFunction.blockMap.get("loop.end" + loopScope.label))
         );
+        currentScope.terminated = true;
         return null;
     }
 
@@ -172,18 +181,19 @@ public class IRBuilder implements ASTVisitor<Entity> {
     public Entity visit(ContinueStmtNode node) {
         LoopScope loopScope = currentScope.getParentLoopScope();
         if (loopScope.hasInc) {
-            currentBlock.pushBack(
+            pushBack(
                     new Jump(currentFunction.blockMap.get("loop.inc" + loopScope.label))
             );
         } else if (loopScope.hasCond) {
-            currentBlock.pushBack(
+            pushBack(
                     new Jump(currentFunction.blockMap.get("loop.cond" + loopScope.label))
             );
         } else {
-            currentBlock.pushBack(
+            pushBack(
                     new Jump(currentFunction.blockMap.get("loop.body" + loopScope.label))
             );
         }
+        currentScope.terminated = true;
         return null;
     }
 
@@ -233,19 +243,19 @@ public class IRBuilder implements ASTVisitor<Entity> {
         if (loopScope.hasCond) {
             condBlock = new BasicBlock("loop.cond" + loopScope.label);
             start = condBlock;
-            currentBlock.pushBack(
+            pushBack(
                     new Jump(condBlock)
             );
             currentBlock = condBlock;
             currentFunction.blockMap.put(currentBlock.label, currentBlock);
             operator = null;
             entity = node.condition.accept(this);
-            currentBlock.pushBack(
+            pushBack(
                     new Branch(entity, bodyBlock, endBlock)
             );
         } else {
             start = bodyBlock;
-            currentBlock.pushBack(
+            pushBack(
                     new Jump(bodyBlock)
             );
         }
@@ -258,7 +268,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         }
         if (loopScope.hasInc) {
             incBlock = new BasicBlock("loop.inc" + loopScope.label);
-            currentBlock.pushBack(
+            pushBack(
                     new Jump(incBlock)
             );
             currentBlock = incBlock;
@@ -266,7 +276,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             operator = null;
             node.step.accept(this);
         }
-        currentBlock.pushBack(
+        pushBack(
                 new Jump(start)
         );
         //for循环结束后，当前block为loop.end
@@ -298,7 +308,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         currentFunction.blockMap.put("start", currentBlock);
         node.suite.accept(this);
         if (currentBlock.tailStmt == null) {
-            currentBlock.pushBack(
+            pushBack(
                     new Jump(currentFunction.ret)
             );
         }
@@ -384,7 +394,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         node.functionBody.accept(this);
         if (currentBlock.tailStmt == null) {
-            currentBlock.pushBack(
+            pushBack(
                     new Jump(currentFunction.ret)
             );
         }
@@ -466,20 +476,20 @@ public class IRBuilder implements ASTVisitor<Entity> {
         //cond：在上一个块里
         operator = null;
         Entity entity = node.condition.accept(this);
-        currentBlock.pushBack(
+        pushBack(
                 new Branch(entity, trueStmtBlock, next)
         );
         currentBlock = trueStmtBlock;
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         node.trueStatement.accept(this);
-        currentBlock.pushBack(
+        pushBack(
                 new Jump(endBlock)
         );
         if (node.falseStatement != null) {
             currentBlock = falseStmtBlock;
             currentFunction.blockMap.put(currentBlock.label, currentBlock);
             node.falseStatement.accept(this);
-            currentBlock.pushBack(
+            pushBack(
                     new Jump(endBlock)
             );
         }
@@ -513,13 +523,14 @@ public class IRBuilder implements ASTVisitor<Entity> {
             Entity val = getValue(
                     node.expression.accept(this)
             );
-            currentBlock.pushBack(
+            pushBack(
                     new Store(val, currentFunction.retVal)
             );
         }
-        currentBlock.pushBack(
+        pushBack(
                 new Jump(currentFunction.ret)
         );
+        currentScope.terminated = true;
         return null;
     }
 
@@ -557,14 +568,14 @@ public class IRBuilder implements ASTVisitor<Entity> {
         BasicBlock condBlock = new BasicBlock("loop.cond" + loopScope.label);
         BasicBlock bodyBlock = new BasicBlock("loop.body" + loopScope.label);
         BasicBlock endBlock = new BasicBlock("loop.end" + loopScope.label);
-        currentBlock.pushBack(
+        pushBack(
                 new Jump(condBlock)
         );
         currentBlock = condBlock;
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         operator = null;
         entity = node.condition.accept(this);
-        currentBlock.pushBack(
+        pushBack(
                 new Branch(entity, bodyBlock, endBlock)
         );
         currentBlock = bodyBlock;
@@ -572,7 +583,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         if (node.statement != null) {
             node.statement.accept(this);
         }
-        currentBlock.pushBack(
+        pushBack(
                 new Jump(condBlock)
         );
         currentBlock = endBlock;
@@ -595,7 +606,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         LocalTmpVar arrayName;
         if (array instanceof Ptr ptr) {
             arrayName = new LocalTmpVar(ptr.storage.type);
-            currentBlock.pushBack(
+            pushBack(
                     new Load(arrayName, ptr)
             );
         } else if (array instanceof LocalTmpVar) {
@@ -612,7 +623,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             //访问到基本元素
             if (ptr.dimension == i) {
                 result = new LocalTmpVar(ptr.type);
-                currentBlock.pushBack(
+                pushBack(
                         new GetElementPtr(result, prev, idx)
                 );
                 return result;
@@ -621,7 +632,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             else {
                 cur = new ArrayType(cur.type, cur.dimension - 1);
                 result = new LocalTmpVar(cur);
-                currentBlock.pushBack(
+                pushBack(
                         new GetElementPtr(result, prev, idx)
                 );
                 prev = result;
@@ -648,13 +659,13 @@ public class IRBuilder implements ASTVisitor<Entity> {
         operator = null;
         Entity right = node.rhs.accept(this);
         if (right instanceof Constant) {
-            currentBlock.pushBack(
+            pushBack(
                     new Store(right, left)
             );
             return null;
         }
         Storage tmp = getValue(right);
-        currentBlock.pushBack(
+        pushBack(
                 new Store(tmp, left)
         );
         return null;
@@ -678,7 +689,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         Storage lhs = getValue(left), rhs = getValue(right);
         //IR运算语句
         LocalTmpVar result = new LocalTmpVar(lhs.type);
-        currentBlock.pushBack(
+        pushBack(
                 new Binary(node.operator,
                         result,
                         lhs,
@@ -708,7 +719,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         Storage lhs = getValue(left), rhs = getValue(right);
         //IR比较语句
         LocalTmpVar result = new LocalTmpVar(new IntType(IntType.TypeName.BOOL));
-        currentBlock.pushBack(
+        pushBack(
                 new Icmp(node.operator,
                         result,
                         lhs,
@@ -722,7 +733,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         LocalTmpVar tmp;
         if (entity instanceof Ptr) {
             tmp = new LocalTmpVar(((Ptr) entity).storage.type);
-            currentBlock.pushBack(
+            pushBack(
                     new Load(tmp, entity)
             );
             return tmp;
@@ -748,7 +759,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         Call stmt;
         //类的成员函数
         if (currentVar != null) {
-            StructType classType =(StructType) currentVar.type;
+            StructType classType = (StructType) currentVar.type;
             function = irRoot.getFunc(classType.name + "." + callFuncName);
             result = new LocalTmpVar(function.retType);
             stmt = new Call(function, result);
@@ -766,7 +777,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 parameter -> stmt.parameterList.add(
                         (Storage) parameter.accept(this)
                 ));
-        currentBlock.pushBack(stmt);
+        pushBack(stmt);
         return result;
     }
 
@@ -806,11 +817,11 @@ public class IRBuilder implements ASTVisitor<Entity> {
             LocalTmpVar leftToBool = toBool(entity);
             //结束当前块，跳转
             if (node.operator.equals(LogicExprNode.LogicOperator.AndAnd)) {
-                currentBlock.pushBack(
+                pushBack(
                         new Branch(leftToBool, nextBlock, endBlock)
                 );
             } else {
-                currentBlock.pushBack(
+                pushBack(
                         new Branch(leftToBool, endBlock, nextBlock)
                 );
             }
@@ -824,7 +835,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         }
         LocalTmpVar rightToBool = toBool(node.rhs.accept(this));
         if (rootFlag) {//当前为根
-            currentBlock.pushBack(
+            pushBack(
                     new Jump(endBlock)
             );
             String str = currentBlock.label;
@@ -832,13 +843,13 @@ public class IRBuilder implements ASTVisitor<Entity> {
             currentFunction.blockMap.put(currentBlock.label, currentBlock);
             LocalTmpVar result = new LocalTmpVar(new IntType(IntType.TypeName.TMP_BOOL));
             if (node.operator.equals(LogicExprNode.LogicOperator.AndAnd)) {
-                currentBlock.pushBack(
+                pushBack(
                         new Phi(result,
                                 new ConstBool(true), rightToBool,
                                 "virtual_block", str)
                 );
             } else {
-                currentBlock.pushBack(
+                pushBack(
                         new Phi(result,
                                 new ConstBool(false), rightToBool,
                                 "virtual_block", str)
@@ -849,11 +860,11 @@ public class IRBuilder implements ASTVisitor<Entity> {
             exprLabel = funcBlockCounter++;
             nextBlock = new BasicBlock("logic.next" + exprLabel);
             if (node.operator.equals(LogicExprNode.LogicOperator.AndAnd)) {
-                currentBlock.pushBack(
+                pushBack(
                         new Branch(rightToBool, nextBlock, endBlock)
                 );
             } else {
-                currentBlock.pushBack(
+                pushBack(
                         new Branch(rightToBool, endBlock, nextBlock)
                 );
             }
@@ -867,7 +878,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         LocalTmpVar tmp, toBool;
         if (entity instanceof Ptr) {
             tmp = new LocalTmpVar(((Ptr) entity).storage.type);
-            currentBlock.pushBack(
+            pushBack(
                     new Load(tmp, entity)
             );
         } else {
@@ -875,7 +886,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         }
         if (tmp.type.equals(new IntType(IntType.TypeName.BOOL))) {
             toBool = new LocalTmpVar(new IntType(IntType.TypeName.TMP_BOOL));
-            currentBlock.pushBack(
+            pushBack(
                     new Trunc(toBool, tmp)
             );
         } else {
@@ -902,7 +913,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         Entity entity = node.expression.accept(this);
         LocalTmpVar result = new LocalTmpVar(new IntType(IntType.TypeName.TMP_BOOL));
         if (entity instanceof Constant) {//常量
-            currentBlock.pushBack(
+            pushBack(
                     new Binary(
                             BinaryExprNode.BinaryOperator.Xor,
                             result, entity, new ConstBool(true)
@@ -912,10 +923,10 @@ public class IRBuilder implements ASTVisitor<Entity> {
         }
         Storage tmp = getValue(entity);
         LocalTmpVar toBool = new LocalTmpVar(new IntType(IntType.TypeName.TMP_BOOL));
-        currentBlock.pushBack(
+        pushBack(
                 new Trunc(toBool, tmp)
         );
-        currentBlock.pushBack(
+        pushBack(
                 new Binary(
                         BinaryExprNode.BinaryOperator.Xor,
                         result, toBool, new ConstBool(true)
@@ -955,14 +966,14 @@ public class IRBuilder implements ASTVisitor<Entity> {
         if (node.dimension == 0) {
             StructType type = (StructType) node.typeNode.accept(this).type;
             LocalTmpVar result = new LocalTmpVar(new PtrType(type));
-            currentBlock.pushBack(
+            pushBack(
                     new Malloc(result, new ConstInt(type.size.toString()))
             );
             //有构造函数，调用构造函数初始化
             if (irRoot.funcDef.containsKey(type.name)) {
                 Function function = irRoot.getFunc(type.name);
                 LocalTmpVar initialized = new LocalTmpVar(new PtrType(type));
-                currentBlock.pushBack(
+                pushBack(
                         new Call(function, initialized, result)
                 );
                 return initialized;
@@ -1001,7 +1012,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             type = new ArrayType(type, dimension - layer);
         }
         //给当前层分配空间
-        currentBlock.pushBack(
+        pushBack(
                 new Malloc(root, indexList.get(layer - 1))
         );
         //最末一层，终止递归
@@ -1024,23 +1035,23 @@ public class IRBuilder implements ASTVisitor<Entity> {
             rename2mem.put("i", i);
             currentInitBlock.pushBack(stmt);
         }
-        currentBlock.pushBack(
+        pushBack(
                 new Store(new ConstInt("0"), i)
         );
-        currentBlock.pushBack(
+        pushBack(
                 new Jump(condBlock)
         );
         //i<size;
         currentBlock = condBlock;
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         LocalTmpVar cmpResult = new LocalTmpVar(new IntType(IntType.TypeName.BOOL));
-        currentBlock.pushBack(
+        pushBack(
                 new Icmp(CmpExprNode.CmpOperator.Less,
                         cmpResult,
                         getValue(i),
                         getValue(indexList.get(layer - 1)))
         );
-        currentBlock.pushBack(
+        pushBack(
                 new Branch(cmpResult, bodyBlock, endBlock)
         );
         //循环体
@@ -1048,30 +1059,30 @@ public class IRBuilder implements ASTVisitor<Entity> {
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         LocalTmpVar newRoot = new LocalTmpVar(new PtrType(type));
         LocalTmpVar index = new LocalTmpVar(new IntType(IntType.TypeName.INT));
-        currentBlock.pushBack(
+        pushBack(
                 new Load(index, i)
         );
-        currentBlock.pushBack(
+        pushBack(
                 new GetElementPtr(newRoot, root, index)
         );
         createArray(indexList, dimension, layer + 1, newRoot);
-        currentBlock.pushBack(
+        pushBack(
                 new Jump(incBlock)
         );
         //step
         currentBlock = incBlock;
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         LocalTmpVar addResult = new LocalTmpVar(new IntType(IntType.TypeName.INT));
-        currentBlock.pushBack(
+        pushBack(
                 new Binary(BinaryExprNode.BinaryOperator.Plus,
                         addResult,
                         getValue(i),
                         new ConstInt("1"))
         );
-        currentBlock.pushBack(
+        pushBack(
                 new Store(addResult, i)
         );
-        currentBlock.pushBack(
+        pushBack(
                 new Jump(condBlock)
         );
         currentBlock = endBlock;
@@ -1090,31 +1101,32 @@ public class IRBuilder implements ASTVisitor<Entity> {
     @Override
     public Entity visit(PrefixExprNode node) {
         Entity entity = node.expression.accept(this);
-        LocalTmpVar result = new LocalTmpVar(entity.type);
         //++\--需要存原始值作为返回值
         if (node.operator == PrefixExprNode.PrefixOperator.PlusPlus ||
                 node.operator == PrefixExprNode.PrefixOperator.MinusMinus) {
             Storage tmp = getValue(entity);
+            LocalTmpVar result = new LocalTmpVar(tmp.type);
             Entity right = new ConstInt("1");
             BinaryExprNode.BinaryOperator operator =
                     node.operator == PrefixExprNode.PrefixOperator.PlusPlus ?
                             BinaryExprNode.BinaryOperator.Plus :
                             BinaryExprNode.BinaryOperator.Minus;
             //运算
-            currentBlock.pushBack(
+            pushBack(
                     new Binary(operator, result, tmp, right)
             );
             //赋值给a
-            currentBlock.pushBack(
+            pushBack(
                     new Store(result, entity)
             );
-            return result;
+            return entity;//返回变量
         }
+        LocalTmpVar result = new LocalTmpVar(entity.type);
         Storage value = getValue(entity);
         //-取相反数
         if (node.operator == PrefixExprNode.PrefixOperator.Minus) {
             Entity left = new ConstInt("0");
-            currentBlock.pushBack(
+            pushBack(
                     new Binary(BinaryExprNode.BinaryOperator.Minus,
                             result, left, value)
             );
@@ -1122,7 +1134,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         }
         //按位取反
         Entity right = new ConstInt("-1");
-        currentBlock.pushBack(
+        pushBack(
                 new Binary(BinaryExprNode.BinaryOperator.Xor,
                         result, value, right)
         );
@@ -1153,25 +1165,25 @@ public class IRBuilder implements ASTVisitor<Entity> {
     @Override
     public Entity visit(SuffixExprNode node) {
         Entity entity = node.expression.accept(this);
-        LocalTmpVar result = new LocalTmpVar(entity.type);
         LocalTmpVar tmp;
-        if (entity instanceof Ptr) {
-            tmp = new LocalTmpVar(entity.type);
-            currentBlock.pushBack(
+        if (entity instanceof Ptr ptr) {
+            tmp = new LocalTmpVar(ptr.storage.type);
+            pushBack(
                     new Load(tmp, entity)
             );
         } else {
             tmp = (LocalTmpVar) entity;
         }
+        LocalTmpVar result = new LocalTmpVar(tmp.type);
         Entity right = new ConstInt("1");
         BinaryExprNode.BinaryOperator operator =
                 node.operator == SuffixExprNode.SuffixOperator.PlusPlus ?
                         BinaryExprNode.BinaryOperator.Plus :
                         BinaryExprNode.BinaryOperator.Minus;
-        currentBlock.pushBack(
+        pushBack(
                 new Binary(operator, result, tmp, right)
         );
-        currentBlock.pushBack(
+        pushBack(
                 new Store(result, entity)
         );
         return tmp;
@@ -1195,27 +1207,27 @@ public class IRBuilder implements ASTVisitor<Entity> {
         //cond：在上一个块里
         operator = null;
         Entity entity = node.condition.accept(this);
-        currentBlock.pushBack(
+        pushBack(
                 new Branch(entity, trueStmtBlock, falseStmtBlock)
         );
         currentBlock = trueStmtBlock;
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         operator = null;
         Storage trueAns = (Storage) node.trueExpr.accept(this);
-        currentBlock.pushBack(
+        pushBack(
                 new Jump(endBlock)
         );
         currentBlock = falseStmtBlock;
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         operator = null;
         Storage falseAns = (Storage) node.falseExpr.accept(this);
-        currentBlock.pushBack(
+        pushBack(
                 new Jump(endBlock)
         );
         currentBlock = endBlock;
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         LocalTmpVar result = new LocalTmpVar(trueAns.type);
-        currentBlock.pushBack(
+        pushBack(
                 new Phi(result, trueAns, falseAns,
                         "cond.true" + label, "cond.false" + label)
         );
@@ -1241,7 +1253,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             if (index >= 0) {
                 IRType type = structType.memberTypes.get(index);
                 LocalTmpVar result = new LocalTmpVar(new PtrType(type));
-                currentBlock.pushBack(
+                pushBack(
                         new GetElementPtr(result, currentVar, new ConstInt(index.toString()))
                 );
                 currentVar = null;
@@ -1269,7 +1281,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             if (index >= 0) {
                 IRType type = currentClass.memberTypes.get(index);
                 LocalTmpVar result = new LocalTmpVar(new PtrType(type));
-                currentBlock.pushBack(
+                pushBack(
                         new GetElementPtr(result, this1, new ConstInt(index.toString()))
                 );
                 return result;
@@ -1461,7 +1473,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             if (node.initExpr != null) {
                 operator = null;
                 entity = getValue(node.initExpr.accept(this));
-                currentBlock.pushBack(
+                pushBack(
                         new Store(entity, stmt.result)
                 );
             }

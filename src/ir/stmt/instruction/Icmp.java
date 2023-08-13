@@ -52,9 +52,8 @@ public class Icmp extends Instruction {
     @Override
     public void print() {
         System.out.println(result.toString()
-                + " = " + cond.name()
-                + " " + result.toString() + ' '
-                + op1.toString() + ", " + op2.toString());
+                + " = icmp " + cond.name()
+                + " " + op1.toString() + ", " + op2.toString());
 
     }
 
