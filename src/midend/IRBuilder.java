@@ -50,6 +50,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
     StructType currentClass = null;
     //当前块
     BasicBlock currentBlock = null;
+    boolean terminated = false;
     //当前的函数名
     String callFuncName;
     //当前的变量，尤其用于类成员访问
@@ -81,6 +82,11 @@ public class IRBuilder implements ASTVisitor<Entity> {
         return num + name;
     }
 
+    private void changeBlock(BasicBlock block) {
+        currentBlock = block;
+        terminated = false;
+    }
+
     //退出当前scope时，将所有新建的变量数目--
     private void exitScope() {
         Integer num;
@@ -95,8 +101,8 @@ public class IRBuilder implements ASTVisitor<Entity> {
 
     //作用域有提前终止符，该作用域后面的语句无用
     private void pushBack(Stmt stmt) {
-        if (!currentScope.terminated) {
-           currentBlock.pushBack(stmt);
+        if (!terminated) {
+            currentBlock.pushBack(stmt);
         }
     }
 
@@ -164,9 +170,9 @@ public class IRBuilder implements ASTVisitor<Entity> {
     public Entity visit(BreakStmtNode node) {
         LoopScope loopScope = currentScope.getParentLoopScope();
         pushBack(
-                new Jump(currentFunction.blockMap.get("loop.end" + loopScope.label))
+                new Jump("loop.end" + loopScope.label)
         );
-        currentScope.terminated = true;
+        terminated = true;
         return null;
     }
 
@@ -182,18 +188,18 @@ public class IRBuilder implements ASTVisitor<Entity> {
         LoopScope loopScope = currentScope.getParentLoopScope();
         if (loopScope.hasInc) {
             pushBack(
-                    new Jump(currentFunction.blockMap.get("loop.inc" + loopScope.label))
+                    new Jump("loop.inc" + loopScope.label)
             );
         } else if (loopScope.hasCond) {
             pushBack(
-                    new Jump(currentFunction.blockMap.get("loop.cond" + loopScope.label))
+                    new Jump("loop.cond" + loopScope.label)
             );
         } else {
             pushBack(
-                    new Jump(currentFunction.blockMap.get("loop.body" + loopScope.label))
+                    new Jump("loop.body" + loopScope.label)
             );
         }
-        currentScope.terminated = true;
+        terminated = true;
         return null;
     }
 
@@ -244,9 +250,9 @@ public class IRBuilder implements ASTVisitor<Entity> {
             condBlock = new BasicBlock("loop.cond" + loopScope.label);
             start = condBlock;
             pushBack(
-                    new Jump(condBlock)
+                    new Jump(condBlock.label)
             );
-            currentBlock = condBlock;
+            changeBlock(condBlock);
             currentFunction.blockMap.put(currentBlock.label, currentBlock);
             operator = null;
             entity = node.condition.accept(this);
@@ -256,12 +262,12 @@ public class IRBuilder implements ASTVisitor<Entity> {
         } else {
             start = bodyBlock;
             pushBack(
-                    new Jump(bodyBlock)
+                    new Jump(bodyBlock.label)
             );
         }
         //body若存在，访问，
         //至少存在跳到下一次循环的语句
-        currentBlock = bodyBlock;
+        changeBlock(bodyBlock);
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         if (node.statement != null) {
             node.statement.accept(this);
@@ -269,18 +275,18 @@ public class IRBuilder implements ASTVisitor<Entity> {
         if (loopScope.hasInc) {
             incBlock = new BasicBlock("loop.inc" + loopScope.label);
             pushBack(
-                    new Jump(incBlock)
+                    new Jump(incBlock.label)
             );
-            currentBlock = incBlock;
+            changeBlock(incBlock);
             currentFunction.blockMap.put(currentBlock.label, currentBlock);
             operator = null;
             node.step.accept(this);
         }
         pushBack(
-                new Jump(start)
+                new Jump(start.label)
         );
         //for循环结束后，当前block为loop.end
-        currentBlock = endBlock;
+        changeBlock(endBlock);
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         exitScope();
         return null;
@@ -303,17 +309,17 @@ public class IRBuilder implements ASTVisitor<Entity> {
         getCurrentFunc(node.name);
         //添加隐含的this参数
         addThisParam();
-        currentBlock = new BasicBlock("start");
+        changeBlock(new BasicBlock("start"));
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         currentFunction.blockMap.put("start", currentBlock);
         node.suite.accept(this);
         if (currentBlock.tailStmt == null) {
             pushBack(
-                    new Jump(currentFunction.ret)
+                    new Jump(currentFunction.ret.label)
             );
         }
         currentInitBlock.pushBack(
-                new Jump(currentFunction.blockMap.get("start"))
+                new Jump("start")
         );
         currentFunction.blockMap.put("return", currentFunction.ret);
         exitScope();
@@ -390,16 +396,16 @@ public class IRBuilder implements ASTVisitor<Entity> {
         }
         //函数作用域
         currentScope = node.scope;
-        currentBlock = new BasicBlock("start");
+        changeBlock(new BasicBlock("start"));
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         node.functionBody.accept(this);
         if (currentBlock.tailStmt == null) {
             pushBack(
-                    new Jump(currentFunction.ret)
+                    new Jump(currentFunction.ret.label)
             );
         }
         currentInitBlock.pushBack(
-                new Jump(currentFunction.blockMap.get("start"))
+                new Jump("start")
         );
         currentFunction.blockMap.put("return", currentFunction.ret);
         exitScope();
@@ -479,21 +485,21 @@ public class IRBuilder implements ASTVisitor<Entity> {
         pushBack(
                 new Branch(entity, trueStmtBlock, next)
         );
-        currentBlock = trueStmtBlock;
+        changeBlock(trueStmtBlock);
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         node.trueStatement.accept(this);
         pushBack(
-                new Jump(endBlock)
+                new Jump(endBlock.label)
         );
         if (node.falseStatement != null) {
-            currentBlock = falseStmtBlock;
+            changeBlock(falseStmtBlock);
             currentFunction.blockMap.put(currentBlock.label, currentBlock);
             node.falseStatement.accept(this);
             pushBack(
-                    new Jump(endBlock)
+                    new Jump(endBlock.label)
             );
         }
-        currentBlock = endBlock;
+        changeBlock(endBlock);
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         return null;
     }
@@ -528,9 +534,9 @@ public class IRBuilder implements ASTVisitor<Entity> {
             );
         }
         pushBack(
-                new Jump(currentFunction.ret)
+                new Jump(currentFunction.ret.label)
         );
-        currentScope.terminated = true;
+        terminated = true;
         return null;
     }
 
@@ -569,24 +575,24 @@ public class IRBuilder implements ASTVisitor<Entity> {
         BasicBlock bodyBlock = new BasicBlock("loop.body" + loopScope.label);
         BasicBlock endBlock = new BasicBlock("loop.end" + loopScope.label);
         pushBack(
-                new Jump(condBlock)
+                new Jump(condBlock.label)
         );
-        currentBlock = condBlock;
+        changeBlock(condBlock);
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         operator = null;
         entity = node.condition.accept(this);
         pushBack(
                 new Branch(entity, bodyBlock, endBlock)
         );
-        currentBlock = bodyBlock;
+        changeBlock(bodyBlock);
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         if (node.statement != null) {
             node.statement.accept(this);
         }
         pushBack(
-                new Jump(condBlock)
+                new Jump(condBlock.label)
         );
-        currentBlock = endBlock;
+        changeBlock(endBlock);
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         return null;
     }
@@ -825,7 +831,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                         new Branch(leftToBool, endBlock, nextBlock)
                 );
             }
-            currentBlock = nextBlock;
+            changeBlock(nextBlock);
             currentFunction.blockMap.put(currentBlock.label, currentBlock);
         }
         //右儿子
@@ -836,10 +842,10 @@ public class IRBuilder implements ASTVisitor<Entity> {
         LocalTmpVar rightToBool = toBool(node.rhs.accept(this));
         if (rootFlag) {//当前为根
             pushBack(
-                    new Jump(endBlock)
+                    new Jump(endBlock.label)
             );
             String str = currentBlock.label;
-            currentBlock = endBlock;
+            changeBlock(endBlock);
             currentFunction.blockMap.put(currentBlock.label, currentBlock);
             LocalTmpVar result = new LocalTmpVar(new IntType(IntType.TypeName.TMP_BOOL));
             if (node.operator.equals(LogicExprNode.LogicOperator.AndAnd)) {
@@ -868,7 +874,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                         new Branch(rightToBool, endBlock, nextBlock)
                 );
             }
-            currentBlock = nextBlock;
+            changeBlock(nextBlock);
             currentFunction.blockMap.put(currentBlock.label, currentBlock);
             return null;
         }
@@ -1039,7 +1045,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 new Store(new ConstInt("0"), i)
         );
         pushBack(
-                new Jump(condBlock)
+                new Jump(condBlock.label)
         );
         //i<size;
         currentBlock = condBlock;
@@ -1067,7 +1073,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         );
         createArray(indexList, dimension, layer + 1, newRoot);
         pushBack(
-                new Jump(incBlock)
+                new Jump(incBlock.label)
         );
         //step
         currentBlock = incBlock;
@@ -1083,7 +1089,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 new Store(addResult, i)
         );
         pushBack(
-                new Jump(condBlock)
+                new Jump(condBlock.label)
         );
         currentBlock = endBlock;
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
@@ -1210,21 +1216,21 @@ public class IRBuilder implements ASTVisitor<Entity> {
         pushBack(
                 new Branch(entity, trueStmtBlock, falseStmtBlock)
         );
-        currentBlock = trueStmtBlock;
+        changeBlock(trueStmtBlock);
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         operator = null;
         Storage trueAns = (Storage) node.trueExpr.accept(this);
         pushBack(
-                new Jump(endBlock)
+                new Jump(endBlock.label)
         );
-        currentBlock = falseStmtBlock;
+        changeBlock(falseStmtBlock);
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         operator = null;
         Storage falseAns = (Storage) node.falseExpr.accept(this);
         pushBack(
-                new Jump(endBlock)
+                new Jump(endBlock.label)
         );
-        currentBlock = endBlock;
+        changeBlock(endBlock);
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         LocalTmpVar result = new LocalTmpVar(trueAns.type);
         pushBack(
@@ -1358,7 +1364,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
     public Entity visit(ClassDefNode node) {
         currentScope = node.scope;
         currentClass = (StructType) irRoot.types.get(node.name);
-        boolean hasConstructor = false;
         StmtNode stmt;
         for (int i = 0; i < node.members.size(); ++i) {
             stmt = node.members.get(i);
@@ -1366,7 +1371,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 stmt.accept(this);
             } else if (stmt instanceof ConstructorDefStmtNode) {
                 stmt.accept(this);
-                hasConstructor = true;
             }
         }
         currentClass = null;

@@ -7,16 +7,16 @@ import ir.*;
  * 作为block终止符的跳转语句
  */
 public class Jump extends TerminalStmt {
-    public BasicBlock target;
+    public String targetName;
 
-    public Jump(BasicBlock target) {
+    public Jump(String targetName) {
         super();
-        this.target = target;
+        this.targetName = targetName;
     }
 
     @Override
     public void print() {
-        System.out.println("br label %" + target.label);
+        System.out.println("br label %" + targetName);
     }
 
     @Override
