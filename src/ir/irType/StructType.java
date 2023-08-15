@@ -5,6 +5,7 @@ import java.util.*;
 /**
  * @author F
  * IR结构体
+ * 为一个特殊的指针，指向结构体组成元素的一大块空间
  * 类的数据成员抽取为一个结构体
  * name -> index -> IRType （接近LLVM IR的输出）
  */

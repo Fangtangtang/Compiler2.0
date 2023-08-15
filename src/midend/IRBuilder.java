@@ -623,31 +623,33 @@ public class IRBuilder implements ASTVisitor<Entity> {
      */
     @Override
     public Entity visit(ArrayVisExprNode node) {
-        //取出数组名
+        //取出数组名(Ptr\LocalTmpVar(PtrType))
         Entity array = node.arrayName.accept(this);
         LocalTmpVar arrayName;
+        ArrayType arrayType;
         //数组名（变量）
         if (array instanceof Ptr ptr) {
             arrayName = new LocalTmpVar(ptr.storage.type);
             pushBack(
                     new Load(arrayName, ptr)
             );
+            arrayType = (ArrayType) arrayName.type;
         }
         //临时变量，指向数组名的指针
         else if (array instanceof LocalTmpVar && array.type instanceof PtrType ptrType) {
-            arrayName = new LocalTmpVar(ptrType.type);
+            arrayName = (LocalTmpVar) array;
+            arrayType = (ArrayType) ptrType.type;
         } else {
             throw new InternalException("unexpected array name");
         }
-        ArrayType ptr = (ArrayType) arrayName.type;
-        ArrayType cur = ptr;
+        ArrayType cur = arrayType;
         Entity idx;
         LocalTmpVar prev = arrayName, result = null;
         for (int i = 1; i <= node.indexList.size(); ++i) {
             idx = getValue(node.indexList.get(i - 1).accept(this));
             //访问到基本元素
-            if (ptr.dimension == i) {
-                result = new LocalTmpVar(new PtrType(ptr.type));
+            if (arrayType.dimension == i) {
+                result = new LocalTmpVar(new PtrType(arrayType.type));
                 pushBack(
                         new GetElementPtr(result, prev, idx)
                 );
@@ -666,7 +668,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         if (result == null) {
             throw new InternalException("invalid array visit");
         }
-        return new LocalTmpVar(new PtrType(result.type));
+        return result;
     }
 
     /**
