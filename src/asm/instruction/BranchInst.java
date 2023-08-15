@@ -7,17 +7,16 @@ import java.io.PrintStream;
 
 /**
  * @author F
- * 二元运算指令,rs1,rs2版本
- * - 乘除法没有立即数版本
+ * 条件跳转
  */
-public class BinaryInst extends ASMInstruction {
+public class BranchInst extends ASMInstruction {
+
     enum Opcode {
-        add, sub, mul, div, rem,
-        sll, xor, srl, sra, or, and
+        beq, bne, blt, bge
     }
 
     public Register rs1, rs2;
-    public Register rd;
+    public String desName;
 
     public Opcode op;
 

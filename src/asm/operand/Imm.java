@@ -1,4 +1,8 @@
 package asm.operand;
 
-public class Imm {
+/**
+ * @author F
+ * ASM立即数
+ */
+public class Imm extends Operand{
 }

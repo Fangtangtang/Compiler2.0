@@ -7,18 +7,18 @@ import java.io.PrintStream;
 
 /**
  * @author F
- * 二元运算指令,rs1,rs2版本
- * - 乘除法没有立即数版本
+ * 比较指令
+ * 由多个基本指令组合的伪指令
  */
-public class BinaryInst extends ASMInstruction {
+public class CmpInst extends ASMInstruction {
+
     enum Opcode {
-        add, sub, mul, div, rem,
-        sll, xor, srl, sra, or, and
+        slt, sgt, sle, sge,
+        eq, ne
     }
 
     public Register rs1, rs2;
     public Register rd;
-
     public Opcode op;
 
     @Override

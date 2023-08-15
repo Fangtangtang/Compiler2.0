@@ -1,4 +1,8 @@
 package asm.operand;
 
-public abstract class Register {
+/**
+ * @author F
+ * ASM寄存器
+ */
+public abstract class Register extends Operand{
 }
