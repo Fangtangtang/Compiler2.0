@@ -799,7 +799,13 @@ public class IRBuilder implements ASTVisitor<Entity> {
         Call stmt;
         //类的成员函数
         if (currentVar != null) {
-            StructType classType = (StructType) currentVar.type;
+            IRType pointed;
+            if (currentVar.type instanceof PtrType ptrType) {
+                pointed = ptrType.type;
+            } else {
+                pointed = currentVar.type;
+            }
+            StructType classType = (StructType) pointed;
             function = irRoot.getFunc(classType.name + "." + callFuncName);
             result = new LocalTmpVar(function.retType);
             stmt = new Call(function, result);
