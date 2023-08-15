@@ -11,8 +11,10 @@ int scanf(const char *pattern, ...);
 int sscanf(const char *src, const char *pattern, ...);
 int strlen(const char *str);
 int strcmp(const char *s1, const char *s2);
-void *memcpy(void *dest, const void *src, size_t n);
-void *malloc(size_t n);
+char *strcpy(char *dest, const char *src);
+char *strcat(char *dest, const char *src);
+void *memcpy(void *dest, const void *src, int n);
+void *malloc(int n);
 
 //Mx内建函数
 void print(char *str) { printf("%s", str); }
