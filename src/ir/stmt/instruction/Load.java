@@ -4,6 +4,8 @@ import ir.IRVisitor;
 import ir.entity.Entity;
 import ir.entity.var.*;
 
+import java.io.PrintStream;
+
 
 /**
  * @author F
@@ -35,8 +37,8 @@ public class Load extends Instruction {
     }
 
     @Override
-    public void print() {
-        System.out.println(result.toString() + " = load "
+    public void print(PrintStream out) {
+        out.println(result.toString() + " = load "
                 + result.type.toString() + ", ptr " + pointer.toString());
     }
 

@@ -6,6 +6,8 @@ import ir.entity.*;
 import ir.entity.var.*;
 import utility.error.InternalException;
 
+import java.io.PrintStream;
+
 /**
  * @author F
  * 二元运算指令
@@ -53,8 +55,8 @@ public class Binary extends Instruction {
     }
 
     @Override
-    public void print() {
-        System.out.println(result.toString()
+    public void print(PrintStream out) {
+        out.println(result.toString()
                 + " = " + operator.name()
                 + " " + result.type.toString() + ' '
                 + op1.toString() + ", " + op2.toString());

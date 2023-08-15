@@ -6,6 +6,8 @@ import ir.entity.*;
 import ir.entity.var.*;
 import utility.error.InternalException;
 
+import java.io.PrintStream;
+
 /**
  * @author F
  * 二元大小比较
@@ -50,8 +52,8 @@ public class Icmp extends Instruction {
     }
 
     @Override
-    public void print() {
-        System.out.println(result.toString()
+    public void print(PrintStream out) {
+        out.println(result.toString()
                 + " = icmp " + cond.name()
                 + " " + op1.toString() + ", " + op2.toString());
 

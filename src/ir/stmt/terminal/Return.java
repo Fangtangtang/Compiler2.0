@@ -5,6 +5,8 @@ import ir.entity.Entity;
 import ir.entity.Storage;
 import ir.irType.VoidType;
 
+import java.io.PrintStream;
+
 /**
  * @author F
  * return语句
@@ -26,14 +28,14 @@ public class Return extends TerminalStmt {
     }
 
     @Override
-    public void print() {
+    public void print(PrintStream out) {
         StringBuilder str = new StringBuilder("ret");
         if (value.type instanceof VoidType) {
             str.append(" void");
         } else {
             str.append(" ").append(value.toString());
         }
-        System.out.println(str.toString());
+        out.println(str.toString());
     }
 
     @Override

@@ -69,7 +69,8 @@ public class Main {
         IRBuilder irBuilder = new IRBuilder(Scope.symbolTable);
         irBuilder.visit(astRoot);
 
-        IRPrinter printer = new IRPrinter();
+        PrintStream outputStream = new PrintStream(new FileOutputStream("output"));
+        IRPrinter printer = new IRPrinter(outputStream);
         printer.visit(irBuilder.irRoot);
     }
 }

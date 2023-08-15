@@ -5,6 +5,8 @@ import ir.entity.Entity;
 import ir.entity.var.LocalTmpVar;
 import ir.irType.PtrType;
 
+import java.io.PrintStream;
+
 /**
  * @author F
  * 一个自定义的内存分配指令
@@ -23,8 +25,8 @@ public class Malloc extends Instruction {
     }
 
     @Override
-    public void print() {
-        System.out.println(
+    public void print(PrintStream out) {
+        out.println(
                 result + " = malloc "
                         + length + ", " + ((PtrType) result.type).type
         );

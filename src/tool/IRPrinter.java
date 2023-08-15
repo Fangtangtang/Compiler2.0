@@ -6,6 +6,7 @@ import ir.stmt.instruction.*;
 import ir.stmt.terminal.*;
 
 
+import java.io.PrintStream;
 import java.util.Map;
 
 /**
@@ -14,22 +15,28 @@ import java.util.Map;
  */
 public class IRPrinter implements IRVisitor {
 
+    PrintStream output;
+
+    public IRPrinter(PrintStream output) {
+        this.output = output;
+    }
+
     @Override
     public void visit(IRRoot root) {
         visit(root.globalVarDefBlock);
         visit(root.globalVarInitFunction);
-        System.out.println("\n");
+        output.println("\n");
         for (Map.Entry<String, Function> entry : root.funcDef.entrySet()) {
             Function func = entry.getValue();
             visit(func);
-            System.out.println("\n");
+            output.println("\n");
         }
     }
 
     @Override
     public void visit(Function function) {
-        System.out.println(function.funcName + " " + function.retType);
-        function.printParameterList();
+        output.println(function.funcName + " " + function.retType);
+        function.printParameterList(output);
         for (Map.Entry<String, BasicBlock> entry : function.blockMap.entrySet()) {
             BasicBlock block = entry.getValue();
             visit(block);
@@ -41,82 +48,82 @@ public class IRPrinter implements IRVisitor {
         if (basicBlock.statements.size() == 0) {
             return;
         }
-        System.out.println(basicBlock.label + ":");
+        output.println(basicBlock.label + ":");
         basicBlock.statements.forEach(stmt -> stmt.accept(this));
     }
 
     @Override
     public void visit(Alloca stmt) {
-        stmt.print();
+        stmt.print(output);
     }
 
     @Override
     public void visit(Binary stmt) {
-        stmt.print();
+        stmt.print(output);
     }
 
     @Override
     public void visit(Call stmt) {
-        stmt.print();
+        stmt.print(output);
     }
 
     @Override
     public void visit(GetElementPtr stmt) {
-        stmt.print();
+        stmt.print(output);
     }
 
     @Override
     public void visit(Global stmt) {
-        stmt.print();
+        stmt.print(output);
     }
 
     @Override
     public void visit(Icmp stmt) {
-        stmt.print();
+        stmt.print(output);
     }
 
     @Override
     public void visit(Load stmt) {
-        stmt.print();
+        stmt.print(output);
     }
 
     @Override
     public void visit(Store stmt) {
-        stmt.print();
+        stmt.print(output);
     }
 
     @Override
     public void visit(Branch stmt) {
-        stmt.print();
+        stmt.print(output);
     }
 
     @Override
     public void visit(Jump stmt) {
-        stmt.print();
+        stmt.print(output);
     }
 
     @Override
     public void visit(Return stmt) {
-        stmt.print();
+        stmt.print(output);
     }
 
     @Override
     public void visit(Trunc stmt) {
-        stmt.print();
+        stmt.print(output);
     }
 
     @Override
     public void visit(Zext stmt) {
-        stmt.print();
+        stmt.print(output);
     }
 
     @Override
     public void visit(Phi stmt) {
-        stmt.print();
+        stmt.print(output);
     }
 
     @Override
     public void visit(Malloc stmt) {
-        stmt.print();
+        stmt.print(output);
     }
 }

@@ -4,6 +4,8 @@ import ir.IRVisitor;
 import ir.entity.Storage;
 import ir.entity.var.LocalTmpVar;
 
+import java.io.PrintStream;
+
 /**
  * @author F
  * 通过跳转来源给变量赋值
@@ -35,8 +37,8 @@ public class Phi extends Instruction {
     }
 
     @Override
-    public void print() {
-        System.out.println(
+    public void print(PrintStream out) {
+        out.println(
                 result.toString() + " = phi " + ans1.type
                         + " [ " + ans1.toString() + " %" + label1 + " ],"
                         + " [ " + ans2.toString() + " %" + label2 + " ]"

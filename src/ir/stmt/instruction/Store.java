@@ -4,6 +4,8 @@ import ir.IRVisitor;
 import ir.entity.Entity;
 import ir.entity.var.*;
 
+import java.io.PrintStream;
+
 /**
  * @author F
  * 将entity存到指针指向位置
@@ -30,8 +32,8 @@ public class Store extends Instruction {
     }
 
     @Override
-    public void print() {
-        System.out.println("store " + value.toString()
+    public void print(PrintStream out) {
+        out.println("store " + value.toString()
                 + ", ptr " + pointer.toString());
     }
 

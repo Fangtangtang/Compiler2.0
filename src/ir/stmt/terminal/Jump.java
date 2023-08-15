@@ -2,6 +2,8 @@ package ir.stmt.terminal;
 
 import ir.*;
 
+import java.io.PrintStream;
+
 /**
  * @author F
  * 作为block终止符的跳转语句
@@ -15,8 +17,8 @@ public class Jump extends TerminalStmt {
     }
 
     @Override
-    public void print() {
-        System.out.println("br label %" + targetName);
+    public void print(PrintStream out) {
+        out.println("br label %" + targetName);
     }
 
     @Override

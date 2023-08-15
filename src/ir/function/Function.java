@@ -7,6 +7,7 @@ import ir.irType.*;
 import ir.stmt.instruction.Load;
 import ir.stmt.terminal.Return;
 
+import java.io.PrintStream;
 import java.util.*;
 
 /**
@@ -60,11 +61,11 @@ public class Function {
         blockMap.put(entryBlock.label, entryBlock);
     }
 
-    public void printParameterList() {
+    public void printParameterList(PrintStream out) {
         StringBuilder str=new StringBuilder("parameter:");
         parameterList.forEach(
                 param->str.append(param.toString()).append(", ")
         );
-        System.out.println(str);
+        out.println(str);
     }
 }

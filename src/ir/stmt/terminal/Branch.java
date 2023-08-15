@@ -4,6 +4,8 @@ import ir.BasicBlock;
 import ir.IRVisitor;
 import ir.entity.Entity;
 
+import java.io.PrintStream;
+
 /**
  * @author F
  * 作为block终止符的分支语句
@@ -25,11 +27,11 @@ public class Branch extends TerminalStmt {
 
     //br i1 %cmp, label %return, label %if.end
     @Override
-    public void print() {
+    public void print(PrintStream out) {
         String str = "br " + condition.toString() +
                 ", label " + trueBranch +
                 ", label " + falseBranch;
-        System.out.println(str);
+        out.println(str);
     }
 
     @Override

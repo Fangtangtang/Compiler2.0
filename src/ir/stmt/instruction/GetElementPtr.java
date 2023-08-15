@@ -3,6 +3,8 @@ package ir.stmt.instruction;
 import ir.IRVisitor;
 import ir.entity.*;
 
+import java.io.PrintStream;
+
 /**
  * @author F
  * 取元素指针指令，转为逐层解析
@@ -34,8 +36,8 @@ public class GetElementPtr extends Instruction {
     }
 
     @Override
-    public void print() {
-        System.out.println(result.toString() + " = getelementptr " +
+    public void print(PrintStream out) {
+        out.println(result.toString() + " = getelementptr " +
                 ptrVal.toString() + ", ptr " +
                 ptrVal.toString() + ", i32 0, " +
                 idx.toString());

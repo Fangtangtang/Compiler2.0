@@ -5,6 +5,8 @@ import ir.entity.*;
 import ir.entity.var.*;
 import ir.irType.IRType;
 
+import java.io.PrintStream;
+
 
 /**
  * @author F
@@ -28,8 +30,8 @@ public class Alloca extends Instruction {
     }
 
     @Override
-    public void print() {
-        System.out.println(result.toString() + " = alloca " + result.storage.toString());
+    public void print(PrintStream out) {
+        out.println(result.toString() + " = alloca " + result.storage.toString());
     }
 
     @Override

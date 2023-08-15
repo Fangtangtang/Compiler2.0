@@ -9,6 +9,8 @@ import ir.irType.IRType;
 import ir.irType.PtrType;
 import ir.irType.StructType;
 
+import java.io.PrintStream;
+
 /**
  * @author F
  * 为全局变量开空间（赋字面量初值）
@@ -31,7 +33,7 @@ public class Global extends Instruction {
     }
 
     @Override
-    public void print() {
+    public void print(PrintStream out) {
         String str;
         if (result.storage instanceof Constant) {
             str = result.storage.toString();
@@ -43,7 +45,7 @@ public class Global extends Instruction {
         } else {
             str = result.storage.type + " 0";
         }
-        System.out.println(result.toString() + " = global " + str);
+        out.println(result.toString() + " = global " + str);
     }
 
     @Override

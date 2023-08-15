@@ -4,6 +4,8 @@ import ir.IRVisitor;
 import ir.entity.Storage;
 import ir.entity.var.LocalTmpVar;
 
+import java.io.PrintStream;
+
 /**
  * @author F
  * 将整型数截断，取低位
@@ -28,8 +30,8 @@ public class Trunc extends Instruction {
     }
 
     @Override
-    public void print() {
-        System.out.println(
+    public void print(PrintStream out) {
+        out.println(
                 result.toString() + " = trunc "
                         + value.type + " " + value.toString()
                         + " to " + result.type

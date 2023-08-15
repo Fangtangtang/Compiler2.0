@@ -5,6 +5,7 @@ import ir.entity.Storage;
 import ir.entity.var.LocalTmpVar;
 import ir.function.Function;
 
+import java.io.PrintStream;
 import java.util.ArrayList;
 
 /**
@@ -39,7 +40,7 @@ public class Call extends Instruction {
     }
 
     @Override
-    public void print() {
+    public void print(PrintStream out) {
         StringBuilder str = new StringBuilder(
                 result.toString() + " = call " + function.retType
                         + "@" + function.funcName + "( "
@@ -48,7 +49,7 @@ public class Call extends Instruction {
                 parameter -> str.append(parameter).append(" ")
         );
         str.append(")");
-        System.out.println(str);
+        out.println(str);
     }
 
     @Override

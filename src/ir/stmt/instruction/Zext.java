@@ -5,6 +5,8 @@ import ir.IRVisitor;
 import ir.entity.Storage;
 import ir.entity.var.LocalTmpVar;
 
+import java.io.PrintStream;
+
 /**
  * @author F
  * trunc逆操作
@@ -29,8 +31,8 @@ public class Zext extends Instruction {
     }
 
     @Override
-    public void print() {
-        System.out.println(
+    public void print(PrintStream out) {
+        out.println(
                 result.toString() + " = zext "
                         + value.type + " " + value.toString()
                         + " to " + result.type
