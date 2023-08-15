@@ -38,7 +38,7 @@ public class GetElementPtr extends Instruction {
     @Override
     public void print(PrintStream out) {
         out.println(result.toString() + " = getelementptr " +
-                ptrVal.toString() + ", ptr " +
+                ptrVal.type.toString() + ", ptr " +
                 ptrVal.toString() + ", i32 0, " +
                 idx.toString());
     }

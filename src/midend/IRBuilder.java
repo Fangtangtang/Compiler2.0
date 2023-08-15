@@ -626,13 +626,16 @@ public class IRBuilder implements ASTVisitor<Entity> {
         //取出数组名
         Entity array = node.arrayName.accept(this);
         LocalTmpVar arrayName;
+        //数组名（变量）
         if (array instanceof Ptr ptr) {
             arrayName = new LocalTmpVar(ptr.storage.type);
             pushBack(
                     new Load(arrayName, ptr)
             );
-        } else if (array instanceof LocalTmpVar) {
-            arrayName = (LocalTmpVar) array;
+        }
+        //临时变量，指向数组名的指针
+        else if (array instanceof LocalTmpVar && array.type instanceof PtrType ptrType) {
+            arrayName = new LocalTmpVar(ptrType.type);
         } else {
             throw new InternalException("unexpected array name");
         }
@@ -644,7 +647,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             idx = getValue(node.indexList.get(i - 1).accept(this));
             //访问到基本元素
             if (ptr.dimension == i) {
-                result = new LocalTmpVar(ptr.type);
+                result = new LocalTmpVar(new PtrType(ptr.type));
                 pushBack(
                         new GetElementPtr(result, prev, idx)
                 );
@@ -660,7 +663,10 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 prev = result;
             }
         }
-        return result;
+        if (result == null) {
+            throw new InternalException("invalid array visit");
+        }
+        return new LocalTmpVar(new PtrType(result.type));
     }
 
     /**
@@ -982,6 +988,22 @@ public class IRBuilder implements ASTVisitor<Entity> {
         return node.rhs.accept(this);
     }
 
+//    private Storage getCurrentVar(Entity entity) {
+//        LocalTmpVar tmp;
+//        if (entity instanceof Ptr) {
+//            tmp = new LocalTmpVar(((Ptr) entity).storage.type);
+//            pushBack(
+//                    new Load(tmp, entity)
+//            );
+//            return tmp;
+//        } else if (entity.type instanceof PtrType ptrType) {
+//            tmp = new LocalTmpVar(ptrType.type);
+//        } else {
+//            throw new InternalException("invalid member visit");
+//        }
+//        return tmp;
+//    }
+
     /**
      * NewExprNode
      * 实例化对象\创建数组
@@ -1280,7 +1302,13 @@ public class IRBuilder implements ASTVisitor<Entity> {
     public Entity visit(VarNameExprNode node) {
         //类成员.访问，作为右式
         if (currentVar != null) {
-            if (currentVar.type instanceof ArrayType arrayType) {
+            IRType pointed;
+            if (currentVar.type instanceof PtrType ptrType) {
+                pointed = ptrType.type;
+            } else {
+                pointed = currentVar.type;
+            }
+            if (pointed instanceof ArrayType arrayType) {
                 if (arrayType.type instanceof IntType eleType) {
                     //字符串数组：string
                     if (eleType.typeName.equals(IntType.TypeName.CHAR)) {
@@ -1293,7 +1321,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 currentVar = null;
                 return null;
             }
-            StructType structType = (StructType) currentVar.type;
+            StructType structType = (StructType) pointed;
             Integer index = structType.members.get(node.name);
             //成员变量
             if (index >= 0) {

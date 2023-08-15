@@ -84,18 +84,10 @@ public class IRRoot {
             //字符串：指向一维字符数组的指针
             return types.get("string");
         } else if (type instanceof utility.type.ArrayType arrayType) {
-            //数组：层层嵌套
-            //最底下一层
-            ir.irType.ArrayType base = new ir.irType.ArrayType(
+            return new ir.irType.ArrayType(
                     type2irType(arrayType.eleType),
-                    1
+                    arrayType.dimensions
             );
-            PtrType ptr = null;
-            for (int i = 1; i <= arrayType.dimensions; ++i) {
-                ptr = new PtrType(base);
-                base = new ir.irType.ArrayType(ptr, i + 1);
-            }
-            return ptr;
         } else if (type instanceof ClassType classType) {
             return types.get(classType.name);
         } else {
