@@ -37,7 +37,7 @@ public class Store extends Instruction {
         if (value instanceof LocalTmpVar) {
             str = value.type.toString() + " " + value.toString();
         } else if (value instanceof Ptr ptr) {
-            str = ptr.storage.type + " " + ptr.toString();
+            str = ptr.storage.type + " " + ptr;
         } else {
             str = value.toString();
         }

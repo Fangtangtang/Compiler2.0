@@ -3,6 +3,7 @@ package ir.stmt.instruction;
 import ir.IRVisitor;
 import ir.entity.Storage;
 import ir.entity.var.LocalTmpVar;
+import ir.entity.var.Ptr;
 import ir.function.Function;
 import ir.irType.VoidType;
 
@@ -22,7 +23,7 @@ import java.util.ArrayList;
  * +------------------------------------------------------------
  */
 public class Call extends Instruction {
-    public ArrayList<Storage> parameterList = new ArrayList<>();
+    public ArrayList<Storage> parameterList;
     public Function function;
     public LocalTmpVar result;
 
@@ -30,6 +31,14 @@ public class Call extends Instruction {
                 LocalTmpVar result) {
         this.function = function;
         this.result = result;
+    }
+
+    public Call(Function function,
+                LocalTmpVar result,
+                ArrayList<Storage> parameterList) {
+        this.function = function;
+        this.result = result;
+        this.parameterList = parameterList;
     }
 
     public Call(Function function,
@@ -43,16 +52,31 @@ public class Call extends Instruction {
     @Override
     public void print(PrintStream out) {
         StringBuilder str = new StringBuilder();
-
         if (!(result.type instanceof VoidType)) {
             str.append("\t").append(result.toString()).append(" = ");
         }
-        str.append("call ").append(function.retType).append(" @").append(function.funcName).append("(");
-        if (parameterList.size() > 0) {
-            str.append(parameterList.get(0));
-        }
-        for (int i = 1; i < parameterList.size(); ++i) {
-            str.append(", ").append(parameterList.get(i));
+        str.append("call ").append(function.retType).append(" @").append(function.funcName)
+//                .append(function.printParameterList())
+                .append("(");
+        Storage param;
+        if(parameterList != null ){
+            if (parameterList.size() > 0) {
+                param = parameterList.get(0);
+                if (param instanceof LocalTmpVar tmp) {
+                    str.append(tmp.type).append(" ").append(tmp.toString());
+                } else {
+                    str.append(param);
+                }
+            }
+            for (int i = 1; i < parameterList.size(); ++i) {
+                str.append(", ");
+                param = parameterList.get(i);
+                if (param instanceof LocalTmpVar tmp) {
+                    str.append(tmp.type).append(" ").append(tmp.toString());
+                } else {
+                    str.append(param);
+                }
+            }
         }
         str.append(")");
         out.println(str);

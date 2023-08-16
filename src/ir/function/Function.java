@@ -47,7 +47,7 @@ public class Function {
         blockMap.put(entryBlock.label, entryBlock);
     }
 
-    public void printParameterList(PrintStream out) {
+    public String printParameterList() {
         StringBuilder str = new StringBuilder("(");
         if (parameterList.size() > 0) {
             str.append(parameterList.get(0).storage.type).append(" ").append(parameterList.get(0));
@@ -57,6 +57,6 @@ public class Function {
                     .append(parameterList.get(i).toString());
         }
         str.append(")");
-        out.print(str);
+        return str.toString();
     }
 }

@@ -52,7 +52,7 @@ public class IRPrinter implements IRVisitor {
             return;
         }
         output.print("\ndefine " + function.retType + " @" + function.funcName);
-        function.printParameterList(output);
+        output.println(function.printParameterList());
         output.println("{");
         for (Map.Entry<String, BasicBlock> entry : function.blockMap.entrySet()) {
             BasicBlock block = entry.getValue();

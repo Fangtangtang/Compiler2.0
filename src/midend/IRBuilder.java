@@ -394,7 +394,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         //清空所有函数构建中的辅助变量
         funcBlockCounter = 0;
         logicExprCounter = 0;
-        tmpCounter=-1;
+        tmpCounter = -1;
         logicBlockMap = new HashMap<>();
         ClassScope classScope;
         //参数复制、局部变量定义
@@ -820,6 +820,13 @@ public class IRBuilder implements ASTVisitor<Entity> {
         Function function;
         LocalTmpVar result;
         Call stmt;
+        //参数表访问
+        ArrayList<Storage> params = new ArrayList<>();
+        node.parameterList.forEach(
+                parameter -> params.add(
+                        getValue(parameter.accept(this))
+                )
+        );
         //类的成员函数
         if (currentVar != null) {
             IRType pointed;
@@ -834,9 +841,9 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 ++tmpCounter;
             }
             result = new LocalTmpVar(function.retType, tmpCounter);
-            stmt = new Call(function, result);
+            stmt = new Call(function, result, params);
             //第一个参数为this
-            stmt.parameterList.add(currentVar);
+            stmt.parameterList.add(0, currentVar);
             currentVar = null;
         }
         //普通函数
@@ -846,12 +853,8 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 ++tmpCounter;
             }
             result = new LocalTmpVar(function.retType, tmpCounter);
-            stmt = new Call(function, result);
+            stmt = new Call(function, result, params);
         }
-        node.parameterList.forEach(
-                parameter -> stmt.parameterList.add(
-                        (Storage) parameter.accept(this)
-                ));
         pushBack(stmt);
         return result;
     }
