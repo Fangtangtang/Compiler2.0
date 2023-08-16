@@ -11,6 +11,7 @@ import java.util.*;
  */
 public class StructType extends IRType {
     public String name;
+    public boolean padding = false;
     public HashMap<String, Integer> members = new HashMap<>();
 
     public ArrayList<IRType> memberTypes = new ArrayList<>();
@@ -34,13 +35,32 @@ public class StructType extends IRType {
 
     @Override
     public String toString() {
-        StringBuilder str = new StringBuilder();
-        str.append("class:").append(this.name).append("\t :");
-        for (String member : members.keySet()) {
-            Integer index = members.get(member);
-            if (index >= 0) {
-                str.append(member).append("\t").append(memberTypes.get(index).toString()).append(";");
+        return "%class." + name;
+    }
+
+    private String typeSpace(IRType type) {
+        if (type instanceof StructType structType) {
+            return structType.toString();
+        }
+        if (type instanceof IntType intType) {
+            if (intType.typeName != IntType.TypeName.INT) {
+                padding = true;
+                return "i8, [3 x i8]";
+            }else {
+                return "i32";
             }
+        }
+        return "ptr";
+    }
+
+    public String memberInformation() {
+        StringBuilder str = new StringBuilder();
+        IRType type;
+        if (memberTypes.size() > 0) {
+            str.append(typeSpace(memberTypes.get(0)));
+        }
+        for (int i = 1; i < memberTypes.size(); ++i) {
+            str.append(", ").append(typeSpace(memberTypes.get(i)));
         }
         return str.toString();
     }

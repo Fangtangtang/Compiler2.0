@@ -18,7 +18,7 @@ public class Jump extends TerminalStmt {
 
     @Override
     public void print(PrintStream out) {
-        out.println("br label %" + targetName);
+        out.println("\tbr label %" + targetName);
     }
 
     @Override

@@ -27,7 +27,7 @@ public class Malloc extends Instruction {
     @Override
     public void print(PrintStream out) {
         out.println(
-                result + " = malloc "
+                "\t" + result + " = malloc "
                         + length + ", " + ((PtrType) result.type).type
         );
     }

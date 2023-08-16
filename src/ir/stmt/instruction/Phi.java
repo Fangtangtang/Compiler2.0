@@ -39,7 +39,7 @@ public class Phi extends Instruction {
     @Override
     public void print(PrintStream out) {
         out.println(
-                result.toString() + " = phi " + ans1.type
+                "\t" + result.toString() + " = phi " + ans1.type
                         + " [ " + ans1.toString() + " %" + label1 + " ],"
                         + " [ " + ans2.toString() + " %" + label2 + " ]"
         );

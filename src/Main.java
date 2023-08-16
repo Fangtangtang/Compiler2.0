@@ -25,8 +25,8 @@ public class Main {
         String fileName = "testcases/primary/function/error.mx";
 //        String fileName ="C:/Users/21672/Desktop/mx_raw/sema/symbol-package/symbol-2.mx";
 
-//        InputStream inputStream = System.in;
-        InputStream inputStream = new FileInputStream(fileName);
+        InputStream inputStream = System.in;
+//        InputStream inputStream = new FileInputStream(fileName);
 
         try {
             compile(inputStream);
@@ -69,9 +69,12 @@ public class Main {
         IRBuilder irBuilder = new IRBuilder(Scope.symbolTable);
         irBuilder.visit(astRoot);
 
-        PrintStream outputStream = new PrintStream(new FileOutputStream("output"));
+//        PrintStream outputStream = new PrintStream(new FileOutputStream("output"));
+        PrintStream outputStream = System.out;
         IRPrinter printer = new IRPrinter(outputStream);
         printer.visit(irBuilder.irRoot);
+//        new BuiltinIRPrinter(outputStream);
+
     }
 }
 

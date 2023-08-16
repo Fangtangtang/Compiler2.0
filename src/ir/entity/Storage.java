@@ -13,16 +13,11 @@ import ir.irType.IRType;
  * 空间的内容可变
  */
 public class Storage extends Entity {
-    //总数目
-    public static int cnt = -1;
-    public final int index;
 
     //由类型能确定占多少空间
     //指针指向的对象在内存中占空间的量
     public Storage(IRType type) {
         super(type);
-        ++cnt;
-        this.index = cnt;
     }
 
     //TODO:print

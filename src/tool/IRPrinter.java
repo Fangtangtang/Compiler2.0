@@ -23,24 +23,42 @@ public class IRPrinter implements IRVisitor {
 
     @Override
     public void visit(IRRoot root) {
+        root.printStruct(output);
         visit(root.globalVarDefBlock);
         visit(root.globalVarInitFunction);
         output.println("\n");
         for (Map.Entry<String, Function> entry : root.funcDef.entrySet()) {
             Function func = entry.getValue();
             visit(func);
-            output.println("\n");
         }
     }
 
+    /**
+     * ---------------------------------------------------------------------------
+     * define i32 @func(i32 %0, i32 %1) #0 {
+     * %3 = alloca i32, align 4
+     * %4 = alloca i32, align 4
+     * store i32 %0, ptr %3, align 4
+     * store i32 %1, ptr %4, align 4
+     * ret i32 1
+     * }
+     * ----------------------------------------------------------------------------
+     *
+     * @param function
+     */
     @Override
     public void visit(Function function) {
-        output.println(function.funcName + " " + function.retType);
+        if (function.entry == null) {
+            return;
+        }
+        output.print("\ndefine " + function.retType + " @" + function.funcName);
         function.printParameterList(output);
+        output.println("{");
         for (Map.Entry<String, BasicBlock> entry : function.blockMap.entrySet()) {
             BasicBlock block = entry.getValue();
             visit(block);
         }
+        output.println("}");
     }
 
     @Override

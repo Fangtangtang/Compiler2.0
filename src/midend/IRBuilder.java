@@ -36,6 +36,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
     //IR上不需要新建Scope，直接使用ASTNode存下来的scope
     Scope currentScope = null;
     Function currentFunction = null;
+    Integer tmpCounter;
     //计数，确保函数block不重名
     Integer funcBlockCounter = 0;
     //当前的逻辑运算符
@@ -58,7 +59,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
     //特殊处理内置类array、string
     //应该是指向当前类的指针（内存中的指针类型）
     Storage currentVar = null;
-    boolean isStringMember = false;
     //全局变量的初始化块；负责变量的空间申请
     BasicBlock globalVarDefBlock = new BasicBlock("global_var_def");
     GlobalVarInitFunction globalInitFunc = new GlobalVarInitFunction();
@@ -81,7 +81,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             num = 1;
         }
         varMap.put(name, num);
-        return num + name;
+        return name + "." + num;
     }
 
     private void changeBlock(BasicBlock block) {
@@ -144,6 +144,9 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 def -> def.accept(this)
         );
         exitScope();
+        irRoot.globalVarInitFunction.currentBlock.pushBack(
+                new Return()
+        );
         return null;
     }
 
@@ -391,6 +394,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         //清空所有函数构建中的辅助变量
         funcBlockCounter = 0;
         logicExprCounter = 0;
+        tmpCounter=-1;
         logicBlockMap = new HashMap<>();
         ClassScope classScope;
         //参数复制、局部变量定义
@@ -423,6 +427,19 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 new Jump("start")
         );
         currentFunction.blockMap.put("return", currentFunction.ret);
+        if (currentFunction.retType instanceof VoidType) {
+            currentFunction.ret.pushBack(
+                    new Return()
+            );
+        } else {
+            LocalTmpVar tmp = new LocalTmpVar(currentFunction.retType, ++tmpCounter);
+            currentFunction.ret.pushBack(
+                    new Load(tmp, currentFunction.retVal)
+            );
+            currentFunction.ret.pushBack(
+                    new Return(tmp)
+            );
+        }
         exitScope();
         return null;
     }
@@ -457,6 +474,12 @@ public class IRBuilder implements ASTVisitor<Entity> {
     private void getCurrentFunc(String funcName) {
         currentFunction = irRoot.getFunc(funcName);
         currentInitBlock = new BasicBlock("var_def");
+        currentFunction.entry = currentInitBlock;
+        if ("main".equals(funcName)) {
+            currentInitBlock.pushBack(
+                    new Call(irRoot.globalVarInitFunction, new LocalTmpVar(new VoidType(), tmpCounter))
+            );
+        }
         //进入函数的第一个块为变量、参数初始化
         currentFunction.entry = currentInitBlock;
         currentFunction.blockMap.put(currentInitBlock.label, currentInitBlock);
@@ -629,7 +652,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         ArrayType arrayType;
         //数组名（变量）
         if (array instanceof Ptr ptr) {
-            arrayName = new LocalTmpVar(ptr.storage.type);
+            arrayName = new LocalTmpVar(ptr.storage.type, ++tmpCounter);
             pushBack(
                     new Load(arrayName, ptr)
             );
@@ -649,7 +672,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             idx = getValue(node.indexList.get(i - 1).accept(this));
             //访问到基本元素
             if (arrayType.dimension == i) {
-                result = new LocalTmpVar(new PtrType(arrayType.type));
+                result = new LocalTmpVar(new PtrType(arrayType.type), ++tmpCounter);
                 pushBack(
                         new GetElementPtr(result, prev, idx)
                 );
@@ -658,7 +681,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             //仍然访问到数组
             else {
                 cur = new ArrayType(cur.type, cur.dimension - 1);
-                result = new LocalTmpVar(cur);
+                result = new LocalTmpVar(cur, ++tmpCounter);
                 pushBack(
                         new GetElementPtr(result, prev, idx)
                 );
@@ -696,7 +719,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         }
         Storage tmp = getValue(right);
         if (tmp.type instanceof IntType && ((IntType) tmp.type).typeName.equals(IntType.TypeName.TMP_BOOL)) {
-            LocalTmpVar result = new LocalTmpVar(new IntType(IntType.TypeName.BOOL));
+            LocalTmpVar result = new LocalTmpVar(new IntType(IntType.TypeName.BOOL), ++tmpCounter);
             pushBack(
                     new Zext(result, tmp)
             );
@@ -728,7 +751,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         Entity right = node.rhs.accept(this);
         Storage lhs = getValue(left), rhs = getValue(right);
         //IR运算语句
-        LocalTmpVar result = new LocalTmpVar(lhs.type);
+        LocalTmpVar result = new LocalTmpVar(lhs.type, ++tmpCounter);
         pushBack(
                 new Binary(node.operator,
                         result,
@@ -758,7 +781,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         Entity right = node.rhs.accept(this);
         Storage lhs = getValue(left), rhs = getValue(right);
         //IR比较语句
-        LocalTmpVar result = new LocalTmpVar(new IntType(IntType.TypeName.TMP_BOOL));
+        LocalTmpVar result = new LocalTmpVar(new IntType(IntType.TypeName.TMP_BOOL), ++tmpCounter);
         pushBack(
                 new Icmp(node.operator,
                         result,
@@ -772,7 +795,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
     private Storage getValue(Entity entity) {
         LocalTmpVar tmp;
         if (entity instanceof Ptr) {
-            tmp = new LocalTmpVar(((Ptr) entity).storage.type);
+            tmp = new LocalTmpVar(((Ptr) entity).storage.type, ++tmpCounter);
             pushBack(
                     new Load(tmp, entity)
             );
@@ -807,7 +830,10 @@ public class IRBuilder implements ASTVisitor<Entity> {
             }
             StructType classType = (StructType) pointed;
             function = irRoot.getFunc(classType.name + "." + callFuncName);
-            result = new LocalTmpVar(function.retType);
+            if (!(function.retType instanceof VoidType)) {
+                ++tmpCounter;
+            }
+            result = new LocalTmpVar(function.retType, tmpCounter);
             stmt = new Call(function, result);
             //第一个参数为this
             stmt.parameterList.add(currentVar);
@@ -816,7 +842,10 @@ public class IRBuilder implements ASTVisitor<Entity> {
         //普通函数
         else {
             function = irRoot.getFunc(callFuncName);
-            result = new LocalTmpVar(function.retType);
+            if (!(function.retType instanceof VoidType)) {
+                ++tmpCounter;
+            }
+            result = new LocalTmpVar(function.retType, tmpCounter);
             stmt = new Call(function, result);
         }
         node.parameterList.forEach(
@@ -888,7 +917,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             String str = currentBlock.label;
             changeBlock(endBlock);
             currentFunction.blockMap.put(currentBlock.label, currentBlock);
-            LocalTmpVar result = new LocalTmpVar(new IntType(IntType.TypeName.TMP_BOOL));
+            LocalTmpVar result = new LocalTmpVar(new IntType(IntType.TypeName.TMP_BOOL), ++tmpCounter);
             if (node.operator.equals(LogicExprNode.LogicOperator.AndAnd)) {
                 pushBack(
                         new Phi(result,
@@ -924,7 +953,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
     private LocalTmpVar toBool(Entity entity) {
         LocalTmpVar tmp, toBool;
         if (entity instanceof Ptr) {
-            tmp = new LocalTmpVar(((Ptr) entity).storage.type);
+            tmp = new LocalTmpVar(((Ptr) entity).storage.type, ++tmpCounter);
             pushBack(
                     new Load(tmp, entity)
             );
@@ -932,7 +961,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             tmp = (LocalTmpVar) entity;
         }
         if (tmp.type.equals(new IntType(IntType.TypeName.BOOL))) {
-            toBool = new LocalTmpVar(new IntType(IntType.TypeName.TMP_BOOL));
+            toBool = new LocalTmpVar(new IntType(IntType.TypeName.TMP_BOOL), ++tmpCounter);
             pushBack(
                     new Trunc(toBool, tmp)
             );
@@ -958,7 +987,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
     public Entity visit(LogicPrefixExprNode node) {
         operator = null;
         Entity entity = node.expression.accept(this);
-        LocalTmpVar result = new LocalTmpVar(new IntType(IntType.TypeName.TMP_BOOL));
+        LocalTmpVar result = new LocalTmpVar(new IntType(IntType.TypeName.TMP_BOOL), ++tmpCounter);
         if (entity instanceof Constant) {//常量
             pushBack(
                     new Binary(
@@ -969,7 +998,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             return result;
         }
         Storage tmp = getValue(entity);
-        LocalTmpVar toBool = new LocalTmpVar(new IntType(IntType.TypeName.TMP_BOOL));
+        LocalTmpVar toBool = new LocalTmpVar(new IntType(IntType.TypeName.TMP_BOOL), ++tmpCounter);
         pushBack(
                 new Trunc(toBool, tmp)
         );
@@ -996,22 +1025,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
         return node.rhs.accept(this);
     }
 
-//    private Storage getCurrentVar(Entity entity) {
-//        LocalTmpVar tmp;
-//        if (entity instanceof Ptr) {
-//            tmp = new LocalTmpVar(((Ptr) entity).storage.type);
-//            pushBack(
-//                    new Load(tmp, entity)
-//            );
-//            return tmp;
-//        } else if (entity.type instanceof PtrType ptrType) {
-//            tmp = new LocalTmpVar(ptrType.type);
-//        } else {
-//            throw new InternalException("invalid member visit");
-//        }
-//        return tmp;
-//    }
-
     /**
      * NewExprNode
      * 实例化对象\创建数组
@@ -1028,14 +1041,14 @@ public class IRBuilder implements ASTVisitor<Entity> {
         //实例化类对象
         if (node.dimension == 0) {
             StructType type = (StructType) node.typeNode.accept(this).type;
-            LocalTmpVar result = new LocalTmpVar(new PtrType(type));
+            LocalTmpVar result = new LocalTmpVar(new PtrType(type), ++tmpCounter);
             pushBack(
                     new Malloc(result, new ConstInt(type.size.toString()))
             );
             //有构造函数，调用构造函数初始化
             if (irRoot.funcDef.containsKey(type.name)) {
                 Function function = irRoot.getFunc(type.name);
-                LocalTmpVar initialized = new LocalTmpVar(new PtrType(type));
+                LocalTmpVar initialized = new LocalTmpVar(new PtrType(type), ++tmpCounter);
                 pushBack(
                         new Call(function, initialized, result)
                 );
@@ -1056,7 +1069,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 );
             }
             //最外一层，指向指针数组的指针
-            LocalTmpVar result = new LocalTmpVar(new PtrType(type));
+            LocalTmpVar result = new LocalTmpVar(new PtrType(type), ++tmpCounter);
             createArray(indexList, node.dimension, 1, result);
             return result;
         }
@@ -1107,7 +1120,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         //i<size;
         currentBlock = condBlock;
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
-        LocalTmpVar cmpResult = new LocalTmpVar(new IntType(IntType.TypeName.BOOL));
+        LocalTmpVar cmpResult = new LocalTmpVar(new IntType(IntType.TypeName.BOOL), ++tmpCounter);
         pushBack(
                 new Icmp(CmpExprNode.CmpOperator.Less,
                         cmpResult,
@@ -1120,8 +1133,8 @@ public class IRBuilder implements ASTVisitor<Entity> {
         //循环体
         currentBlock = bodyBlock;
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
-        LocalTmpVar newRoot = new LocalTmpVar(new PtrType(type));
-        LocalTmpVar index = new LocalTmpVar(new IntType(IntType.TypeName.INT));
+        LocalTmpVar newRoot = new LocalTmpVar(new PtrType(type), ++tmpCounter);
+        LocalTmpVar index = new LocalTmpVar(new IntType(IntType.TypeName.INT), ++tmpCounter);
         pushBack(
                 new Load(index, i)
         );
@@ -1135,7 +1148,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         //step
         currentBlock = incBlock;
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
-        LocalTmpVar addResult = new LocalTmpVar(new IntType(IntType.TypeName.INT));
+        LocalTmpVar addResult = new LocalTmpVar(new IntType(IntType.TypeName.INT), ++tmpCounter);
         pushBack(
                 new Binary(BinaryExprNode.BinaryOperator.Plus,
                         addResult,
@@ -1168,7 +1181,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         if (node.operator == PrefixExprNode.PrefixOperator.PlusPlus ||
                 node.operator == PrefixExprNode.PrefixOperator.MinusMinus) {
             Storage tmp = getValue(entity);
-            LocalTmpVar result = new LocalTmpVar(tmp.type);
+            LocalTmpVar result = new LocalTmpVar(tmp.type, ++tmpCounter);
             Entity right = new ConstInt("1");
             BinaryExprNode.BinaryOperator operator =
                     node.operator == PrefixExprNode.PrefixOperator.PlusPlus ?
@@ -1184,7 +1197,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             );
             return entity;//返回变量
         }
-        LocalTmpVar result = new LocalTmpVar(entity.type);
+        LocalTmpVar result = new LocalTmpVar(entity.type, ++tmpCounter);
         Storage value = getValue(entity);
         //-取相反数
         if (node.operator == PrefixExprNode.PrefixOperator.Minus) {
@@ -1230,14 +1243,14 @@ public class IRBuilder implements ASTVisitor<Entity> {
         Entity entity = node.expression.accept(this);
         LocalTmpVar tmp;
         if (entity instanceof Ptr ptr) {
-            tmp = new LocalTmpVar(ptr.storage.type);
+            tmp = new LocalTmpVar(ptr.storage.type, ++tmpCounter);
             pushBack(
                     new Load(tmp, entity)
             );
         } else {
             tmp = (LocalTmpVar) entity;
         }
-        LocalTmpVar result = new LocalTmpVar(tmp.type);
+        LocalTmpVar result = new LocalTmpVar(tmp.type, ++tmpCounter);
         Entity right = new ConstInt("1");
         BinaryExprNode.BinaryOperator operator =
                 node.operator == SuffixExprNode.SuffixOperator.PlusPlus ?
@@ -1289,7 +1302,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         );
         changeBlock(endBlock);
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
-        LocalTmpVar result = new LocalTmpVar(trueAns.type);
+        LocalTmpVar result = new LocalTmpVar(trueAns.type, ++tmpCounter);
         pushBack(
                 new Phi(result, trueAns, falseAns,
                         "cond.true" + label, "cond.false" + label)
@@ -1334,7 +1347,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             //成员变量
             if (index >= 0) {
                 IRType type = structType.memberTypes.get(index);
-                LocalTmpVar result = new LocalTmpVar(new PtrType(type));
+                LocalTmpVar result = new LocalTmpVar(new PtrType(type), ++tmpCounter);
                 pushBack(
                         new GetElementPtr(result, currentVar, new ConstInt(index.toString()))
                 );
@@ -1348,7 +1361,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         //变量名
         if (varMap.containsKey(node.name)) {
             //该变量在当前的重命名
-            String name = varMap.get(node.name) + node.name;
+            String name = node.name + "." + varMap.get(node.name);
             return rename2mem.get(name);
         }
         //类的成员直接访问
@@ -1362,7 +1375,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             //成员变量
             if (index >= 0) {
                 IRType type = currentClass.memberTypes.get(index);
-                LocalTmpVar result = new LocalTmpVar(new PtrType(type));
+                LocalTmpVar result = new LocalTmpVar(new PtrType(type), ++tmpCounter);
                 pushBack(
                         new GetElementPtr(result, this1, new ConstInt(index.toString()))
                 );
@@ -1539,7 +1552,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             //在全局的初始化函数中加入赋值语句
             if (entity != null && !(entity instanceof Constant)) {
                 if (entity.type instanceof IntType && ((IntType) entity.type).typeName.equals(IntType.TypeName.TMP_BOOL)) {
-                    LocalTmpVar tmp = new LocalTmpVar(new IntType(IntType.TypeName.BOOL));
+                    LocalTmpVar tmp = new LocalTmpVar(new IntType(IntType.TypeName.BOOL), ++tmpCounter);
                     pushBack(
                             new Zext(tmp, (Storage) entity)
                     );
@@ -1563,7 +1576,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 operator = null;
                 entity = getValue(node.initExpr.accept(this));
                 if (entity.type instanceof IntType && ((IntType) entity.type).typeName.equals(IntType.TypeName.TMP_BOOL)) {
-                    LocalTmpVar result = new LocalTmpVar(new IntType(IntType.TypeName.BOOL));
+                    LocalTmpVar result = new LocalTmpVar(new IntType(IntType.TypeName.BOOL), ++tmpCounter);
                     pushBack(
                             new Zext(result, (Storage) entity)
                     );

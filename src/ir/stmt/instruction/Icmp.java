@@ -53,7 +53,7 @@ public class Icmp extends Instruction {
 
     @Override
     public void print(PrintStream out) {
-        out.println(result.toString()
+        out.println("\t" + result.toString()
                 + " = icmp " + cond.name()
                 + " " + op1.toString() + ", " + op2.toString());
 

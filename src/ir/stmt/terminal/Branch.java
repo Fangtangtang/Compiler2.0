@@ -28,9 +28,9 @@ public class Branch extends TerminalStmt {
     //br i1 %cmp, label %return, label %if.end
     @Override
     public void print(PrintStream out) {
-        String str = "br " + condition.toString() +
-                ", label " + trueBranch +
-                ", label " + falseBranch;
+        String str = "\tbr " + condition.toString() +
+                ", label %" + trueBranch +
+                ", label %" + falseBranch;
         out.println(str);
     }
 

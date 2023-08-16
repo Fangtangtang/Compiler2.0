@@ -10,6 +10,7 @@ import utility.SymbolTable;
 import utility.error.InternalException;
 import utility.type.*;
 
+import java.io.PrintStream;
 import java.util.*;
 
 
@@ -43,7 +44,7 @@ public class IRRoot {
             String name = entry.getKey();
             Type type = entry.getValue();
             if (!(type instanceof FunctionType)) {
-                addSymbol(name, type);
+                addSymbol(name);
             }
         }
         for (Map.Entry<String, Type> entry : table.symbolTable.entrySet()) {
@@ -95,7 +96,7 @@ public class IRRoot {
         }
     }
 
-    private void addSymbol(String typeName, Type type) {
+    private void addSymbol(String typeName) {
         switch (typeName) {
             case "void" -> types.put(typeName, new VoidType());
             case "int" -> types.put(typeName, new IntType(IntType.TypeName.INT));
@@ -121,7 +122,6 @@ public class IRRoot {
         switch (typeName) {
             //没有内建函数的内置类
             case "void", "int", "bool", "null" -> {
-                return;
             }
             //内置的string，有内建方法，加入func
             case "string" -> {
@@ -130,7 +130,6 @@ public class IRRoot {
                     FunctionType functionType = (FunctionType) entry.getValue();
                     addFunc("_string_" + name, functionType);
                 }
-                return;
             }
             default -> {
                 if (type instanceof ClassType classType) {
@@ -177,5 +176,23 @@ public class IRRoot {
 
     public Function getFunc(String funcName) {
         return funcDef.get(funcName);
+    }
+
+    public void printStruct(PrintStream output) {
+        for (Map.Entry<String, IRType> entry : types.entrySet()) {
+            IRType type = entry.getValue();
+            if (type instanceof StructType structType) {
+                String str=structType.memberInformation();
+               if(structType.padding) {
+                   output.println(
+                           structType+ " = type <{ " + str+" }>"
+                   );
+               }else {
+                   output.println(
+                           structType + " = type { " + str+" }"
+                   );
+               }
+            }
+        }
     }
 }

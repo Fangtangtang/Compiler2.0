@@ -4,6 +4,7 @@ import ir.IRVisitor;
 import ir.entity.Storage;
 import ir.entity.var.LocalTmpVar;
 import ir.function.Function;
+import ir.irType.VoidType;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -41,13 +42,18 @@ public class Call extends Instruction {
 
     @Override
     public void print(PrintStream out) {
-        StringBuilder str = new StringBuilder(
-                result.toString() + " = call " + function.retType
-                        + "@" + function.funcName + "( "
-        );
-        parameterList.forEach(
-                parameter -> str.append(parameter).append(" ")
-        );
+        StringBuilder str = new StringBuilder();
+
+        if (!(result.type instanceof VoidType)) {
+            str.append("\t").append(result.toString()).append(" = ");
+        }
+        str.append("call ").append(function.retType).append(" @").append(function.funcName).append("(");
+        if (parameterList.size() > 0) {
+            str.append(parameterList.get(0));
+        }
+        for (int i = 1; i < parameterList.size(); ++i) {
+            str.append(", ").append(parameterList.get(i));
+        }
         str.append(")");
         out.println(str);
     }

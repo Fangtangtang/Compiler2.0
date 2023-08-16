@@ -33,7 +33,7 @@ public class Zext extends Instruction {
     @Override
     public void print(PrintStream out) {
         out.println(
-                result.toString() + " = zext "
+                "\t" + result.toString() + " = zext "
                         + value.type + " " + value.toString()
                         + " to " + result.type
         );

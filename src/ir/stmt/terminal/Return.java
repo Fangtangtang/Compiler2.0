@@ -29,11 +29,11 @@ public class Return extends TerminalStmt {
 
     @Override
     public void print(PrintStream out) {
-        StringBuilder str = new StringBuilder("ret");
+        StringBuilder str = new StringBuilder("\tret");
         if (value.type instanceof VoidType) {
             str.append(" void");
         } else {
-            str.append(" ").append(value.toString());
+            str.append(" ").append(value.type.toString()).append(" ").append(value.toString());
         }
         out.println(str.toString());
     }

@@ -40,6 +40,6 @@ public class IntType extends IRType {
         } else {
             throw new InternalException("unexpected IR int");
         }
-        return "i" + size + "(" + name + ")";
+        return "i" + size;
     }
 }

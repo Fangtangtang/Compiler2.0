@@ -33,7 +33,15 @@ public class Store extends Instruction {
 
     @Override
     public void print(PrintStream out) {
-        out.println("store " + value.toString()
+        String str;
+        if (value instanceof LocalTmpVar) {
+            str = value.type.toString() + " " + value.toString();
+        } else if (value instanceof Ptr ptr) {
+            str = ptr.storage.type + " " + ptr.toString();
+        } else {
+            str = value.toString();
+        }
+        out.println("\tstore " + str
                 + ", ptr " + pointer.toString());
     }
 

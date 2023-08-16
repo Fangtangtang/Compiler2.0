@@ -31,7 +31,7 @@ public class Alloca extends Instruction {
 
     @Override
     public void print(PrintStream out) {
-        out.println(result.toString() + " = alloca " + result.storage.toString());
+        out.println("\t" + result.toString() + " = alloca " + result.storage.toString());
     }
 
     @Override

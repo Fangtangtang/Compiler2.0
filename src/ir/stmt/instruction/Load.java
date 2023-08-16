@@ -38,7 +38,7 @@ public class Load extends Instruction {
 
     @Override
     public void print(PrintStream out) {
-        out.println(result.toString() + " = load "
+        out.println("\t"+ result.toString() + " = load "
                 + result.type.toString() + ", ptr " + pointer.toString());
     }
 

@@ -45,7 +45,7 @@ public class Global extends Instruction {
         } else {
             str = result.storage.type + " 0";
         }
-        out.println(result.toString() + " = global " + str);
+        out.println("\t" + result.toString() + " = global " + str);
     }
 
     @Override

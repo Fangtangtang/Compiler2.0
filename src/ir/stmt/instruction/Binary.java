@@ -56,7 +56,7 @@ public class Binary extends Instruction {
 
     @Override
     public void print(PrintStream out) {
-        out.println(result.toString()
+        out.println("\t" + result.toString()
                 + " = " + operator.name()
                 + " " + result.type.toString() + ' '
                 + op1.toString() + ", " + op2.toString());

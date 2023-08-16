@@ -32,7 +32,7 @@ public class Trunc extends Instruction {
     @Override
     public void print(PrintStream out) {
         out.println(
-                result.toString() + " = trunc "
+              "\t"+  result.toString() + " = trunc "
                         + value.type + " " + value.toString()
                         + " to " + result.type
         );

@@ -34,20 +34,6 @@ public class Function {
         this.retType = retType;
         this.retVal = new LocalVar(new Storage(retType), "retVal");
         this.funcName = funcName;
-        if (retType instanceof VoidType) {
-            ret.pushBack(
-                    new Return()
-            );
-        } else {
-            LocalTmpVar tmp = new LocalTmpVar(retType);
-            ret.pushBack(
-                    new Load(tmp, this.retVal)
-            );
-            ret.pushBack(
-                    new Return(tmp)
-            );
-        }
-
     }
 
     //用于global_var_init
@@ -62,10 +48,15 @@ public class Function {
     }
 
     public void printParameterList(PrintStream out) {
-        StringBuilder str=new StringBuilder("parameter:");
-        parameterList.forEach(
-                param->str.append(param.toString()).append(", ")
-        );
-        out.println(str);
+        StringBuilder str = new StringBuilder("(");
+        if (parameterList.size() > 0) {
+            str.append(parameterList.get(0).storage.type).append(" ").append(parameterList.get(0));
+        }
+        for (int i = 1; i < parameterList.size(); ++i) {
+            str.append(", ").append(parameterList.get(i).storage.type).append(" ")
+                    .append(parameterList.get(i).toString());
+        }
+        str.append(")");
+        out.print(str);
     }
 }
