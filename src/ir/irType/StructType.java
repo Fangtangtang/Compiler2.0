@@ -5,7 +5,7 @@ import java.util.*;
 /**
  * @author F
  * IR结构体
- * 为一个特殊的指针，指向结构体组成元素的一大块空间
+ * 类似于被一个指针指向的数组
  * 类的数据成员抽取为一个结构体
  * name -> index -> IRType （接近LLVM IR的输出）
  */
@@ -35,7 +35,7 @@ public class StructType extends IRType {
 
     //TODO:对齐？空间优化
     @Override
-    public int getSize() {
+    public Integer getSize() {
         if (size > 0) {
             return size;
         }

@@ -109,4 +109,9 @@ public class InstSelector implements IRVisitor {
     public void visit(Malloc stmt) {
 
     }
+
+    @Override
+    public void visit(GlobalStr stmt) {
+
+    }
 }

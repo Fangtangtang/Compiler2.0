@@ -42,4 +42,6 @@ public interface IRVisitor {
     void visit(Phi stmt);
 
     void visit(Malloc stmt);
+
+    void visit(GlobalStr stmt);
 }

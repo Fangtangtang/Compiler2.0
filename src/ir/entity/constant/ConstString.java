@@ -12,7 +12,7 @@ import ir.irType.PtrType;
  */
 public class ConstString extends Constant {
 
-    private final String value;
+    public String value;
 
     public ConstString(String value) {
         super(new ArrayType(

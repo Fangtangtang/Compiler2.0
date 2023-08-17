@@ -10,7 +10,7 @@ public abstract class IRType {
     public IRType() {
     }
 
-    public int getSize() {
+    public Integer getSize() {
         return size;
     }
 
