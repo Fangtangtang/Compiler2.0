@@ -654,6 +654,22 @@ public class IRBuilder implements ASTVisitor<Entity> {
      */
     @Override
     public Entity visit(ArrayVisExprNode node) {
+        //下标访问（必定为int）
+        ArrayList<Storage> indexList = new ArrayList<>();
+        node.indexList.forEach(
+                index -> {
+                    Storage ind = getValue(index.accept(this));
+                    if (ind.type instanceof PtrType) {
+                        LocalTmpVar indValue = new LocalTmpVar(intType,++tmpCounter);
+                        pushBack(
+                                new Load(indValue, ind)
+                        );
+                        indexList.add(indValue);
+                    } else {
+                        indexList.add(ind);
+                    }
+                }
+        );
         //取出数组名(Ptr\LocalTmpVar(PtrType))
         Entity array = node.arrayName.accept(this);
         LocalTmpVar arrayName;
@@ -676,8 +692,8 @@ public class IRBuilder implements ASTVisitor<Entity> {
         ArrayType cur = arrayType;
         Entity idx;
         LocalTmpVar prev = arrayName, result = null;
-        for (int i = 1; i <= node.indexList.size(); ++i) {
-            idx = getValue(node.indexList.get(i - 1).accept(this));
+        for (int i = 1; i <= indexList.size(); ++i) {
+            idx = indexList.get(i - 1);
             //访问到基本元素
             if (arrayType.dimension == i) {
                 result = new LocalTmpVar(new PtrType(arrayType.type), ++tmpCounter);
@@ -1071,6 +1087,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         //实例化数组
         //分配到size给出的，余下的当成指针
         else {
+            //数组类型，含基本元素类型和数组维度
             ArrayType type = (ArrayType) node.typeNode.accept(this).type;
             //先将dimensions中的元素取出来
             ArrayList<Storage> indexList = new ArrayList<>();
@@ -1079,59 +1096,59 @@ public class IRBuilder implements ASTVisitor<Entity> {
                         getValue(node.dimensions.get(i).accept(this))
                 );
             }
-            //最外一层，指向指针数组的指针
+            //最外一层，指向数组的指针
+            IRType currentEleType;
+            if (node.dimension == 1) {
+                currentEleType = type.type;
+            } else {
+                currentEleType = new ArrayType(type.type, node.dimension - 1);
+            }
+            //给数组长度分配空间
+            Entity size = indexList.get(0);
+            LocalTmpVar arraySize = new LocalTmpVar(new PtrType(intType), ++tmpCounter);
+            Call callStmt = new Call(malloc, arraySize);
+            callStmt.parameterList.add(new ConstInt("4"));//4字节的空间
+            pushBack(callStmt);
+            //存数组长度
+            pushBack(
+                    new Store(size, arraySize)
+            );
+            //给当前层分配空间
+            //计算需要的空间
+            LocalTmpVar bitSpace = new LocalTmpVar(intType, ++tmpCounter);
+            pushBack(
+                    new Binary(BinaryExprNode.BinaryOperator.Multiply,
+                            bitSpace,
+                            new ConstInt(currentEleType.getSize().toString()),
+                            size
+                    ));
+            LocalTmpVar mallocSpace = new LocalTmpVar(intType, ++tmpCounter);
+            pushBack(
+                    new Binary(BinaryExprNode.BinaryOperator.Divide,
+                            mallocSpace,
+                            bitSpace,
+                            new ConstInt("8")
+                    ));
             LocalTmpVar result = new LocalTmpVar(new PtrType(type), ++tmpCounter);
-            createArray(indexList, node.dimension, 1, result);
+            Call callStmt1 = new Call(malloc, result);
+            callStmt1.parameterList.add(mallocSpace);
+            pushBack(callStmt1);
+            //高维数组
+            if (indexList.size() > 1) {
+                constructArray(indexList, node.dimension, 1, result);
+            }
             return result;
         }
     }
 
-    //递归建立数组
-    //手动循环
-    //TODO：类的最后一维（类相当于一维数组）,全部为null
-    private void createArray(ArrayList<Storage> indexList,
-                             int dimension,
-                             int layer,
-                             LocalTmpVar root) {
-        IRType type = ((PtrType) root.type).type;
-        type = ((ArrayType) type).type;
-        //非基本元素
-        if (layer != dimension) {
-            type = new ArrayType(type, dimension - layer);
-        }
-        //给数组长度分配空间
-        Entity size = indexList.get(layer - 1);
-        LocalTmpVar arraySize = new LocalTmpVar(new PtrType(intType), ++tmpCounter);
-        Call callStmt = new Call(malloc, arraySize);
-        callStmt.parameterList.add(new ConstInt("4"));//4字节的空间
-        pushBack(callStmt);
-        //存数组长度
-        pushBack(
-                new Store(size, arraySize)
-        );
-        //给当前层分配空间
-        //计算需要的空间
-        LocalTmpVar bitSpace = new LocalTmpVar(intType, ++tmpCounter);
-        pushBack(
-                new Binary(BinaryExprNode.BinaryOperator.Multiply,
-                        bitSpace,
-                        new ConstInt(type.getSize().toString()),
-                        size
-                ));
-        LocalTmpVar mallocSpace = new LocalTmpVar(intType, ++tmpCounter);
-        pushBack(
-                new Binary(BinaryExprNode.BinaryOperator.Divide,
-                        mallocSpace,
-                        bitSpace,
-                        new ConstInt("8")
-                ));
-        Call callStmt1 = new Call(malloc, root);
-        callStmt1.parameterList.add(mallocSpace);
-        pushBack(callStmt1);
-        //最末一层，终止递归
-        if (layer == indexList.size()) {
-            return;
-        }
+    /**
+     * 递归建立数组
+     * TODO：类的最后一维（类相当于一维数组）,全部为null
+     */
+    private void constructArray(ArrayList<Storage> indexList,
+                                int dimension,
+                                int layer,
+                                LocalTmpVar root) {
         //手写IR上for循环向下递归
         int label = funcBlockCounter++;
         BasicBlock condBlock = new BasicBlock("loop.cond" + label),
@@ -1170,15 +1187,54 @@ public class IRBuilder implements ASTVisitor<Entity> {
         //循环体
         currentBlock = bodyBlock;
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
-        LocalTmpVar newRoot = new LocalTmpVar(new PtrType(type), ++tmpCounter);
+        layer += 1;//新的一层
+        IRType type = ((PtrType) root.type).type;
+        type = ((ArrayType) type).type;//基本元素类型
+        //非基本元素
+        if (layer != dimension) {
+            type = new ArrayType(type, dimension - layer);
+        }
+        //给数组长度分配空间
+        Entity size = indexList.get(layer - 1);
+        LocalTmpVar arraySize = new LocalTmpVar(new PtrType(intType), ++tmpCounter);
+        Call callStmt = new Call(malloc, arraySize);
+        callStmt.parameterList.add(new ConstInt("4"));//4字节的空间
+        pushBack(callStmt);
+        //存数组长度
+        pushBack(
+                new Store(size, arraySize)
+        );
+        //给当前层分配空间
+        //计算需要的空间
+        LocalTmpVar bitSpace = new LocalTmpVar(intType, ++tmpCounter);
+        pushBack(
+                new Binary(BinaryExprNode.BinaryOperator.Multiply,
+                        bitSpace,
+                        new ConstInt(type.getSize().toString()),
+                        size
+                ));
+        LocalTmpVar mallocSpace = new LocalTmpVar(intType, ++tmpCounter);
+        pushBack(
+                new Binary(BinaryExprNode.BinaryOperator.Divide,
+                        mallocSpace,
+                        bitSpace,
+                        new ConstInt("8")
+                ));
         LocalTmpVar index = new LocalTmpVar(intType, ++tmpCounter);
         pushBack(
                 new Load(index, i)
         );
+        LocalTmpVar newRoot = new LocalTmpVar(new PtrType(type), ++tmpCounter);
         pushBack(
                 new GetElementPtr(newRoot, root, index)
         );
-        createArray(indexList, dimension, layer + 1, newRoot);
+        Call callStmt1 = new Call(malloc, newRoot);
+        callStmt1.parameterList.add(mallocSpace);
+        pushBack(callStmt1);
+        //判断是否终止
+        if (layer != indexList.size()) {
+            constructArray(indexList, dimension, layer, newRoot);
+        }
         pushBack(
                 new Jump(incBlock.label)
         );
@@ -1201,6 +1257,122 @@ public class IRBuilder implements ASTVisitor<Entity> {
         currentBlock = endBlock;
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
     }
+
+//    //递归建立数组
+//    //手动循环
+//    //TODO：类的最后一维（类相当于一维数组）,全部为null
+//    private void createArray(ArrayList<Storage> indexList,
+//                             int dimension,
+//                             int layer,
+//                             LocalTmpVar root) {
+//        IRType type = ((PtrType) root.type).type;
+//        type = ((ArrayType) type).type;
+//        //非基本元素
+//        if (layer != dimension) {
+//            type = new ArrayType(type, dimension - layer);
+//        }
+//        //给数组长度分配空间
+//        Entity size = indexList.get(layer - 1);
+//        LocalTmpVar arraySize = new LocalTmpVar(new PtrType(intType), ++tmpCounter);
+//        Call callStmt = new Call(malloc, arraySize);
+//        callStmt.parameterList.add(new ConstInt("4"));//4字节的空间
+//        pushBack(callStmt);
+//        //存数组长度
+//        pushBack(
+//                new Store(size, arraySize)
+//        );
+//        //给当前层分配空间
+//        //计算需要的空间
+//        LocalTmpVar bitSpace = new LocalTmpVar(intType, ++tmpCounter);
+//        pushBack(
+//                new Binary(BinaryExprNode.BinaryOperator.Multiply,
+//                        bitSpace,
+//                        new ConstInt(type.getSize().toString()),
+//                        size
+//                ));
+//        LocalTmpVar mallocSpace = new LocalTmpVar(intType, ++tmpCounter);
+//        pushBack(
+//                new Binary(BinaryExprNode.BinaryOperator.Divide,
+//                        mallocSpace,
+//                        bitSpace,
+//                        new ConstInt("8")
+//                ));
+//        Call callStmt1 = new Call(malloc, root);
+//        callStmt1.parameterList.add(mallocSpace);
+//        pushBack(callStmt1);
+//        //最末一层，终止递归
+//        if (layer == indexList.size()) {
+//            return;
+//        }
+//        //手写IR上for循环向下递归
+//        int label = funcBlockCounter++;
+//        BasicBlock condBlock = new BasicBlock("loop.cond" + label),
+//                incBlock = new BasicBlock("loop.inc" + label),
+//                bodyBlock = new BasicBlock("loop.body" + label),
+//                endBlock = new BasicBlock("loop.end" + label);
+//        //int i=0;
+//        LocalVar i;//允许被通用的局部变量
+//        if (rename2mem.containsKey("i")) {
+//            i = (LocalVar) rename2mem.get("i");
+//        } else {
+//            Alloca stmt = new Alloca(intType, "i");
+//            i = stmt.result;
+//            rename2mem.put("i", i);
+//            currentInitBlock.pushBack(stmt);
+//        }
+//        pushBack(
+//                new Store(new ConstInt("0"), i)
+//        );
+//        pushBack(
+//                new Jump(condBlock.label)
+//        );
+//        //i<size;
+//        currentBlock = condBlock;
+//        currentFunction.blockMap.put(currentBlock.label, currentBlock);
+//        LocalTmpVar cmpResult = new LocalTmpVar(boolType, ++tmpCounter);
+//        pushBack(
+//                new Icmp(CmpExprNode.CmpOperator.Less,
+//                        cmpResult,
+//                        getValue(i),
+//                        getValue(indexList.get(layer - 1)))
+//        );
+//        pushBack(
+//                new Branch(cmpResult, bodyBlock.label, endBlock.label)
+//        );
+//        //循环体
+//        currentBlock = bodyBlock;
+//        currentFunction.blockMap.put(currentBlock.label, currentBlock);
+//        LocalTmpVar newRoot = new LocalTmpVar(new PtrType(type), ++tmpCounter);
+//        LocalTmpVar index = new LocalTmpVar(intType, ++tmpCounter);
+//        pushBack(
+//                new Load(index, i)
+//        );
+//        pushBack(
+//                new GetElementPtr(newRoot, root, index)
+//        );
+//        createArray(indexList, dimension, layer + 1, newRoot);
+//        pushBack(
+//                new Jump(incBlock.label)
+//        );
+//        //step
+//        currentBlock = incBlock;
+//        currentFunction.blockMap.put(currentBlock.label, currentBlock);
+//        LocalTmpVar addResult = new LocalTmpVar(intType, ++tmpCounter);
+//        pushBack(
+//                new Binary(BinaryExprNode.BinaryOperator.Plus,
+//                        addResult,
+//                        getValue(i),
+//                        new ConstInt("1"))
+//        );
+//        pushBack(
+//                new Store(addResult, i)
+//        );
+//        pushBack(
+//                new Jump(condBlock.label)
+//        );
+//        currentBlock = endBlock;
+//        currentFunction.blockMap.put(currentBlock.label, currentBlock);
+//    }
 
     /**
      * PrefixExprNode

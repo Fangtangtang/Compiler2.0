@@ -16,17 +16,19 @@ import java.io.*;
  * @author F
  * COMPILER
  */
-public class Main {
+public class LocalMain {
     //程序的入口点
     //可能会抛出任何类型的异常
     public static void main(String[] args) throws Exception {
 //        String fileName ="C:/Users/21672/Desktop/mx_raw/sema/function-package/function-6.mx";
 
-        String fileName = "testcases/primary/function/error.mx";
+        String fileName = "testcases/codegen/t1.mx";
+//        String fileName = "testcases/primary/function/error.mx";
+
 //        String fileName ="C:/Users/21672/Desktop/mx_raw/sema/symbol-package/symbol-2.mx";
 
-        InputStream inputStream = System.in;
-//        InputStream inputStream = new FileInputStream(fileName);
+//        InputStream inputStream = System.in;
+        InputStream inputStream = new FileInputStream(fileName);
 
         try {
             compile(inputStream);
@@ -66,8 +68,8 @@ public class Main {
         IRBuilder irBuilder = new IRBuilder(Scope.symbolTable);
         irBuilder.visit(astRoot);
 
-//        PrintStream outputStream = new PrintStream(new FileOutputStream("output"));
-        PrintStream outputStream = System.out;
+        PrintStream outputStream = new PrintStream(new FileOutputStream("output"));
+//        PrintStream outputStream = System.out;
         IRPrinter printer = new IRPrinter(outputStream);
         printer.visit(irBuilder.irRoot);
 //        new BuiltinIRPrinter(outputStream);

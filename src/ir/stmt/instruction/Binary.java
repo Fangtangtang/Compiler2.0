@@ -3,8 +3,7 @@ package ir.stmt.instruction;
 import ast.expr.BinaryExprNode;
 import ir.IRVisitor;
 import ir.entity.*;
-import ir.entity.constant.ConstInt;
-import ir.entity.constant.Constant;
+import ir.entity.constant.*;
 import ir.entity.var.*;
 import utility.error.InternalException;
 

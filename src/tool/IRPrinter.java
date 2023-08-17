@@ -24,7 +24,7 @@ public class IRPrinter implements IRVisitor {
     @Override
     public void visit(IRRoot root) {
         root.printStruct(output);
-        visit(root.globalVarDefBlock);
+        root.globalVarDefBlock.statements.forEach(stmt -> stmt.accept(this));
         visit(root.globalVarInitFunction);
         output.println("\n");
         for (Map.Entry<String, Function> entry : root.funcDef.entrySet()) {

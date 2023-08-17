@@ -2,6 +2,11 @@ package ir.stmt.instruction;
 
 import ir.IRVisitor;
 import ir.entity.*;
+import ir.entity.constant.Constant;
+import ir.irType.ArrayType;
+import ir.irType.PtrType;
+import ir.irType.StructType;
+import utility.error.InternalException;
 
 import java.io.PrintStream;
 
@@ -35,12 +40,29 @@ public class GetElementPtr extends Instruction {
         this.idx = index;
     }
 
+    //TODO:ptrType?
     @Override
     public void print(PrintStream out) {
+        String ptrType;
+        if (ptrVal.type instanceof ArrayType arrayType) {
+            ptrType = arrayType.type.toString();
+        } else if (ptrVal.type instanceof StructType structType) {
+            ptrType = structType.toString();
+        } else {
+            throw new InternalException("unexpected type in GetElementPtr");
+        }
+        String str;
+        if (idx instanceof Constant) {
+            str = idx.toString();
+        } else {
+            str = idx.type + " " + idx;
+        }
         out.println("\t" + result.toString() + " = getelementptr " +
-                ptrVal.type.toString() + ", ptr " +
-                ptrVal.toString() + ", i32 0, " +
-                idx.toString());
+                ptrType + ", ptr " +
+                ptrVal.toString() +
+//                ", i32 0, " + str
+                ", " + str
+        );
     }
 
     @Override

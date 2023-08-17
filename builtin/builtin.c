@@ -105,6 +105,6 @@ char *_string_add(char *str1, char *str2) {
 //分配空间alloca
 //按字节
 //TODO：free？
-char *_malloc(int size) {
-    return (char *) malloc(size);
+int *_malloc(int size) {
+    return  malloc(size);
 }

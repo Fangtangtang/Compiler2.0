@@ -37,6 +37,7 @@ public class ArrayType extends IRType {
 
     @Override
     public String toString() {
+//        return "[" + dimension + " x " + type.toString() + "]";
         return "ptr";
     }
 }

@@ -3,6 +3,7 @@ package ir.stmt.instruction;
 import ast.expr.CmpExprNode;
 import ir.IRVisitor;
 import ir.entity.*;
+import ir.entity.constant.*;
 import ir.entity.var.*;
 import utility.error.InternalException;
 
@@ -53,9 +54,22 @@ public class Icmp extends Instruction {
 
     @Override
     public void print(PrintStream out) {
+        String s1, s2;
+        if (op1 instanceof ConstInt constant) {
+            s1 = constant.printValue();
+        } else {
+            s1 = op1.toString();
+        }
+        if (op2 instanceof ConstInt constant) {
+            s2 = constant.printValue();
+        } else {
+            s2 = op2.toString();
+        }
         out.println("\t" + result.toString()
                 + " = icmp " + cond.name()
-                + " " + op1.toString() + ", " + op2.toString());
+                + " " + op1.type + " "
+                + s1 + ", " + s2
+        );
 
     }
 
