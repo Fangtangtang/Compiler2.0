@@ -69,6 +69,12 @@ public class IRRoot {
             FunctionType functionType = (FunctionType) entry.getValue();
             addBuiltinFunc("_array_" + name, functionType, new ArrayType());
         }
+        //TODO:添加malloc
+        Function function = new Function(
+                new PtrType(),
+                "_malloc"
+        );
+        funcDef.put("_malloc", function);
         addBuiltinFuncParam();
     }
 
@@ -191,12 +197,10 @@ public class IRRoot {
                 "this"
         ));
         type.parameters.forEach(
-                param -> {
-                    function.parameterList.add(new LocalVar(
-                            new Storage(type2irType(param.type)),
-                            param.name
-                    ));
-                }
+                param -> function.parameterList.add(new LocalVar(
+                        new Storage(type2irType(param.type)),
+                        param.name
+                ))
         );
         funcDef.put(funcName, function);
     }
@@ -226,6 +230,9 @@ public class IRRoot {
         builtinFunc.parameterList.add(intParam);
         //string toString(int i);
         builtinFunc = funcDef.get("toString");
+        builtinFunc.parameterList.add(intParam);
+        //char *_malloc(int size)
+        builtinFunc = funcDef.get("_malloc");
         builtinFunc.parameterList.add(intParam);
     }
 

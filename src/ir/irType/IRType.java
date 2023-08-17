@@ -10,6 +10,10 @@ public abstract class IRType {
     public IRType() {
     }
 
+    public int getSize() {
+        return size;
+    }
+
     @Override
     public abstract String toString();
 }

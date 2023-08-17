@@ -43,6 +43,10 @@ char *toString(int i) {
     return str;
 }
 
+//array内建方法（将数组长度放在数组前4字节）
+int _array_size(void *__this) {
+    return ((int*)__this)[-1];
+}
 //string内建方法
 int _string_length(char *str) {
          return strlen(str);

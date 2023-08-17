@@ -23,7 +23,7 @@ import java.util.ArrayList;
  * +------------------------------------------------------------
  */
 public class Call extends Instruction {
-    public ArrayList<Storage> parameterList;
+    public ArrayList<Storage> parameterList=new ArrayList<>();
     public Function function;
     public LocalTmpVar result;
 

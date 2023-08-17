@@ -1034,7 +1034,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
      * 调用自己写的内置函数_malloc分配空间
      * - dimension总维数
      * - dimensions给出实际长度的几维
-     * TODO:怎么找function
+     * TODO：将new拆解成new基本元素和指针
      *
      * @param node NewExprNode
      * @return ptr
@@ -1046,7 +1046,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             StructType type = (StructType) node.typeNode.accept(this).type;
             LocalTmpVar result = new LocalTmpVar(new PtrType(type), ++tmpCounter);
             pushBack(
-                    new Malloc(result, new ConstInt(type.size.toString()))
+                    new Malloc(result, type.getSize())
             );
             //有构造函数，调用构造函数初始化
             if (irRoot.funcDef.containsKey(type.name)) {
@@ -1080,6 +1080,8 @@ public class IRBuilder implements ASTVisitor<Entity> {
 
     //递归建立数组
     //手动循环
+    //TODO:类的数组，走到最后一层的时候调用构造函数
+    //TODO：类的最后一维（类相当于一维数组）
     private void createArray(ArrayList<Storage> indexList,
                              int dimension,
                              int layer,
@@ -1092,7 +1094,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         }
         //给当前层分配空间
         pushBack(
-                new Malloc(root, indexList.get(layer - 1))
+                new Malloc(root, type, indexList.get(layer - 1))
         );
         //最末一层，终止递归
         if (layer == indexList.size()) {

@@ -19,22 +19,24 @@ public class ArrayType extends IRType {
     public Entity length;
 
     public ArrayType(IRType type, int dimension) {
+        this.size = 32;
         this.type = type;
         this.dimension = dimension;
     }
 
     public ArrayType(IRType type, int dimension, Entity length) {
+        this.size = 32;
         this.type = type;
         this.dimension = dimension;
         this.length = length;
     }
 
-    public ArrayType() {}
+    public ArrayType() {
+        this.size = 32;
+    }
 
     @Override
     public String toString() {
-//        return "[" + dimension + " x " + type.toString() + "]";
-//        return type.toString();
         return "ptr";
     }
 }

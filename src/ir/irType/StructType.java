@@ -33,6 +33,16 @@ public class StructType extends IRType {
         memberTypes.add(irType);
     }
 
+    //TODO:对齐？空间优化
+    @Override
+    public int getSize() {
+        if (size > 0) {
+            return size;
+        }
+        size = 32 * memberTypes.size();
+        return size;
+    }
+
     @Override
     public String toString() {
         return "%class." + name;
@@ -46,7 +56,7 @@ public class StructType extends IRType {
             if (intType.typeName != IntType.TypeName.INT) {
                 padding = true;
                 return "i8, [3 x i8]";
-            }else {
+            } else {
                 return "i32";
             }
         }

@@ -56,9 +56,6 @@ public class Main {
         ASTBuilder astBuilder = new ASTBuilder();
         astRoot = (RootNode) astBuilder.visit(parseTreeRoot);
 
-//            ASTPrinter printer = new ASTPrinter();
-//            printer.visit(astRoot);
-
         Scope.symbolTable = new SymbolTable();
         SymbolCollector symbolCollector = new SymbolCollector(Scope.symbolTable);
         symbolCollector.visit(astRoot);
