@@ -23,4 +23,8 @@ public class ConstInt extends Constant {
     public String toString() {
         return this.type.toString() + " " + value;
     }
+
+    public String printValue() {
+        return value;
+    }
 }

@@ -48,7 +48,10 @@ public class IRPrinter implements IRVisitor {
      */
     @Override
     public void visit(Function function) {
+        //借用的函数，要声明
         if (function.entry == null) {
+            output.print("\ndeclare " + function.retType + " @" + function.funcName);
+            output.println(function.printParameterList());
             return;
         }
         output.print("\ndefine " + function.retType + " @" + function.funcName);

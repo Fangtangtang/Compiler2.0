@@ -20,4 +20,5 @@ public class ConstBool extends Constant {
     public String toString() {
         return this.type.toString() + " " + value;
     }
+
 }

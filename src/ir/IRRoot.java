@@ -1,8 +1,11 @@
 package ir;
 
 
+import ir.entity.Storage;
+import ir.entity.var.LocalVar;
 import ir.function.*;
 import ir.irType.*;
+import ir.irType.ArrayType;
 import ir.irType.IntType;
 import ir.irType.NullType;
 import ir.irType.VoidType;
@@ -64,8 +67,9 @@ public class IRRoot {
         for (Map.Entry<String, Type> entry : utility.type.ArrayType.members.entrySet()) {
             String name = entry.getKey();
             FunctionType functionType = (FunctionType) entry.getValue();
-            addFunc("_array_" + name, functionType);
+            addBuiltinFunc("_array_" + name, functionType, new ArrayType());
         }
+        addBuiltinFuncParam();
     }
 
     /**
@@ -128,7 +132,7 @@ public class IRRoot {
                 for (Map.Entry<String, Type> entry : StringType.members.entrySet()) {
                     String name = entry.getKey();
                     FunctionType functionType = (FunctionType) entry.getValue();
-                    addFunc("_string_" + name, functionType);
+                    addBuiltinFunc("_string_" + name, functionType, types.get("string"));
                 }
             }
             default -> {
@@ -174,6 +178,57 @@ public class IRRoot {
         funcDef.put(funcName, function);
     }
 
+    //内建类方法
+    private void addBuiltinFunc(String funcName,
+                                FunctionType type,
+                                IRType irType) {
+        Function function = new Function(
+                type2irType(type.returnType),
+                funcName
+        );
+        function.parameterList.add(new LocalVar(
+                new Storage(new PtrType(irType)),
+                "this"
+        ));
+        type.parameters.forEach(
+                param -> {
+                    function.parameterList.add(new LocalVar(
+                            new Storage(type2irType(param.type)),
+                            param.name
+                    ));
+                }
+        );
+        funcDef.put(funcName, function);
+    }
+
+    //添加内建函数的参数
+    private void addBuiltinFuncParam() {
+        LocalVar intParam = new LocalVar(
+                new Storage(types.get("int")),
+                "n"
+        );
+        LocalVar strParam = new LocalVar(
+                new Storage(types.get("string")),
+                "str"
+        );
+        Function builtinFunc;
+        //void print(string str);
+        builtinFunc = funcDef.get("print");
+        builtinFunc.parameterList.add(strParam);
+        //void println(string str);
+        builtinFunc = funcDef.get("println");
+        builtinFunc.parameterList.add(strParam);
+        //void printInt(int n);
+        builtinFunc = funcDef.get("printInt");
+        builtinFunc.parameterList.add(intParam);
+        //void printlnInt(int n);
+        builtinFunc = funcDef.get("printlnInt");
+        builtinFunc.parameterList.add(intParam);
+        //string toString(int i);
+        builtinFunc = funcDef.get("toString");
+        builtinFunc.parameterList.add(intParam);
+    }
+
     public Function getFunc(String funcName) {
         return funcDef.get(funcName);
     }
@@ -182,16 +237,16 @@ public class IRRoot {
         for (Map.Entry<String, IRType> entry : types.entrySet()) {
             IRType type = entry.getValue();
             if (type instanceof StructType structType) {
-                String str=structType.memberInformation();
-               if(structType.padding) {
-                   output.println(
-                           structType+ " = type <{ " + str+" }>"
-                   );
-               }else {
-                   output.println(
-                           structType + " = type { " + str+" }"
-                   );
-               }
+                String str = structType.memberInformation();
+                if (structType.padding) {
+                    output.println(
+                            structType + " = type <{ " + str + " }>"
+                    );
+                } else {
+                    output.println(
+                            structType + " = type { " + str + " }"
+                    );
+                }
             }
         }
     }

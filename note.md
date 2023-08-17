@@ -14,3 +14,10 @@ sed 's/string_/string./g;s/array_/array./g' builtin_intermediate.ll > builtin.ll
 rm builtin_intermediate.ll
 
 ```
+```
+testcases/codegen/scripts/test_llvm_ir.bash 'bin/mxc -emit-llvm' testcases/codegen/t1.mx bin/builtin.ll 
+```
+```
+ clang-17 ./bin/builtin.ll /tmp/mxc.naTyTyxf1f/output.ll -o code 
+ ./code
+```

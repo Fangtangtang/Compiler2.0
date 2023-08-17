@@ -70,7 +70,7 @@ define dso_local i32 @getInt() #0 {
 }
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local ptr @toString(i32 noundef %0) #0 {
+define ptr @toString(i32 noundef %0) #0 {
   %2 = alloca i32, align 4
   %3 = alloca ptr, align 8
   store i32 %0, ptr %2, align 4

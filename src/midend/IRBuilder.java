@@ -815,11 +815,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
      */
     @Override
     public Entity visit(FuncCallExprNode node) {
-        //得到函数名
-        node.func.accept(this);
-        Function function;
-        LocalTmpVar result;
-        Call stmt;
         //参数表访问
         ArrayList<Storage> params = new ArrayList<>();
         node.parameterList.forEach(
@@ -827,6 +822,11 @@ public class IRBuilder implements ASTVisitor<Entity> {
                         getValue(parameter.accept(this))
                 )
         );
+        //得到函数名
+        node.func.accept(this);
+        Function function;
+        LocalTmpVar result;
+        Call stmt;
         //类的成员函数
         if (currentVar != null) {
             IRType pointed;

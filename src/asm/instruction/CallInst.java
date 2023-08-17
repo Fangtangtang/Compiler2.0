@@ -20,6 +20,6 @@ public class CallInst extends ASMInstruction {
 
     @Override
     public void accept(ASMVisitor visitor) {
-
+        visitor.visit(this);
     }
 }

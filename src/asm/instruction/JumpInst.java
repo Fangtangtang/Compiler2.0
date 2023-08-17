@@ -11,6 +11,9 @@ import java.io.PrintStream;
 public class JumpInst extends ASMInstruction {
     public String desName;
 
+    public JumpInst(String desName){
+        this.desName=desName;
+    }
     @Override
     public void print(PrintStream out) {
         out.println("\tj\t" + desName);
@@ -18,6 +21,6 @@ public class JumpInst extends ASMInstruction {
 
     @Override
     public void accept(ASMVisitor visitor) {
-
+visitor.visit(this);
     }
 }

@@ -29,9 +29,12 @@ public class ArrayType extends IRType {
         this.length = length;
     }
 
+    public ArrayType() {}
+
     @Override
     public String toString() {
 //        return "[" + dimension + " x " + type.toString() + "]";
-        return type.toString();
+//        return type.toString();
+        return "ptr";
     }
 }

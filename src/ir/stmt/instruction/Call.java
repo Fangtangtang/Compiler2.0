@@ -46,20 +46,21 @@ public class Call extends Instruction {
                 Storage parameter) {
         this.function = function;
         this.result = result;
-        this.parameterList.add(parameter);
+        if (parameter != null) {
+            this.parameterList.add(parameter);
+        }
     }
 
     @Override
     public void print(PrintStream out) {
-        StringBuilder str = new StringBuilder();
+        StringBuilder str = new StringBuilder("\t");
         if (!(result.type instanceof VoidType)) {
-            str.append("\t").append(result.toString()).append(" = ");
+            str.append(result.toString()).append(" = ");
         }
         str.append("call ").append(function.retType).append(" @").append(function.funcName)
-//                .append(function.printParameterList())
                 .append("(");
         Storage param;
-        if(parameterList != null ){
+        if (parameterList != null) {
             if (parameterList.size() > 0) {
                 param = parameterList.get(0);
                 if (param instanceof LocalTmpVar tmp) {

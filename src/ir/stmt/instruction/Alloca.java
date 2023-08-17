@@ -10,7 +10,7 @@ import java.io.PrintStream;
 
 /**
  * @author F
- * 局部变量分配内存空间的指令
+ * 局部变量分配内存空间（在栈上开空间）的指令
  * <result> = alloca <type>
  * + --------------------------------
  * |

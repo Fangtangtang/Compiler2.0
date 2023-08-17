@@ -3,6 +3,8 @@ package ir.stmt.instruction;
 import ast.expr.BinaryExprNode;
 import ir.IRVisitor;
 import ir.entity.*;
+import ir.entity.constant.ConstInt;
+import ir.entity.constant.Constant;
 import ir.entity.var.*;
 import utility.error.InternalException;
 
@@ -56,10 +58,22 @@ public class Binary extends Instruction {
 
     @Override
     public void print(PrintStream out) {
+        String s1, s2;
+        if (op1 instanceof ConstInt constant) {
+            s1 = constant.printValue();
+        } else {
+            s1 = op1.toString();
+        }
+        if (op2 instanceof ConstInt constant) {
+            s2 = constant.printValue();
+        } else {
+            s2 = op2.toString();
+        }
         out.println("\t" + result.toString()
                 + " = " + operator.name()
                 + " " + result.type.toString() + ' '
-                + op1.toString() + ", " + op2.toString());
+                + s1 + ", " + s2
+        );
     }
 
     @Override

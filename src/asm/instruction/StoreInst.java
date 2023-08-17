@@ -1,8 +1,7 @@
 package asm.instruction;
 
 import asm.ASMVisitor;
-import asm.operand.Imm;
-import asm.operand.Register;
+import asm.operand.*;
 
 import java.io.PrintStream;
 
@@ -11,16 +10,23 @@ import java.io.PrintStream;
  * 存入内存
  */
 public class StoreInst extends ASMInstruction {
-    public Register re1, rs2;
+    public Register rs1, rs2;
     public Imm imm;
+
+    public StoreInst(Register rs1, Register rs2,
+                     Imm imm) {
+        this.rs1 = rs1;
+        this.rs2 = rs2;
+        this.imm = imm;
+    }
 
     @Override
     public void print(PrintStream out) {
-
+        out.println("\tsw\t" + rs1 + ", " + imm + "(" + rs2 + ")");
     }
 
     @Override
     public void accept(ASMVisitor visitor) {
-
+        visitor.visit(this);
     }
 }
