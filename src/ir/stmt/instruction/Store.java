@@ -2,6 +2,7 @@ package ir.stmt.instruction;
 
 import ir.IRVisitor;
 import ir.entity.Entity;
+import ir.entity.constant.Constant;
 import ir.entity.var.*;
 
 import java.io.PrintStream;

@@ -12,6 +12,8 @@ import ir.irType.VoidType;
 public class GlobalVarInitFunction extends Function {
     public BasicBlock currentBlock;
 
+    public Integer tmpCounter = -1;
+
     public GlobalVarInitFunction() {
         super(new VoidType(),
                 "global_var_init",

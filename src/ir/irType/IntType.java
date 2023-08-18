@@ -18,13 +18,10 @@ public class IntType extends IRType {
 
     public TypeName typeName;
 
+    String name;
+
     public IntType(TypeName typeName) {
         this.typeName = typeName;
-    }
-
-    @Override
-    public String toString() {
-        String name;
         if (typeName.equals(TypeName.BOOL)) {
             size = 8;
             name = "bool";
@@ -40,6 +37,15 @@ public class IntType extends IRType {
         } else {
             throw new InternalException("unexpected IR int");
         }
+    }
+
+    @Override
+    public String toString() {
         return "i" + size;
+    }
+
+    @Override
+    public Integer getSize() {
+        return size;
     }
 }
