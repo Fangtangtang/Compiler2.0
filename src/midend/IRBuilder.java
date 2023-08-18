@@ -762,6 +762,14 @@ public class IRBuilder implements ASTVisitor<Entity> {
         Storage lhs = getValue(left), rhs = getValue(right);
         //IR运算语句
         LocalTmpVar result = new LocalTmpVar(lhs.type, ++tmpCounter);
+        //str1+str2
+        if (isString(lhs)) {
+            Call stmt = new Call(irRoot.getFunc("_string_add"), result);
+            stmt.parameterList.add(lhs);
+            stmt.parameterList.add(rhs);
+            pushBack(stmt);
+            return result;
+        }
         pushBack(
                 new Binary(node.operator,
                         result,
@@ -770,6 +778,15 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 )
         );
         return result;
+    }
+
+    private boolean isString(Entity entity) {
+        if (entity.type instanceof ArrayType arrayType
+                && arrayType.type instanceof IntType type
+                && type.typeName.equals(IntType.TypeName.CHAR)) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -792,6 +809,23 @@ public class IRBuilder implements ASTVisitor<Entity> {
         Storage lhs = getValue(left), rhs = getValue(right);
         //IR比较语句
         LocalTmpVar result = new LocalTmpVar(tmpBoolType, ++tmpCounter);
+        if (isString(lhs)) {
+            String functionName;
+            switch (node.operator) {
+                case Less -> functionName = "_string_less";
+                case Greater -> functionName = "_string_greater";
+                case LessEqual -> functionName = "_string_lessOrEqual";
+                case GreaterEqual -> functionName = "_string_greaterOrEqual";
+                case Equal -> functionName = "_string_equal";
+                case NotEqual -> functionName = "_string_notEqual";
+                default -> throw new InternalException("unexpected operator in Icmp instruction");
+            }
+            Call stmt = new Call(irRoot.getFunc(functionName), result);
+            stmt.parameterList.add(lhs);
+            stmt.parameterList.add(rhs);
+            pushBack(stmt);
+            return result;
+        }
         pushBack(
                 new Icmp(node.operator,
                         result,
@@ -811,7 +845,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             );
             return tmp;
         }
-        //处理geiElementPtr结果
+        //处理getElementPtr结果
         else if (entity.type instanceof PtrType ptrType) {
             //自定义类
             if (ptrType instanceof StructPtrType) {
@@ -1553,16 +1587,19 @@ public class IRBuilder implements ASTVisitor<Entity> {
      */
     @Override
     public Entity visit(StrConstantExprNode node) {
+        GlobalVar str;
         if (constStringMap.containsKey(node.value)) {
-            return constStringMap.get(node.value);
+            str = constStringMap.get(node.value);
+        } else {
+            ++constStrCounter;
+            Global stmt = new Global(new ConstString(node.value), ".str." + constStrCounter);
+            globalVarDefBlock.pushBack(stmt);
+            constStringMap.put(node.value, stmt.result);
+            str = stmt.result;
         }
-        ++constStrCounter;
-        Global stmt = new Global(new ConstString(node.value), ".str." + constStrCounter);
-        globalVarDefBlock.pushBack(stmt);
-        constStringMap.put(node.value, stmt.result);
-        LocalTmpVar tmp = new LocalTmpVar(stmt.result.storage.type, ++tmpCounter);
+        LocalTmpVar tmp = new LocalTmpVar(str.storage.type, ++tmpCounter);
         pushBack(
-                new GetElementPtr(tmp, stmt.result, zero)
+                new GetElementPtr(tmp, str, zero)
         );
         return tmp;
     }

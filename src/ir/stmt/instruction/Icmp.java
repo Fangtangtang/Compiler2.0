@@ -48,7 +48,6 @@ public class Icmp extends Instruction {
             case Equal -> this.cond = Cond.eq;
             case NotEqual -> this.cond = Cond.ne;
             default -> throw new InternalException("unexpected operator in Icmp instruction");
-
         }
     }
 

@@ -69,12 +69,35 @@ public class IRRoot {
             FunctionType functionType = (FunctionType) entry.getValue();
             addBuiltinFunc("_array_" + name, functionType, new ArrayType());
         }
-        //TODO:添加malloc
+        //添加malloc
         Function function = new Function(
                 new PtrType(),
                 "_malloc"
         );
         funcDef.put("_malloc", function);
+        //添加字符串二元运算函数
+        IntType bool = new IntType(IntType.TypeName.TMP_BOOL);
+        //==
+        function = new Function(bool, "_string_equal");
+        funcDef.put("_string_equal", function);
+        //!=
+        function = new Function(bool, "_string_notEqual");
+        funcDef.put("_string_notEqual", function);
+        //<
+        function = new Function(bool, "_string_less");
+        funcDef.put("_string_less", function);
+        //<=
+        function = new Function(bool, "_string_lessOrEqual");
+        funcDef.put("_string_lessOrEqual", function);
+        //>
+        function = new Function(bool, "_string_greater");
+        funcDef.put("_string_greater", function);
+        //>=
+        function = new Function(bool, "_string_greaterOrEqual");
+        funcDef.put("_string_greaterOrEqual", function);
+        //+
+        function = new Function(types.get("string"), "_string_add");
+        funcDef.put("_string_add", function);
         addBuiltinFuncParam();
     }
 
@@ -215,6 +238,10 @@ public class IRRoot {
                 new Storage(types.get("string")),
                 "str"
         );
+        LocalVar strParam1 = new LocalVar(
+                new Storage(types.get("string")),
+                "str1"
+        );
         Function builtinFunc;
         //void print(string str);
         builtinFunc = funcDef.get("print");
@@ -234,6 +261,34 @@ public class IRRoot {
         //char *_malloc(int size)
         builtinFunc = funcDef.get("_malloc");
         builtinFunc.parameterList.add(intParam);
+        //str1+str2
+        builtinFunc = funcDef.get("_string_add");
+        builtinFunc.parameterList.add(strParam);
+        builtinFunc.parameterList.add(strParam1);
+        //==
+        builtinFunc = funcDef.get("_string_equal");
+        builtinFunc.parameterList.add(strParam);
+        builtinFunc.parameterList.add(strParam1);
+        //!=
+        builtinFunc = funcDef.get("_string_notEqual");
+        builtinFunc.parameterList.add(strParam);
+        builtinFunc.parameterList.add(strParam1);
+        //<
+        builtinFunc = funcDef.get("_string_less");
+        builtinFunc.parameterList.add(strParam);
+        builtinFunc.parameterList.add(strParam1);
+        //<=
+        builtinFunc = funcDef.get("_string_lessOrEqual");
+        builtinFunc.parameterList.add(strParam);
+        builtinFunc.parameterList.add(strParam1);
+        //>
+        builtinFunc = funcDef.get("_string_greater");
+        builtinFunc.parameterList.add(strParam);
+        builtinFunc.parameterList.add(strParam1);
+        //>=
+        builtinFunc = funcDef.get("_string_greaterOrEqual");
+        builtinFunc.parameterList.add(strParam);
+        builtinFunc.parameterList.add(strParam1);
     }
 
     public Function getFunc(String funcName) {
