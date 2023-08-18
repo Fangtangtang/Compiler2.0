@@ -3,6 +3,7 @@ package ir.stmt.instruction;
 import ir.IRVisitor;
 import ir.entity.*;
 import ir.entity.constant.Constant;
+import ir.entity.var.Ptr;
 import ir.irType.ArrayType;
 import ir.irType.PtrType;
 import ir.irType.StructType;
@@ -48,6 +49,8 @@ public class GetElementPtr extends Instruction {
             ptrType = arrayType.type.toString();
         } else if (ptrVal.type instanceof StructType structType) {
             ptrType = structType.toString();
+        } else if (ptrVal instanceof Ptr ptr) {
+            ptrType = "ptr";
         } else {
             throw new InternalException("unexpected type in GetElementPtr");
         }
@@ -58,10 +61,10 @@ public class GetElementPtr extends Instruction {
             str = idx.type + " " + idx;
         }
         out.println("\t" + result.toString() + " = getelementptr " +
-                ptrType + ", ptr " +
-                ptrVal.toString() +
+                        ptrType + ", ptr " +
+                        ptrVal.toString() +
 //                ", i32 0, " + str
-                ", " + str
+                        ", " + str
         );
     }
 

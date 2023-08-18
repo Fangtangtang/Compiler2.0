@@ -122,9 +122,9 @@ public class IRBuilder implements ASTVisitor<Entity> {
 
     //作用域有提前终止符，该作用域后面的语句无用
     private void pushBack(Stmt stmt) {
-        if (!terminated && !currentScope.terminated) {
-            currentBlock.pushBack(stmt);
-        }
+//        if (!terminated && !currentScope.terminated) {
+        currentBlock.pushBack(stmt);
+//        }
     }
 
     public IRBuilder(SymbolTable symbolTable) {
@@ -535,16 +535,20 @@ public class IRBuilder implements ASTVisitor<Entity> {
         changeBlock(trueStmtBlock);
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         node.trueStatement.accept(this);
-        pushBack(
-                new Jump(endBlock.label)
-        );
+        if (currentBlock.tailStmt == null) {
+            pushBack(
+                    new Jump(endBlock.label)
+            );
+        }
         if (node.falseStatement != null) {
             changeBlock(falseStmtBlock);
             currentFunction.blockMap.put(currentBlock.label, currentBlock);
             node.falseStatement.accept(this);
-            pushBack(
-                    new Jump(endBlock.label)
-            );
+            if (currentBlock.tailStmt == null) {
+                pushBack(
+                        new Jump(endBlock.label)
+                );
+            }
         }
         changeBlock(endBlock);
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
@@ -1663,13 +1667,14 @@ public class IRBuilder implements ASTVisitor<Entity> {
             return constStringMap.get(node.value);
         }
         ++constStrCounter;
-        GlobalVar str = new GlobalVar(new ConstString(node.value),
-                ".str." + constStrCounter);
-        globalVarDefBlock.pushBack(
-                new GlobalStr(str)
+        Global stmt = new Global(new ConstString(node.value), ".str." + constStrCounter);
+        globalVarDefBlock.pushBack(stmt);
+        constStringMap.put(node.value, stmt.result);
+        LocalTmpVar tmp = new LocalTmpVar(stmt.result.storage.type, ++tmpCounter);
+        pushBack(
+                new GetElementPtr(tmp, stmt.result, new ConstInt("0"))
         );
-        constStringMap.put(node.value, str);
-        return str;
+        return tmp;
     }
 
     /**

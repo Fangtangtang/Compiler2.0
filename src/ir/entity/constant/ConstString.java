@@ -25,6 +25,13 @@ public class ConstString extends Constant {
 
     @Override
     public String toString() {
-        return type.toString() + " " + value;
+//        return type.toString() + " " + value;
+        if (this.value.length() > 0) {
+            return ("[" + (this.value.length() + 1) + " x i8] c" +
+                    "\"" + this.value + "\\00\""
+            );
+        } else {
+            return "[1 x i8] zeroinitializer";
+        }
     }
 }
