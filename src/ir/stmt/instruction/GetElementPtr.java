@@ -47,7 +47,11 @@ public class GetElementPtr extends Instruction {
     public void print(PrintStream out) {
         String ptrType;
         if (ptrVal.type instanceof ArrayType arrayType) {
-            ptrType = arrayType.type.toString();
+            if (arrayType.dimension == 1) {
+                ptrType = arrayType.type.toString();
+            } else {
+                ptrType = "ptr";
+            }
         } else if (ptrVal.type instanceof StructType structType) {
             ptrType = structType.toString();
         } else if (ptrVal instanceof Ptr || ptrVal instanceof LocalTmpVar) {
@@ -62,10 +66,9 @@ public class GetElementPtr extends Instruction {
             str = idx.type + " " + idx;
         }
         out.println("\t" + result.toString() + " = getelementptr " +
-                        ptrType + ", ptr " +
-                        ptrVal.toString() +
-//                ", i32 0, " + str
-                        ", " + str
+                ptrType + ", ptr " +
+                ptrVal.toString() +
+                ", " + str
         );
     }
 

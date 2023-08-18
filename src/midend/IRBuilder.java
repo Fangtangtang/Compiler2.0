@@ -807,7 +807,13 @@ public class IRBuilder implements ASTVisitor<Entity> {
                     new Load(tmp, entity)
             );
             return tmp;
-        } else if (entity.type instanceof PtrType ptrType) {
+        }
+        //处理geiElementPtr结果
+        else if (entity.type instanceof PtrType ptrType) {
+            //自定义类
+            if (ptrType instanceof StructPtrType) {
+                return (Storage) entity;
+            }
             tmp = new LocalTmpVar(ptrType.type, ++tmpCounter);
             pushBack(
                     new Load(tmp, entity)
@@ -1059,21 +1065,27 @@ public class IRBuilder implements ASTVisitor<Entity> {
     public Entity visit(NewExprNode node) {
         //实例化类对象
         if (node.dimension == 0) {
-            StructType type = (StructType) node.typeNode.accept(this).type;
-            LocalTmpVar result = new LocalTmpVar(new PtrType(type), ++tmpCounter);
-            Call callStmt = new Call(malloc, result);
+            StructPtrType ptrType = (StructPtrType) node.typeNode.accept(this).type;
+            StructType type = (StructType) ptrType.type;
+            LocalTmpVar ptr = new LocalTmpVar(new PtrType(ptrType), ++tmpCounter);
+            Call callStmt = new Call(malloc, ptr);
             callStmt.parameterList.add(new ConstInt(((Integer) (type.getSize() / 8)).toString()));
             pushBack(callStmt);
+            //指向结构体的指针
+            LocalTmpVar tmpPtr = new LocalTmpVar(ptrType, ++tmpCounter);
+            pushBack(
+                    new GetElementPtr(tmpPtr, ptr, zero)
+            );
             //有构造函数，调用构造函数初始化
             if (irRoot.funcDef.containsKey(type.name)) {
                 Function function = irRoot.getFunc(type.name);
                 LocalTmpVar initialized = new LocalTmpVar(new PtrType(type), ++tmpCounter);
                 pushBack(
-                        new Call(function, initialized, result)
+                        new Call(function, initialized, tmpPtr)
                 );
                 return initialized;
             } else {
-                return result;
+                return tmpPtr;
             }
         }
         //实例化数组
@@ -1121,10 +1133,12 @@ public class IRBuilder implements ASTVisitor<Entity> {
                             bitSpace,
                             new ConstInt("8")
                     ));
+            //指向当前数组的指针
             LocalTmpVar root = new LocalTmpVar(new PtrType(type), ++tmpCounter);
             Call callStmt1 = new Call(malloc, root);
             callStmt1.parameterList.add(mallocSpace);
             pushBack(callStmt1);
+            //当前数组（本质是一个指针）
             LocalTmpVar result = new LocalTmpVar(type, ++tmpCounter);
             pushBack(
                     new GetElementPtr(result, root, zero)
@@ -1263,122 +1277,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
         changeBlock(endBlock);
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
     }
-
-//    //递归建立数组
-//    //手动循环
-//    //TODO：类的最后一维（类相当于一维数组）,全部为null
-//    private void createArray(ArrayList<Storage> indexList,
-//                             int dimension,
-//                             int layer,
-//                             LocalTmpVar root) {
-//        IRType type = ((PtrType) root.type).type;
-//        type = ((ArrayType) type).type;
-//        //非基本元素
-//        if (layer != dimension) {
-//            type = new ArrayType(type, dimension - layer);
-//        }
-//        //给数组长度分配空间
-//        Entity size = indexList.get(layer - 1);
-//        LocalTmpVar arraySize = new LocalTmpVar(new PtrType(intType), ++tmpCounter);
-//        Call callStmt = new Call(malloc, arraySize);
-//        callStmt.parameterList.add(new ConstInt("4"));//4字节的空间
-//        pushBack(callStmt);
-//        //存数组长度
-//        pushBack(
-//                new Store(size, arraySize)
-//        );
-//        //给当前层分配空间
-//        //计算需要的空间
-//        LocalTmpVar bitSpace = new LocalTmpVar(intType, ++tmpCounter);
-//        pushBack(
-//                new Binary(BinaryExprNode.BinaryOperator.Multiply,
-//                        bitSpace,
-//                        new ConstInt(type.getSize().toString()),
-//                        size
-//                ));
-//        LocalTmpVar mallocSpace = new LocalTmpVar(intType, ++tmpCounter);
-//        pushBack(
-//                new Binary(BinaryExprNode.BinaryOperator.Divide,
-//                        mallocSpace,
-//                        bitSpace,
-//                        new ConstInt("8")
-//                ));
-//        Call callStmt1 = new Call(malloc, root);
-//        callStmt1.parameterList.add(mallocSpace);
-//        pushBack(callStmt1);
-//        //最末一层，终止递归
-//        if (layer == indexList.size()) {
-//            return;
-//        }
-//        //手写IR上for循环向下递归
-//        int label = funcBlockCounter++;
-//        BasicBlock condBlock = new BasicBlock("loop.cond" + label),
-//                incBlock = new BasicBlock("loop.inc" + label),
-//                bodyBlock = new BasicBlock("loop.body" + label),
-//                endBlock = new BasicBlock("loop.end" + label);
-//        //int i=0;
-//        LocalVar i;//允许被通用的局部变量
-//        if (rename2mem.containsKey("i")) {
-//            i = (LocalVar) rename2mem.get("i");
-//        } else {
-//            Alloca stmt = new Alloca(intType, "i");
-//            i = stmt.result;
-//            rename2mem.put("i", i);
-//            currentInitBlock.pushBack(stmt);
-//        }
-//        pushBack(
-//                new Store(zero, i)
-//        );
-//        pushBack(
-//                new Jump(condBlock.label)
-//        );
-//        //i<size;
-//        currentBlock = condBlock;
-//        currentFunction.blockMap.put(currentBlock.label, currentBlock);
-//        LocalTmpVar cmpResult = new LocalTmpVar(boolType, ++tmpCounter);
-//        pushBack(
-//                new Icmp(CmpExprNode.CmpOperator.Less,
-//                        cmpResult,
-//                        getValue(i),
-//                        getValue(indexList.get(layer - 1)))
-//        );
-//        pushBack(
-//                new Branch(cmpResult, bodyBlock.label, endBlock.label)
-//        );
-//        //循环体
-//        currentBlock = bodyBlock;
-//        currentFunction.blockMap.put(currentBlock.label, currentBlock);
-//        LocalTmpVar newRoot = new LocalTmpVar(new PtrType(type), ++tmpCounter);
-//        LocalTmpVar index = new LocalTmpVar(intType, ++tmpCounter);
-//        pushBack(
-//                new Load(index, i)
-//        );
-//        pushBack(
-//                new GetElementPtr(newRoot, root, index)
-//        );
-//        createArray(indexList, dimension, layer + 1, newRoot);
-//        pushBack(
-//                new Jump(incBlock.label)
-//        );
-//        //step
-//        currentBlock = incBlock;
-//        currentFunction.blockMap.put(currentBlock.label, currentBlock);
-//        LocalTmpVar addResult = new LocalTmpVar(intType, ++tmpCounter);
-//        pushBack(
-//                new Binary(BinaryExprNode.BinaryOperator.Plus,
-//                        addResult,
-//                        getValue(i),
-//                        new ConstInt("1"))
-//        );
-//        pushBack(
-//                new Store(addResult, i)
-//        );
-//        pushBack(
-//                new Jump(condBlock.label)
-//        );
-//        currentBlock = endBlock;
-//        currentFunction.blockMap.put(currentBlock.label, currentBlock);
-//    }
 
     /**
      * PrefixExprNode
@@ -1733,7 +1631,9 @@ public class IRBuilder implements ASTVisitor<Entity> {
             );
         }
         if (node.type instanceof utility.type.ClassType classType) {
-            return new Storage(irRoot.types.get(classType.name));
+            return new Storage(
+                    new StructPtrType((StructType) irRoot.types.get(classType.name))
+            );
         } else {
             throw new InternalException("unexpected type in typeNode");
         }
@@ -1780,15 +1680,8 @@ public class IRBuilder implements ASTVisitor<Entity> {
             //非字面量初始化
             //在全局的初始化函数中加入赋值语句
             if (entity != null && !(entity instanceof Constant)) {
-                if (entity.type instanceof IntType && ((IntType) entity.type).typeName.equals(IntType.TypeName.TMP_BOOL)) {
-                    LocalTmpVar tmp = new LocalTmpVar(boolType, ++tmpCounter);
-                    pushBack(
-                            new Zext(tmp, (Storage) entity)
-                    );
-                    entity = tmp;
-                }
                 pushBack(
-                        new Store(entity, stmt.result)
+                        new Store(fromBool(entity), stmt.result)
                 );
             }
         }

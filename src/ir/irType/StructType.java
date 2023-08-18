@@ -5,7 +5,8 @@ import java.util.*;
 /**
  * @author F
  * IR结构体
- * 类似于被一个指针指向的数组
+ * 实质类似特殊的数组体
+ * 一块连续空间
  * 类的数据成员抽取为一个结构体
  * name -> index -> IRType （接近LLVM IR的输出）
  */
