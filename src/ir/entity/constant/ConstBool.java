@@ -18,7 +18,7 @@ public class ConstBool extends Constant {
 
     @Override
     public String toString() {
-        return this.type.toString() + " " + value;
+        return value ? "1" : "0";
     }
 
 }

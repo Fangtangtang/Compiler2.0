@@ -5,6 +5,7 @@ import ir.entity.Storage;
 import ir.entity.var.LocalTmpVar;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 
 /**
  * @author F
@@ -22,7 +23,7 @@ public class Phi extends Instruction {
     public LocalTmpVar result;
 
     public Storage ans1, ans2;
-    public String label1, label2;
+    public ArrayList<String> label1 = new ArrayList<>(), label2 = new ArrayList<>();
 
     public Phi(LocalTmpVar result,
                Storage ans1,
@@ -32,16 +33,34 @@ public class Phi extends Instruction {
         this.result = result;
         this.ans1 = ans1;
         this.ans2 = ans2;
+        this.label1.add(label1);
+        this.label2.add(label2);
+    }
+
+    public Phi(LocalTmpVar result,
+               Storage ans1,
+               Storage ans2,
+               ArrayList<String> label1,
+               String label2) {
+        this.result = result;
+        this.ans1 = ans1;
+        this.ans2 = ans2;
         this.label1 = label1;
-        this.label2 = label2;
+        this.label2.add(label2);
     }
 
     @Override
     public void print(PrintStream out) {
+        StringBuilder l1 = new StringBuilder(" [ " + ans1.toString() + ", %" + label1.get(0) + " ]");
+        StringBuilder l2 = new StringBuilder(" [ " + ans2.toString() + ", %" + label2.get(0) + " ]");
+        for (int i = 1; i < label1.size(); ++i) {
+            l1.append(", [ ").append(ans1.toString()).append(", %").append(label1.get(i)).append(" ]");
+        }
+        for (int i = 1; i < label2.size(); ++i) {
+            l2.append(", [ ").append(ans2.toString()).append(", %").append(label2.get(i)).append(" ]");
+        }
         out.println(
-                "\t" + result.toString() + " = phi " + ans1.type
-                        + " [ " + ans1.toString() + " %" + label1 + " ],"
-                        + " [ " + ans2.toString() + " %" + label2 + " ]"
+                "\t" + result.toString() + " = phi " + ans1.type + l1 + "," + l2
         );
     }
 
