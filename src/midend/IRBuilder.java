@@ -353,7 +353,10 @@ public class IRBuilder implements ASTVisitor<Entity> {
         currentInitBlock.pushBack(
                 new Jump("start")
         );
-        currentFunction.blockMap.put("return", currentFunction.ret);
+        currentFunction.blockMap.put(node.name + "_return", currentFunction.ret);
+        currentFunction.ret.pushBack(
+                new Return()
+        );
         exitScope();
         return null;
     }
@@ -1079,14 +1082,11 @@ public class IRBuilder implements ASTVisitor<Entity> {
             //有构造函数，调用构造函数初始化
             if (irRoot.funcDef.containsKey(type.name)) {
                 Function function = irRoot.getFunc(type.name);
-                LocalTmpVar initialized = new LocalTmpVar(new PtrType(type), ++tmpCounter);
-                pushBack(
-                        new Call(function, initialized, tmpPtr)
-                );
-                return initialized;
-            } else {
-                return tmpPtr;
+                Call stmt = new Call(function);
+                stmt.parameterList.add(tmpPtr);
+                pushBack(stmt);
             }
+            return tmpPtr;
         }
         //实例化数组
         //分配到size给出的，余下的当成指针
@@ -1625,9 +1625,12 @@ public class IRBuilder implements ASTVisitor<Entity> {
             return new ConstString("");
         }
         if (node.type instanceof utility.type.ArrayType arrayType) {
+            IRType irType = irRoot.type2irType(arrayType.eleType);
+            if (irType instanceof StructType structType) {
+                irType = new StructPtrType(structType);
+            }
             return new Storage(
-                    new ArrayType(irRoot.type2irType(arrayType.eleType),
-                            arrayType.dimensions)
+                    new ArrayType(irType, arrayType.dimensions)
             );
         }
         if (node.type instanceof utility.type.ClassType classType) {

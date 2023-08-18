@@ -23,7 +23,7 @@ import java.util.ArrayList;
  * +------------------------------------------------------------
  */
 public class Call extends Instruction {
-    public ArrayList<Storage> parameterList=new ArrayList<>();
+    public ArrayList<Storage> parameterList = new ArrayList<>();
     public Function function;
     public LocalTmpVar result;
 
@@ -31,6 +31,11 @@ public class Call extends Instruction {
                 LocalTmpVar result) {
         this.function = function;
         this.result = result;
+    }
+
+    //无返回值
+    public Call(Function function) {
+        this.function = function;
     }
 
     public Call(Function function,
@@ -54,7 +59,7 @@ public class Call extends Instruction {
     @Override
     public void print(PrintStream out) {
         StringBuilder str = new StringBuilder("\t");
-        if (!(result.type instanceof VoidType)) {
+        if (result != null && !(result.type instanceof VoidType)) {
             str.append(result.toString()).append(" = ");
         }
         str.append("call ").append(function.retType).append(" @").append(function.funcName)
