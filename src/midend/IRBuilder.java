@@ -18,6 +18,7 @@ import ir.stmt.terminal.*;
 import utility.*;
 import utility.error.InternalException;
 import utility.scope.*;
+import utility.type.StringType;
 import utility.type.Type;
 
 import java.util.*;
@@ -65,6 +66,8 @@ public class IRBuilder implements ASTVisitor<Entity> {
     //特殊处理内置类array、string
     //应该是指向当前类的指针（内存中的指针类型）
     Storage currentVar = null;
+    boolean getFuncName = false;
+    boolean getMemberVar = false;
     //全局变量的初始化块；负责变量的空间申请
     BasicBlock globalVarDefBlock = new BasicBlock("global_var_def");
     GlobalVarInitFunction globalInitFunc = new GlobalVarInitFunction();
@@ -879,26 +882,31 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 )
         );
         //得到函数名
+        getFuncName = true;
         node.func.accept(this);
+        getFuncName = false;
         Function function;
-        LocalTmpVar result;
+        LocalTmpVar result = null;
         Call stmt;
         //类的成员函数
         if (currentVar != null) {
-            IRType pointed;
-            if (currentVar.type instanceof PtrType ptrType) {
-                pointed = ptrType.type;
-            } else {
-                pointed = currentVar.type;
+            //自定义类
+            if (currentVar.type instanceof StructPtrType structPtrType) {
+                StructType classType = (StructType) structPtrType.type;
+                function = irRoot.getFunc(classType.name + "." + callFuncName);
+                if (!(function.retType instanceof VoidType)) {
+                    result = new LocalTmpVar(function.retType, ++tmpCounter);
+                    stmt = new Call(function, result, params);
+                } else {
+                    stmt = new Call(function);
+                    stmt.parameterList = params;
+                }
+            } else {//内建类的方法
+                function = irRoot.getFunc(callFuncName);
+                result = new LocalTmpVar(function.retType, ++tmpCounter);
+                stmt = new Call(function, result, params);
             }
-            StructType classType = (StructType) pointed;
-            function = irRoot.getFunc(classType.name + "." + callFuncName);
-            if (!(function.retType instanceof VoidType)) {
-                ++tmpCounter;
-            }
-            result = new LocalTmpVar(function.retType, tmpCounter);
-            stmt = new Call(function, result, params);
-            //第一个参数为this
+            //this指针
             stmt.parameterList.add(0, currentVar);
             currentVar = null;
         }
@@ -1084,6 +1092,9 @@ public class IRBuilder implements ASTVisitor<Entity> {
     public Entity visit(MemberVisExprNode node) {
         //左式，取值结果为指向class的指针
         currentVar = getValue(node.lhs.accept(this));
+        if (!(node.rhs instanceof FuncCallExprNode)) {
+            getMemberVar = true;
+        }
         return node.rhs.accept(this);
     }
 
@@ -1463,48 +1474,47 @@ public class IRBuilder implements ASTVisitor<Entity> {
      * 变量名localPtr、globalPtr
      * 从rename2mem找到重命名后的变量ptr返回
      * 不可以返回storage（可能是赋值语句的left）
+     * 如果getFuncName 为寻找函数名
      *
      * @param node VarNameExprNode
      * @return ptr\result(ptrType)
      */
     @Override
     public Entity visit(VarNameExprNode node) {
-        //类成员.访问，作为右式
-        if (currentVar != null) {
-            IRType pointed;
-            if (currentVar.type instanceof PtrType ptrType) {
-                pointed = ptrType.type;
-            } else {
-                pointed = currentVar.type;
-            }
-            if (pointed instanceof ArrayType arrayType) {
-                if (arrayType.type instanceof IntType eleType) {
-                    //字符串数组：string
-                    if (eleType.typeName.equals(IntType.TypeName.CHAR)) {
-                        callFuncName = "_string_" + node.name;
-                        currentVar = null;
-                        return null;
-                    }
-                }
-                callFuncName = "_array_" + node.name;
-                currentVar = null;
+        //函数名
+        if (getFuncName) {
+            //普通函数
+            if (currentVar == null) {
+                callFuncName = node.name;
                 return null;
             }
-            StructType structType = (StructType) pointed;
+            //类方法
+            if (currentVar.type instanceof StructPtrType) {
+                callFuncName = node.name;
+                return null;
+            }
+            if (currentVar.type instanceof ArrayType arrayType) {
+                if (isString(currentVar)) {
+                    callFuncName = "_string_" + node.name;
+                    return null;
+                }
+                callFuncName = "_array_" + node.name;
+                return null;
+            }
+            throw new InternalException("unexpected function call");
+        }
+        //类成员
+        if (getMemberVar) {
+            StructType structType = (StructType) ((StructPtrType) currentVar.type).type;
             Integer index = structType.members.get(node.name);
             //成员变量
-            if (index >= 0) {
-                IRType type = structType.memberTypes.get(index);
-                LocalTmpVar result = new LocalTmpVar(new PtrType(type), ++tmpCounter);
-                pushBack(
-                        new GetElementPtr(result, currentVar, new ConstInt(index.toString()))
-                );
-                currentVar = null;
-                return result;
-            }
-            //成员方法
-            callFuncName = node.name;
-            return null;
+            IRType type = structType.memberTypes.get(index);
+            LocalTmpVar result = new LocalTmpVar(new PtrType(type), ++tmpCounter);
+            pushBack(
+                    new GetElementPtr(result, currentVar, new ConstInt(index.toString()))
+            );
+            currentVar = null;
+            return result;
         }
         //变量名
         if (varMap.containsKey(node.name)) {
@@ -1521,25 +1531,92 @@ public class IRBuilder implements ASTVisitor<Entity> {
             //判断为成员变量还是方法
             Integer index = currentClass.members.get(node.name);
             //成员变量
-            if (index >= 0) {
-                IRType type = currentClass.memberTypes.get(index);
-                LocalTmpVar result = new LocalTmpVar(new PtrType(type), ++tmpCounter);
-                pushBack(
-                        new GetElementPtr(result, this1, new ConstInt(index.toString()))
-                );
-                return result;
-            }
-            //成员方法
-            else {
-                currentVar = this1;
-                callFuncName = node.name;
-                return null;
-            }
+            IRType type = currentClass.memberTypes.get(index);
+            LocalTmpVar result = new LocalTmpVar(new PtrType(type), ++tmpCounter);
+            pushBack(
+                    new GetElementPtr(result, this1, new ConstInt(index.toString()))
+            );
+            return result;
         }
-        //普通函数
-        callFuncName = node.name;
-        return null;
+        throw new InternalException("unexpected name");
     }
+
+//    @Override
+//    public Entity visit(VarNameExprNode node) {
+//        //类成员.访问，作为右式
+//        if (currentVar != null) {
+//            IRType pointed;
+//            if (currentVar.type instanceof PtrType ptrType) {
+//                pointed = ptrType.type;
+//            } else {
+//                pointed = currentVar.type;
+//            }
+//            if (pointed instanceof ArrayType arrayType) {
+//                if (arrayType.type instanceof IntType eleType &&
+//                        eleType.typeName.equals(IntType.TypeName.CHAR)) {
+//                    //string的内置函数
+//                    if (StringType.members.containsKey(node.name)) {
+//                        callFuncName = "_string_" + node.name;
+//                        currentVar = null;
+//                        return null;
+//                    }
+//                }
+//                if (utility.type.ArrayType.members.containsKey(node.name)) {
+//                    callFuncName = "_array_" + node.name;
+//                    currentVar = null;
+//                    return null;
+//                }
+//            }
+//            StructType structType = (StructType) pointed;
+//            Integer index = structType.members.get(node.name);
+//            //成员变量
+//            if (index >= 0) {
+//                IRType type = structType.memberTypes.get(index);
+//                LocalTmpVar result = new LocalTmpVar(new PtrType(type), ++tmpCounter);
+//                pushBack(
+//                        new GetElementPtr(result, currentVar, new ConstInt(index.toString()))
+//                );
+//                currentVar = null;
+//                return result;
+//            }
+//            //成员方法
+//            callFuncName = node.name;
+//            return null;
+//        }
+//        //变量名
+//        if (varMap.containsKey(node.name)) {
+//            //该变量在当前的重命名
+//            String name = node.name + "." + varMap.get(node.name);
+//            return rename2mem.get(name);
+//        }
+//        //类的成员直接访问
+//        //仅可能出现在类的成员函数中
+//        //相当于this.xx
+//        if (currentClass != null && currentClass.members.containsKey(node.name)) {
+//            //先取this
+//            Ptr this1 = rename2mem.get("this1");
+//            //判断为成员变量还是方法
+//            Integer index = currentClass.members.get(node.name);
+//            //成员变量
+//            if (index >= 0) {
+//                IRType type = currentClass.memberTypes.get(index);
+//                LocalTmpVar result = new LocalTmpVar(new PtrType(type), ++tmpCounter);
+//                pushBack(
+//                        new GetElementPtr(result, this1, new ConstInt(index.toString()))
+//                );
+//                return result;
+//            }
+//            //成员方法
+//            else {
+//                currentVar = this1;
+//                callFuncName = node.name;
+//                return null;
+//            }
+//        }
+//        //普通函数
+//        callFuncName = node.name;
+//        return null;
+//    }
 
     /**
      * BoolConstantExprNode
