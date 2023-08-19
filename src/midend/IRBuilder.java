@@ -112,7 +112,12 @@ public class IRBuilder implements ASTVisitor<Entity> {
     }
 
     //退出当前scope时，将所有新建的变量数目--
+    //类的成员不作为新建变量
     private void exitScope() {
+        if (currentScope instanceof ClassScope) {
+            currentScope = currentScope.getParent();
+            return;
+        }
         Integer num;
         for (Map.Entry<String, Type> entry : currentScope.name2type.entrySet()) {
             String key = entry.getKey();
@@ -335,6 +340,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
      * 唯一的参数：this
      * 函数的入口为var_def，var_def跳转到start
      * 返回void
+     * TODO:构造函数新建变量和类成员变量（可以同名）
      *
      * @param node ConstructorDefStmtNode
      * @return null
@@ -368,7 +374,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
     //添加隐含的this参数
     private void addThisParam() {
         LocalVar var = new LocalVar(
-                new Storage(new PtrType(currentClass)),
+                new Storage(new StructPtrType(currentClass)),
                 "this"
         );
         currentFunction.parameterList.add(var);
@@ -383,7 +389,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         );
         //%this1 = load ptr, ptr %this.addr
         var = new LocalVar(
-                new Storage(new PtrType(currentClass)),
+                new Storage(new StructPtrType(currentClass)),
                 "this1"
         );
         currentInitBlock.pushBack(
@@ -910,7 +916,11 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 stmt = new Call(function, result, params);
             }
             //this指针
-            stmt.parameterList.add(0, currentVar);
+            LocalTmpVar thisVar = new LocalTmpVar(currentVar.type, ++tmpCounter);
+            pushBack(
+                    new GetElementPtr(thisVar, currentVar, zero)
+            );
+            stmt.parameterList.add(0, thisVar);
             currentVar = null;
         }
         //普通函数
@@ -1124,6 +1134,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             pushBack(callStmt);
             //指向结构体的指针
             LocalTmpVar tmpPtr = new LocalTmpVar(ptrType, ++tmpCounter);
+            //TODO
             pushBack(
                     new GetElementPtr(tmpPtr, ptr, zero)
             );
@@ -1361,6 +1372,12 @@ public class IRBuilder implements ASTVisitor<Entity> {
      */
     @Override
     public Entity visit(PointerExprNode node) {
+//        LocalVar pointer = (LocalVar) rename2mem.get("this1");
+//        LocalTmpVar result = new LocalTmpVar(pointer.storage.type, ++tmpCounter);
+//        pushBack(
+//                new Load(result, pointer)
+//        );
+//        return result;
         return rename2mem.get("this1");
     }
 
@@ -1481,14 +1498,20 @@ public class IRBuilder implements ASTVisitor<Entity> {
         //类成员
         if (getMemberVar) {
             StructType structType = (StructType) ((StructPtrType) currentVar.type).type;
+            //结构体
+            LocalTmpVar struct = new LocalTmpVar(new PtrType(structType), ++tmpCounter);
+            pushBack(
+                    new GetElementPtr(struct, currentVar, zero)
+            );
             Integer index = structType.members.get(node.name);
             //成员变量
             IRType type = structType.memberTypes.get(index);
             LocalTmpVar result = new LocalTmpVar(new PtrType(type), ++tmpCounter);
             pushBack(
-                    new GetElementPtr(result, currentVar, new ConstInt(index.toString()))
+                    new GetElementPtr(result, struct, new ConstInt(index.toString()))
             );
             currentVar = null;
+            getMemberVar = false;
             return result;
         }
         //变量名
@@ -1602,7 +1625,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
             }
         }
         currentClass = null;
-        currentScope = currentScope.getParent();
         exitScope();
         return null;
     }

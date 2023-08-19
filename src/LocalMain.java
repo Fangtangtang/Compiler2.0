@@ -22,8 +22,8 @@ public class LocalMain {
     public static void main(String[] args) throws Exception {
 
 //        String fileName = "testcases/codegen/t1_debug.mx";
-        String fileName = "testcases/codegen/t4.mx";
-//        String fileName = "testcases/primary/1.mx";
+//        String fileName = "testcases/codegen/t14.mx";
+        String fileName = "testcases/primary/1.mx";
 
 
 //        InputStream inputStream = System.in;

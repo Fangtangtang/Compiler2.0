@@ -15,6 +15,10 @@ rm builtin_intermediate.ll
 
 ```
 ```
+clang-17 -emit-llvm --target=riscv32-unknown-elf -S -O2 -fno-builtin-printf -fno-builtin-memcpy \builtin.c -o builtin.ll
+
+```
+```
 testcases/codegen/scripts/test_llvm_ir.bash 'bin/mxc -emit-llvm' testcases/codegen/t1.mx bin/builtin.ll 
 ```
 ```

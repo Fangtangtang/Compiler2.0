@@ -74,14 +74,14 @@ define dso_local noalias ptr @toString(i32 noundef %0) local_unnamed_addr #2 {
 declare dso_local noundef i32 @sprintf(ptr noalias nocapture noundef writeonly, ptr nocapture noundef readonly, ...) local_unnamed_addr #2
 
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(argmem: read)
-define dso_local i32 @_array.size(ptr nocapture noundef readonly %0) local_unnamed_addr #5 {
+define dso_local i32 @_array_size(ptr nocapture noundef readonly %0) local_unnamed_addr #5 {
   %2 = getelementptr inbounds i32, ptr %0, i32 -1
   %3 = load i32, ptr %2, align 4, !tbaa !4
   ret i32 %3
 }
 
 ; Function Attrs: mustprogress nofree nounwind willreturn memory(argmem: read)
-define dso_local i32 @_string.length(ptr nocapture noundef readonly %0) local_unnamed_addr #6 {
+define dso_local i32 @_string_length(ptr nocapture noundef readonly %0) local_unnamed_addr #6 {
   %2 = tail call i32 @strlen(ptr noundef nonnull dereferenceable(1) %0) #12
   ret i32 %2
 }
@@ -90,7 +90,7 @@ define dso_local i32 @_string.length(ptr nocapture noundef readonly %0) local_un
 declare dso_local i32 @strlen(ptr nocapture noundef) local_unnamed_addr #6
 
 ; Function Attrs: nounwind
-define dso_local ptr @_string.substring(ptr noundef %0, i32 noundef %1, i32 noundef %2) local_unnamed_addr #0 {
+define dso_local ptr @_string_substring(ptr noundef %0, i32 noundef %1, i32 noundef %2) local_unnamed_addr #0 {
   %4 = sub nsw i32 %2, %1
   %5 = add nsw i32 %4, 1
   %6 = tail call ptr @malloc(i32 noundef %5) #12
@@ -104,7 +104,7 @@ define dso_local ptr @_string.substring(ptr noundef %0, i32 noundef %1, i32 noun
 declare dso_local ptr @memcpy(ptr noundef, ptr noundef, i32 noundef) local_unnamed_addr #1
 
 ; Function Attrs: nofree nounwind
-define dso_local i32 @_string.parseInt(ptr nocapture noundef readonly %0) local_unnamed_addr #2 {
+define dso_local i32 @_string_parseInt(ptr nocapture noundef readonly %0) local_unnamed_addr #2 {
   %2 = alloca i32, align 4
   call void @llvm.lifetime.start.p0(i64 4, ptr nonnull %2) #13
   %3 = call i32 (ptr, ptr, ...) @sscanf(ptr noundef %0, ptr noundef nonnull @.str.2, ptr noundef nonnull %2) #12
@@ -117,7 +117,7 @@ define dso_local i32 @_string.parseInt(ptr nocapture noundef readonly %0) local_
 declare dso_local noundef i32 @sscanf(ptr nocapture noundef readonly, ptr nocapture noundef readonly, ...) local_unnamed_addr #2
 
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(argmem: read)
-define dso_local i32 @_string.ord(ptr nocapture noundef readonly %0, i32 noundef %1) local_unnamed_addr #5 {
+define dso_local i32 @_string_ord(ptr nocapture noundef readonly %0, i32 noundef %1) local_unnamed_addr #5 {
   %3 = getelementptr inbounds i8, ptr %0, i32 %1
   %4 = load i8, ptr %3, align 1, !tbaa !8
   %5 = zext i8 %4 to i32
@@ -125,7 +125,7 @@ define dso_local i32 @_string.ord(ptr nocapture noundef readonly %0, i32 noundef
 }
 
 ; Function Attrs: mustprogress nofree nounwind willreturn memory(argmem: read)
-define dso_local zeroext i1 @_string.equal(ptr nocapture noundef readonly %0, ptr nocapture noundef readonly %1) local_unnamed_addr #6 {
+define dso_local zeroext i1 @_string_equal(ptr nocapture noundef readonly %0, ptr nocapture noundef readonly %1) local_unnamed_addr #6 {
   %3 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(1) %1) #12
   %4 = icmp eq i32 %3, 0
   ret i1 %4
@@ -135,42 +135,42 @@ define dso_local zeroext i1 @_string.equal(ptr nocapture noundef readonly %0, pt
 declare dso_local i32 @strcmp(ptr nocapture noundef, ptr nocapture noundef) local_unnamed_addr #6
 
 ; Function Attrs: mustprogress nofree nounwind willreturn memory(argmem: read)
-define dso_local zeroext i1 @_string.notEqual(ptr nocapture noundef readonly %0, ptr nocapture noundef readonly %1) local_unnamed_addr #6 {
+define dso_local zeroext i1 @_string_notEqual(ptr nocapture noundef readonly %0, ptr nocapture noundef readonly %1) local_unnamed_addr #6 {
   %3 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(1) %1) #12
   %4 = icmp ne i32 %3, 0
   ret i1 %4
 }
 
 ; Function Attrs: mustprogress nofree nounwind willreturn memory(argmem: read)
-define dso_local zeroext i1 @_string.less(ptr nocapture noundef readonly %0, ptr nocapture noundef readonly %1) local_unnamed_addr #6 {
+define dso_local zeroext i1 @_string_less(ptr nocapture noundef readonly %0, ptr nocapture noundef readonly %1) local_unnamed_addr #6 {
   %3 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(1) %1) #12
   %4 = icmp slt i32 %3, 0
   ret i1 %4
 }
 
 ; Function Attrs: mustprogress nofree nounwind willreturn memory(argmem: read)
-define dso_local zeroext i1 @_string.lessOrEqual(ptr nocapture noundef readonly %0, ptr nocapture noundef readonly %1) local_unnamed_addr #6 {
+define dso_local zeroext i1 @_string_lessOrEqual(ptr nocapture noundef readonly %0, ptr nocapture noundef readonly %1) local_unnamed_addr #6 {
   %3 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(1) %1) #12
   %4 = icmp slt i32 %3, 1
   ret i1 %4
 }
 
 ; Function Attrs: mustprogress nofree nounwind willreturn memory(argmem: read)
-define dso_local zeroext i1 @_string.greater(ptr nocapture noundef readonly %0, ptr nocapture noundef readonly %1) local_unnamed_addr #6 {
+define dso_local zeroext i1 @_string_greater(ptr nocapture noundef readonly %0, ptr nocapture noundef readonly %1) local_unnamed_addr #6 {
   %3 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(1) %1) #12
   %4 = icmp sgt i32 %3, 0
   ret i1 %4
 }
 
 ; Function Attrs: mustprogress nofree nounwind willreturn memory(argmem: read)
-define dso_local zeroext i1 @_string.greaterOrEqual(ptr nocapture noundef readonly %0, ptr nocapture noundef readonly %1) local_unnamed_addr #6 {
+define dso_local zeroext i1 @_string_greaterOrEqual(ptr nocapture noundef readonly %0, ptr nocapture noundef readonly %1) local_unnamed_addr #6 {
   %3 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(1) %1) #12
   %4 = icmp sgt i32 %3, -1
   ret i1 %4
 }
 
 ; Function Attrs: mustprogress nofree nounwind willreturn
-define dso_local ptr @_string.add(ptr nocapture noundef readonly %0, ptr nocapture noundef readonly %1) local_unnamed_addr #7 {
+define dso_local ptr @_string_add(ptr nocapture noundef readonly %0, ptr nocapture noundef readonly %1) local_unnamed_addr #7 {
   %3 = tail call i32 @strlen(ptr noundef nonnull dereferenceable(1) %0) #12
   %4 = tail call i32 @strlen(ptr noundef nonnull dereferenceable(1) %1) #12
   %5 = add i32 %3, 1
