@@ -6,4 +6,5 @@ src/LocalJudge.java
 antlr-4.12.0-complete.jar
 output
 code
+ravel
 *.out
