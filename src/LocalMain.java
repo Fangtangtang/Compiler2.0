@@ -23,7 +23,7 @@ public class LocalMain {
 
 //        String fileName = "testcases/codegen/t1.mx";
 //        String fileName = "testcases/codegen/t4.mx";
-        String fileName = "testcases/primary/function/error.mx";
+        String fileName = "testcases/primary/1.mx";
 
 
 //        InputStream inputStream = System.in;

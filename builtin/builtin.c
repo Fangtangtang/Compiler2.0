@@ -45,6 +45,7 @@ char *toString(int i) {
 
 //array内建方法（将数组长度放在数组前4字节）
 int _array_size(void *__this) {
+//    printf("%d\n",((int*)__this)[-1]);
     return ((int*)__this)[-1];
 }
 //string内建方法
@@ -111,7 +112,10 @@ int *_malloc(int size) {
 
 //为数组分配空间
 int *_malloc_array(int eleSize, int arraySize) {
+//    printf("%d %d %d ", eleSize,arraySize,eleSize*arraySize);
     int *tmp = (int *) malloc(eleSize * arraySize + 4);
+//    printf("%d\n",tmp[0]);
     tmp[0] = arraySize;
+//    malloc(4);
     return tmp + 1;
 }

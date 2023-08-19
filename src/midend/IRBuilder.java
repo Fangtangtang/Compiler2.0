@@ -713,11 +713,14 @@ public class IRBuilder implements ASTVisitor<Entity> {
             //仍然访问到数组
             else {
                 cur = new ArrayType(cur.type, cur.dimension - 1);
-                result = new LocalTmpVar(cur, ++tmpCounter);
+                result = new LocalTmpVar(new PtrType(cur), ++tmpCounter);
                 pushBack(
                         new GetElementPtr(result, prev, idx)
                 );
-                prev = result;
+                prev = new LocalTmpVar(cur, ++tmpCounter);
+                pushBack(
+                        new Load(prev, result)
+                );
             }
         }
         if (result == null) {
@@ -1228,15 +1231,14 @@ public class IRBuilder implements ASTVisitor<Entity> {
         //循环体
         changeBlock(bodyBlock);
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
-        layer += 1;//新的一层
         IRType type = ((PtrType) root.type).type;
         type = ((ArrayType) type).type;//基本元素类型
         //非基本元素
-        if (layer != dimension) {
-            type = new ArrayType(type, dimension - layer);
+        if ((layer + 1) != dimension) {
+            type = new ArrayType(type, dimension - layer - 1);
         }
         //给数组长度分配空间
-        Storage size = indexList.get(layer - 1);
+        Storage size = indexList.get(layer);
         //给当前层分配空间
         //计算需要的空间
         //计算单个元素需要的空间
@@ -1268,8 +1270,8 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 new Store(result, newRoot)
         );
         //判断是否终止
-        if (layer != indexList.size()) {
-            constructArray(indexList, dimension, layer, newRoot);
+        if ((1 + layer) != indexList.size()) {
+            constructArray(indexList, dimension, layer + 1, newRoot);
         }
         pushBack(
                 new Jump(incBlock.label)
