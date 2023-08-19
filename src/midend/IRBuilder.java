@@ -41,6 +41,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
     Constant zero = new ConstInt("0");
     Function currentFunction = null;
     Function malloc;
+    Function malloc_array;
     Integer tmpCounter;
     //计数，确保函数block不重名
     Integer funcBlockCounter = 0;
@@ -138,6 +139,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         irRoot.globalVarDefBlock = globalVarDefBlock;
         irRoot.globalVarInitFunction = globalInitFunc;
         malloc = irRoot.getFunc("_malloc");
+        malloc_array = irRoot.getFunc("_malloc_array");
     }
 
     /**
@@ -1149,37 +1151,23 @@ public class IRBuilder implements ASTVisitor<Entity> {
             } else {
                 currentEleType = new ArrayType(type.type, node.dimension - 1);
             }
-            //给数组长度分配空间
-            Entity size = indexList.get(0);
-            LocalTmpVar arraySize = new LocalTmpVar(new PtrType(intType), ++tmpCounter);
-            Call callStmt = new Call(malloc, arraySize);
-            callStmt.parameterList.add(new ConstInt("4"));//4字节的空间
-            pushBack(callStmt);
-            //存数组长度
-            pushBack(
-                    new Store(size, arraySize)
-            );
+            //数组长度
+            Storage size = indexList.get(0);
             //给当前层分配空间
-            //计算需要的空间
-            LocalTmpVar bitSpace = new LocalTmpVar(intType, ++tmpCounter);
-            pushBack(
-                    new Binary(BinaryExprNode.BinaryOperator.Multiply,
-                            bitSpace,
-                            new ConstInt((currentEleType.getSize()).toString()),
-                            size
-                    ));
+            //计算单个元素需要的空间
             LocalTmpVar mallocSpace = new LocalTmpVar(intType, ++tmpCounter);
             pushBack(
                     new Binary(BinaryExprNode.BinaryOperator.Divide,
                             mallocSpace,
-                            bitSpace,
+                            new ConstInt((currentEleType.getSize()).toString()),
                             new ConstInt("8")
                     ));
             //指向当前数组的指针
             LocalTmpVar root = new LocalTmpVar(new PtrType(type), ++tmpCounter);
-            Call callStmt1 = new Call(malloc, root);
-            callStmt1.parameterList.add(mallocSpace);
-            pushBack(callStmt1);
+            Call callStmt = new Call(malloc_array, root);
+            callStmt.parameterList.add(mallocSpace);
+            callStmt.parameterList.add(size);
+            pushBack(callStmt);
             //当前数组（本质是一个指针）
             LocalTmpVar result = new LocalTmpVar(type, ++tmpCounter);
             pushBack(
@@ -1248,29 +1236,15 @@ public class IRBuilder implements ASTVisitor<Entity> {
             type = new ArrayType(type, dimension - layer);
         }
         //给数组长度分配空间
-        Entity size = indexList.get(layer - 1);
-        LocalTmpVar arraySize = new LocalTmpVar(new PtrType(intType), ++tmpCounter);
-        Call callStmt = new Call(malloc, arraySize);
-        callStmt.parameterList.add(new ConstInt("4"));//4字节的空间
-        pushBack(callStmt);
-        //存数组长度
-        pushBack(
-                new Store(size, arraySize)
-        );
+        Storage size = indexList.get(layer - 1);
         //给当前层分配空间
         //计算需要的空间
-        LocalTmpVar bitSpace = new LocalTmpVar(intType, ++tmpCounter);
-        pushBack(
-                new Binary(BinaryExprNode.BinaryOperator.Multiply,
-                        bitSpace,
-                        new ConstInt(type.getSize().toString()),
-                        size
-                ));
+        //计算单个元素需要的空间
         LocalTmpVar mallocSpace = new LocalTmpVar(intType, ++tmpCounter);
         pushBack(
                 new Binary(BinaryExprNode.BinaryOperator.Divide,
                         mallocSpace,
-                        bitSpace,
+                        new ConstInt((type.getSize()).toString()),
                         new ConstInt("8")
                 ));
         LocalTmpVar index = new LocalTmpVar(intType, ++tmpCounter);
@@ -1282,9 +1256,10 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 new GetElementPtr(newRoot, root, index)
         );
         LocalTmpVar tmpRoot = new LocalTmpVar(new PtrType(newRoot.type), ++tmpCounter);
-        Call callStmt1 = new Call(malloc, tmpRoot);
-        callStmt1.parameterList.add(mallocSpace);
-        pushBack(callStmt1);
+        Call callStmt = new Call(malloc_array, tmpRoot);
+        callStmt.parameterList.add(mallocSpace);
+        callStmt.parameterList.add(size);
+        pushBack(callStmt);
         LocalTmpVar result = new LocalTmpVar(newRoot.type, ++tmpCounter);
         pushBack(
                 new GetElementPtr(result, tmpRoot, zero)

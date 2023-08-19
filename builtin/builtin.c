@@ -108,3 +108,10 @@ char *_string_add(char *str1, char *str2) {
 int *_malloc(int size) {
     return  malloc(size);
 }
+
+//为数组分配空间
+int *_malloc_array(int eleSize, int arraySize) {
+    int *tmp = (int *) malloc(eleSize * arraySize + 4);
+    tmp[0] = arraySize;
+    return tmp + 1;
+}

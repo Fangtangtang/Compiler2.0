@@ -75,6 +75,12 @@ public class IRRoot {
                 "_malloc"
         );
         funcDef.put("_malloc", function);
+        //添加_malloc_array
+        function = new Function(
+                new PtrType(),
+                "_malloc_array"
+        );
+        funcDef.put("_malloc_array", function);
         //添加字符串二元运算函数
         IntType bool = new IntType(IntType.TypeName.TMP_BOOL);
         //==
@@ -233,6 +239,10 @@ public class IRRoot {
                 new Storage(types.get("int")),
                 "n"
         );
+        LocalVar intParam1 = new LocalVar(
+                new Storage(types.get("int")),
+                "n1"
+        );
         LocalVar strParam = new LocalVar(
                 new Storage(types.get("string")),
                 "str"
@@ -260,6 +270,10 @@ public class IRRoot {
         //char *_malloc(int size)
         builtinFunc = funcDef.get("_malloc");
         builtinFunc.parameterList.add(intParam);
+        //int *_malloc_array(int eleSize, int arraySize)
+        builtinFunc = funcDef.get("_malloc_array");
+        builtinFunc.parameterList.add(intParam);
+        builtinFunc.parameterList.add(intParam1);
         //str1+str2
         builtinFunc = funcDef.get("_string_add");
         builtinFunc.parameterList.add(strParam);

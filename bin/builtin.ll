@@ -295,6 +295,28 @@ define dso_local ptr @_malloc(i32 noundef %0) #0 {
   ret ptr %4
 }
 
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local ptr @_malloc_array(i32 noundef %0, i32 noundef %1) #0 {
+  %3 = alloca i32, align 4
+  %4 = alloca i32, align 4
+  %5 = alloca ptr, align 8
+  store i32 %0, ptr %3, align 4
+  store i32 %1, ptr %4, align 4
+  %6 = load i32, ptr %3, align 4
+  %7 = load i32, ptr %4, align 4
+  %8 = mul nsw i32 %6, %7
+  %9 = add nsw i32 %8, 4
+  %10 = call ptr @malloc(i32 noundef %9)
+  store ptr %10, ptr %5, align 8
+  %11 = load i32, ptr %4, align 4
+  %12 = load ptr, ptr %5, align 8
+  %13 = getelementptr inbounds i32, ptr %12, i64 0
+  store i32 %11, ptr %13, align 4
+  %14 = load ptr, ptr %5, align 8
+  %15 = getelementptr inbounds i32, ptr %14, i64 1
+  ret ptr %15
+}
+
 attributes #0 = { noinline nounwind optnone uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 attributes #1 = { "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 
