@@ -65,9 +65,13 @@ public class IRBuilder implements ASTVisitor<Entity> {
     //当前的变量，尤其用于类成员访问
     //特殊处理内置类array、string
     //应该是指向当前类的指针（内存中的指针类型）
+    //非成员访问：zero作为virtual value
     Stack<Storage> currentVar = new Stack<>();
     boolean getFuncName = false;
     boolean getMemberVar = false;
+    boolean getMemberFunc = false;
+    //类内直接访问成员函数
+    boolean addThis = false;
     //全局变量的初始化块；负责变量的空间申请
     BasicBlock globalVarDefBlock = new BasicBlock("_global_var_def");
     GlobalVarInitFunction globalInitFunc = new GlobalVarInitFunction();
@@ -362,6 +366,11 @@ public class IRBuilder implements ASTVisitor<Entity> {
      */
     @Override
     public Entity visit(ConstructorDefStmtNode node) {
+        //清空所有函数构建中的辅助变量
+        funcBlockCounter = 0;
+        logicExprCounter = 0;
+        tmpCounter = new Counter();
+        logicBlockMap = new HashMap<>();
         enterScope(node);
         getCurrentFunc(node.name);
         //添加隐含的this参数
@@ -903,6 +912,11 @@ public class IRBuilder implements ASTVisitor<Entity> {
      */
     @Override
     public Entity visit(FuncCallExprNode node) {
+        //直接调用的函数
+        if (!getMemberFunc) {
+            currentVar.push(zero);
+        }
+        getMemberFunc = false;
         //参数表访问
         ArrayList<Storage> params = new ArrayList<>();
         node.parameterList.forEach(
@@ -917,10 +931,33 @@ public class IRBuilder implements ASTVisitor<Entity> {
         Function function;
         LocalTmpVar result = null;
         Call stmt;
+        Storage current = currentVar.pop();
         //类的成员函数
-        if (!currentVar.empty()) {
+        if (current instanceof Constant) {
+            //隐含的成员方法调用
+            if (addThis) {
+                //先取this
+                Storage this1 = getValue(rename2mem.get("this1"));
+                params.add(0, this1);
+                addThis = false;
+                function = irRoot.getFunc(callFuncName);
+                if (!(function.retType instanceof VoidType)) {
+                    ++tmpCounter.cnt;
+                }
+                result = new LocalTmpVar(function.retType, tmpCounter.cnt);
+                stmt = new Call(function, result, params);
+            }
+            //普通函数
+            else {
+                function = irRoot.getFunc(callFuncName);
+                if (!(function.retType instanceof VoidType)) {
+                    ++tmpCounter.cnt;
+                }
+                result = new LocalTmpVar(function.retType, tmpCounter.cnt);
+                stmt = new Call(function, result, params);
+            }
+        } else {
             //this指针（指向结构体类型的局部变量）
-            Storage current = currentVar.pop();
             LocalTmpVar thisVar = new LocalTmpVar(current.type, ++tmpCounter.cnt);
             pushBack(
                     new GetElementPtr(thisVar, current, zero)
@@ -942,15 +979,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 result = new LocalTmpVar(function.retType, ++tmpCounter.cnt);
                 stmt = new Call(function, result, params);
             }
-        }
-        //普通函数
-        else {
-            function = irRoot.getFunc(callFuncName);
-            if (!(function.retType instanceof VoidType)) {
-                ++tmpCounter.cnt;
-            }
-            result = new LocalTmpVar(function.retType, tmpCounter.cnt);
-            stmt = new Call(function, result, params);
         }
         pushBack(stmt);
         return result;
@@ -1134,6 +1162,8 @@ public class IRBuilder implements ASTVisitor<Entity> {
         currentVar.push(getValue(node.lhs.accept(this)));
         if (!(node.rhs instanceof FuncCallExprNode)) {
             getMemberVar = true;
+        } else {
+            getMemberFunc = true;
         }
         return node.rhs.accept(this);
     }
@@ -1493,16 +1523,19 @@ public class IRBuilder implements ASTVisitor<Entity> {
     public Entity visit(VarNameExprNode node) {
         //函数名
         if (getFuncName) {
-            //普通函数
-            if (currentVar.empty()) {
+            Storage current = currentVar.peek();
+            //非成员访问
+            if (current instanceof Constant) {
                 if (currentClass != null && currentClass.funcNameSet.contains(node.name)) {
                     callFuncName = currentClass.name + "." + node.name;
-                } else {
+                    addThis = true;
+                }
+                //普通函数
+                else {
                     callFuncName = node.name;
                 }
                 return null;
             }
-            Storage current = currentVar.peek();
             //类方法
             if (current.type instanceof StructPtrType) {
                 callFuncName = node.name;

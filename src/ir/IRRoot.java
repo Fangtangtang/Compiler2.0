@@ -310,6 +310,9 @@ public class IRRoot {
     }
 
     public Function getFunc(String funcName) {
+        if (!funcDef.containsKey(funcName)) {
+            throw new InternalException(funcName + " not found");
+        }
         return funcDef.get(funcName);
     }
 
