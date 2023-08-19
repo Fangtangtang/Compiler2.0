@@ -371,6 +371,27 @@ public class IRBuilder implements ASTVisitor<Entity> {
         return null;
     }
 
+    //添加函数参数
+    //不访问结点，直接处理
+    private void addParam(VarDefUnitNode node) {
+        Entity entity = node.typeNode.accept(this);
+        String name = rename(node.name);
+        //构造局部变量，加入参数表(参数表中的)
+        LocalVar var = new LocalVar(
+                new Storage(entity.type),
+                node.name
+        );
+        currentFunction.parameterList.add(var);
+        rename2mem.put(var.identity, var);
+        //构建var_def
+        Alloca stmt = new Alloca(var.storage.type, name);
+        currentInitBlock.pushBack(stmt);
+        currentInitBlock.pushBack(
+                new Store(var, stmt.result)
+        );
+        rename2mem.put(name, stmt.result);
+    }
+
     //添加隐含的this参数
     private void addThisParam() {
         LocalVar var = new LocalVar(
@@ -380,24 +401,12 @@ public class IRBuilder implements ASTVisitor<Entity> {
         currentFunction.parameterList.add(var);
         rename2mem.put(var.identity, var);
         //构建var_def
-        //%this.addr = alloca ptr
-        Alloca stmt = new Alloca(var.storage.type, "this.addr");
+        Alloca stmt = new Alloca(var.storage.type, "this1");
         currentInitBlock.pushBack(stmt);
-        //store ptr %this, ptr %this.addr
         currentInitBlock.pushBack(
                 new Store(var, stmt.result)
         );
-        //%this1 = load ptr, ptr %this.addr
-        var = new LocalVar(
-                new Storage(new StructPtrType(currentClass)),
-                "this1"
-        );
-        currentInitBlock.pushBack(
-                new Load(var, stmt.result)
-        );
-        //一个函数中加一次this1
-        //换函数时，如果有新的this，覆盖
-        rename2mem.put(var.identity, var);
+        rename2mem.put("this1", stmt.result);
     }
 
     /**
@@ -470,27 +479,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
         exitScope();
         tmpCounter = globalInitFunc.tmpCounter;
         return null;
-    }
-
-    //添加函数参数
-    //不访问结点，直接处理
-    private void addParam(VarDefUnitNode node) {
-        Entity entity = node.typeNode.accept(this);
-        String name = rename(node.name);
-        //构造局部变量，加入参数表(参数表中的)
-        LocalVar var = new LocalVar(
-                new Storage(entity.type),
-                node.name
-        );
-        currentFunction.parameterList.add(var);
-        rename2mem.put(var.identity, var);
-        //构建var_def
-        Alloca stmt = new Alloca(var.storage.type, name);
-        currentInitBlock.pushBack(stmt);
-        currentInitBlock.pushBack(
-                new Store(var, stmt.result)
-        );
-        rename2mem.put(name, stmt.result);
     }
 
     /**
@@ -915,7 +903,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 result = new LocalTmpVar(function.retType, ++tmpCounter);
                 stmt = new Call(function, result, params);
             }
-            //this指针
+            //this指针（指向结构体类型的局部变量）
             LocalTmpVar thisVar = new LocalTmpVar(currentVar.type, ++tmpCounter);
             pushBack(
                     new GetElementPtr(thisVar, currentVar, zero)
@@ -1372,13 +1360,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
      */
     @Override
     public Entity visit(PointerExprNode node) {
-//        LocalVar pointer = (LocalVar) rename2mem.get("this1");
-//        LocalTmpVar result = new LocalTmpVar(pointer.storage.type, ++tmpCounter);
-//        pushBack(
-//                new Load(result, pointer)
-//        );
-//        return result;
-        return rename2mem.get("this1");
+        return (LocalVar) rename2mem.get("this1");
     }
 
     /**
@@ -1497,6 +1479,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         }
         //类成员
         if (getMemberVar) {
+            //currentVar存了一个指向结构体的指针的局部临时变量
             StructType structType = (StructType) ((StructPtrType) currentVar.type).type;
             //结构体
             LocalTmpVar struct = new LocalTmpVar(new PtrType(structType), ++tmpCounter);
@@ -1525,14 +1508,18 @@ public class IRBuilder implements ASTVisitor<Entity> {
         //相当于this.xx
         if (currentClass != null && currentClass.members.containsKey(node.name)) {
             //先取this
-            Ptr this1 = rename2mem.get("this1");
-            //判断为成员变量还是方法
+            Storage this1 = getValue(rename2mem.get("this1"));
+            //结构体
+            LocalTmpVar struct = new LocalTmpVar(new PtrType(currentClass), ++tmpCounter);
+            pushBack(
+                    new GetElementPtr(struct, this1, zero)
+            );
             Integer index = currentClass.members.get(node.name);
             //成员变量
             IRType type = currentClass.memberTypes.get(index);
             LocalTmpVar result = new LocalTmpVar(new PtrType(type), ++tmpCounter);
             pushBack(
-                    new GetElementPtr(result, this1, new ConstInt(index.toString()))
+                    new GetElementPtr(result, struct, new ConstInt(index.toString()))
             );
             return result;
         }
