@@ -2,6 +2,7 @@ package ir.function;
 
 import ir.BasicBlock;
 import ir.irType.VoidType;
+import utility.Counter;
 
 /**
  * @author F
@@ -12,7 +13,7 @@ import ir.irType.VoidType;
 public class GlobalVarInitFunction extends Function {
     public BasicBlock currentBlock;
 
-    public Integer tmpCounter = -1;
+    public Counter tmpCounter=new Counter();
 
     public GlobalVarInitFunction() {
         super(new VoidType(),

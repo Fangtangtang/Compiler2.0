@@ -183,7 +183,11 @@ public class IRRoot {
                         }
                         //自定义类的所有成员变量
                         else {
-                            currentStruct.addMember(name, type2irType(memberType));
+                            IRType irType = type2irType(memberType);
+                            if (irType instanceof ArrayType arrayType) {
+                                irType = new ArrayPtrType(arrayType);
+                            }
+                            currentStruct.addMember(name, irType);
                         }
                     }
                     //自定义类的构造函数（同类名）
