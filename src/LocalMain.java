@@ -22,7 +22,7 @@ public class LocalMain {
     public static void main(String[] args) throws Exception {
 
 //        String fileName = "testcases/codegen/t1_debug.mx";
-//        String fileName = "testcases/codegen/t19.mx";
+//        String fileName = "testcases/codegen/t61.mx";
         String fileName = "testcases/primary/1.mx";
 
 
@@ -32,7 +32,7 @@ public class LocalMain {
         try {
             compile(inputStream);
         } catch (MxException exception) {
-            System.err.println(exception.toString());
+            System.err.println(exception);
             throw new RuntimeException();
         }
     }

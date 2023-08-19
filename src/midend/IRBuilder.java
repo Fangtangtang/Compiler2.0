@@ -69,7 +69,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
     boolean getFuncName = false;
     boolean getMemberVar = false;
     //全局变量的初始化块；负责变量的空间申请
-    BasicBlock globalVarDefBlock = new BasicBlock("global_var_def");
+    BasicBlock globalVarDefBlock = new BasicBlock("_global_var_def");
     GlobalVarInitFunction globalInitFunc = new GlobalVarInitFunction();
     //字符串字面量，重复的仅在全局定义一次
     HashMap<String, GlobalVar> constStringMap = new HashMap<>();
@@ -79,21 +79,37 @@ public class IRBuilder implements ASTVisitor<Entity> {
 
     //变量名 -> <覆盖层次,对应mem空间>
     //变量重命名即为 int+name
-    public HashMap<String, Integer> varMap = new HashMap<>();
+    public HashMap<
+            String,//真名
+            Pair<Integer, Stack<Integer>>//重名次数；当前名
+            > varMap = new HashMap<>();
 
     //重命名后的name -> Ptr
     public HashMap<String, Ptr> rename2mem = new HashMap<>();
 
     private String rename(String name) {
         Integer num;
+        Pair<Integer, Stack<Integer>> pair;
         if (varMap.containsKey(name)) {
-            num = varMap.get(name);
+            pair = varMap.get(name);
+            num = pair.getFirst();
             num += 1;
+            pair.getSecond().push(num);
         } else {
+            Stack<Integer> stack = new Stack<>();
+            stack.push(1);
+            pair = new Pair<>(1, stack);
             num = 1;
         }
-        varMap.put(name, num);
+        pair.setFirst(num);
+        varMap.put(name, pair);
         return name + "." + num;
+    }
+
+    private Ptr name2var(String name) {
+        Pair<Integer, Stack<Integer>> pair = varMap.get(name);
+        String rename = name + "." + pair.getSecond().peek();
+        return rename2mem.get(rename);
     }
 
     private void changeBlock(BasicBlock block) {
@@ -118,12 +134,11 @@ public class IRBuilder implements ASTVisitor<Entity> {
             currentScope = currentScope.getParent();
             return;
         }
-        Integer num;
         for (Map.Entry<String, Type> entry : currentScope.name2type.entrySet()) {
             String key = entry.getKey();
-            num = varMap.get(key);
-            num -= 1;
-            varMap.put(key, num);
+            Pair<Integer, Stack<Integer>> pair = varMap.get(key);
+            pair.getSecond().pop();
+            varMap.put(key, pair);
         }
         //就终结符来看，函数作用域同函数体作用域
         if (currentScope.getParent() instanceof FuncScope) {
@@ -296,7 +311,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             changeBlock(condBlock);
             currentFunction.blockMap.put(currentBlock.label, currentBlock);
             operator = null;
-            entity = toBool(node.condition.accept(this));
+            entity = toBool(getValue(node.condition.accept(this)));
             pushBack(
                     new Branch(entity, bodyBlock.label, endBlock.label)
             );
@@ -351,9 +366,9 @@ public class IRBuilder implements ASTVisitor<Entity> {
         getCurrentFunc(node.name);
         //添加隐含的this参数
         addThisParam();
-        changeBlock(new BasicBlock("start"));
+        changeBlock(new BasicBlock("_start"));
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
-        currentFunction.blockMap.put("start", currentBlock);
+        currentFunction.blockMap.put("_start", currentBlock);
         node.suite.accept(this);
         if (currentBlock.tailStmt == null) {
             pushBack(
@@ -361,7 +376,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             );
         }
         currentInitBlock.pushBack(
-                new Jump("start")
+                new Jump("_start")
         );
         currentFunction.blockMap.put(node.name + "_return", currentFunction.ret);
         currentFunction.ret.pushBack(
@@ -451,7 +466,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         }
         //函数作用域
         enterScope(node);
-        changeBlock(new BasicBlock("start"));
+        changeBlock(new BasicBlock("_start"));
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         node.functionBody.accept(this);
         if (currentBlock.tailStmt == null) {
@@ -460,7 +475,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             );
         }
         currentInitBlock.pushBack(
-                new Jump("start")
+                new Jump("_start")
         );
         currentFunction.blockMap.put("return", currentFunction.ret);
         if (currentFunction.retType instanceof VoidType) {
@@ -489,7 +504,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
      */
     private void getCurrentFunc(String funcName) {
         currentFunction = irRoot.getFunc(funcName);
-        currentInitBlock = new BasicBlock("var_def");
+        currentInitBlock = new BasicBlock("_var_def");
         currentFunction.entry = currentInitBlock;
         if ("main".equals(funcName)) {
             currentInitBlock.pushBack(
@@ -535,7 +550,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         }
         //cond：在上一个块里
         operator = null;
-        Entity entity = toBool(node.condition.accept(this));
+        Entity entity = toBool(getValue(node.condition.accept(this)));
         pushBack(
                 new Branch(entity, trueStmtBlock.label, next.label)
         );
@@ -639,7 +654,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         changeBlock(condBlock);
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         operator = null;
-        entity = toBool(node.condition.accept(this));
+        entity = toBool(getValue(node.condition.accept(this)));
         pushBack(
                 new Branch(entity, bodyBlock.label, endBlock.label)
         );
@@ -836,6 +851,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         return result;
     }
 
+    //返回值
     private Storage getValue(Entity entity) {
         LocalTmpVar tmp;
         if (entity instanceof Ptr) {
@@ -860,6 +876,11 @@ public class IRBuilder implements ASTVisitor<Entity> {
             return (Storage) entity;
         }
     }
+
+//    //TODO:返回指针
+//    private Storage getAssignableValue(Entity entity) {
+//
+//    }
 
     /**
      * FuncCallExprNode
@@ -929,7 +950,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
      * 逻辑运算语句
      * 需要支持短路求值（跳转语句）
      * 使用phi指令，提前退出，都退到end
-     * （phi仅使用两个label，如果提前退出，都为同一个结果，使用一个虚拟label表示）
      * - 只有根有end、返回result
      * （应该正确 但不是最优解法）
      *
@@ -956,6 +976,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             rootFlag = true;
         }
         BasicBlock nextBlock = new BasicBlock("logic.next" + exprLabel);
+        //可能左边为计算了一半的逻辑表达式串，返回值为null
         Entity entity = node.lhs.accept(this);
         if (entity != null) {
             LocalTmpVar leftToBool = toBool(entity);
@@ -978,7 +999,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         if (node.rhs instanceof LogicExprNode) {
             ++logicExprCounter;
         }
-        LocalTmpVar rightToBool = toBool(node.rhs.accept(this));
+        LocalTmpVar rightToBool = toBool(getValue(node.rhs.accept(this)));
         if (rootFlag) {//当前为根
             pushBack(
                     new Jump(endBlock.label)
@@ -1023,6 +1044,13 @@ public class IRBuilder implements ASTVisitor<Entity> {
 
     private LocalTmpVar toBool(Entity entity) {
         LocalTmpVar tmp, toBool;
+        if (entity instanceof ConstBool bool) {
+            toBool = new LocalTmpVar(tmpBoolType, ++tmpCounter);
+            pushBack(
+                    new Trunc(toBool, bool)
+            );
+            return toBool;
+        }
         if (entity instanceof Ptr) {
             tmp = new LocalTmpVar(((Ptr) entity).storage.type, ++tmpCounter);
             pushBack(
@@ -1359,7 +1387,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
      */
     @Override
     public Entity visit(PointerExprNode node) {
-        return (LocalVar) rename2mem.get("this1");
+        return rename2mem.get("this1");
     }
 
     /**
@@ -1373,15 +1401,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
     @Override
     public Entity visit(SuffixExprNode node) {
         Entity entity = node.expression.accept(this);
-        LocalTmpVar tmp;
-        if (entity instanceof Ptr ptr) {
-            tmp = new LocalTmpVar(ptr.storage.type, ++tmpCounter);
-            pushBack(
-                    new Load(tmp, entity)
-            );
-        } else {
-            tmp = (LocalTmpVar) entity;
-        }
+        LocalTmpVar tmp = (LocalTmpVar) getValue(entity);
         LocalTmpVar result = new LocalTmpVar(tmp.type, ++tmpCounter);
         Entity right = new ConstInt("1");
         BinaryExprNode.BinaryOperator operator =
@@ -1414,7 +1434,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         BasicBlock endBlock = new BasicBlock("cond.end" + label);
         //cond：在上一个块里
         operator = null;
-        Entity entity = toBool(node.condition.accept(this));
+        Entity entity = toBool(getValue(node.condition.accept(this)));
         pushBack(
                 new Branch(entity, trueStmtBlock.label, falseStmtBlock.label)
         );
@@ -1499,8 +1519,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         //变量名
         if (varMap.containsKey(node.name)) {
             //该变量在当前的重命名
-            String name = node.name + "." + varMap.get(node.name);
-            return rename2mem.get(name);
+            return name2var(node.name);
         }
         //类的成员直接访问
         //仅可能出现在类的成员函数中
