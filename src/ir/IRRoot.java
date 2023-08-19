@@ -147,7 +147,7 @@ public class IRRoot {
                     )
             );
             case "null" -> types.put(typeName, new NullType());
-            default -> types.put(typeName, new StructType(typeName));
+            default -> types.put(typeName, new StructPtrType(new StructType(typeName)));
         }
     }
 
@@ -172,7 +172,7 @@ public class IRRoot {
             }
             default -> {
                 if (type instanceof ClassType classType) {
-                    StructType currentStruct = (StructType) types.get(classType.name);
+                    StructType currentStruct = (StructType) ((StructPtrType) types.get(classType.name)).type;
                     for (Map.Entry<String, Type> entry : classType.classMembers.entrySet()) {
                         String name = entry.getKey();
                         Type memberType = entry.getValue();

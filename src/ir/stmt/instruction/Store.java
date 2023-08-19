@@ -2,8 +2,9 @@ package ir.stmt.instruction;
 
 import ir.IRVisitor;
 import ir.entity.Entity;
-import ir.entity.constant.Constant;
+import ir.entity.constant.*;
 import ir.entity.var.*;
+import ir.irType.PtrType;
 
 import java.io.PrintStream;
 
@@ -39,6 +40,12 @@ public class Store extends Instruction {
             str = value.type.toString() + " " + value.toString();
         } else if (value instanceof Ptr ptr) {
             str = ptr.storage.type + " " + ptr;
+        } else if (value instanceof Null) {
+            if (pointer instanceof Ptr ptr) {
+                str = ptr.storage.type + " null";
+            } else {
+                str = ((PtrType) pointer.type).type + " null";
+            }
         } else {
             str = value.toString();
         }

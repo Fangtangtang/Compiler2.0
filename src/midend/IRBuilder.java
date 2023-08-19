@@ -887,6 +887,12 @@ public class IRBuilder implements ASTVisitor<Entity> {
         Call stmt;
         //类的成员函数
         if (currentVar != null) {
+            //this指针（指向结构体类型的局部变量）
+            LocalTmpVar thisVar = new LocalTmpVar(currentVar.type, ++tmpCounter);
+            pushBack(
+                    new GetElementPtr(thisVar, currentVar, zero)
+            );
+            params.add(0, thisVar);
             //自定义类
             if (currentVar.type instanceof StructPtrType structPtrType) {
                 StructType classType = (StructType) structPtrType.type;
@@ -903,12 +909,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 result = new LocalTmpVar(function.retType, ++tmpCounter);
                 stmt = new Call(function, result, params);
             }
-            //this指针（指向结构体类型的局部变量）
-            LocalTmpVar thisVar = new LocalTmpVar(currentVar.type, ++tmpCounter);
-            pushBack(
-                    new GetElementPtr(thisVar, currentVar, zero)
-            );
-            stmt.parameterList.add(0, thisVar);
             currentVar = null;
         }
         //普通函数
@@ -1122,7 +1122,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
             pushBack(callStmt);
             //指向结构体的指针
             LocalTmpVar tmpPtr = new LocalTmpVar(ptrType, ++tmpCounter);
-            //TODO
             pushBack(
                     new GetElementPtr(tmpPtr, ptr, zero)
             );
@@ -1601,7 +1600,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
     @Override
     public Entity visit(ClassDefNode node) {
         enterScope(node);
-        currentClass = (StructType) irRoot.types.get(node.name);
+        currentClass = (StructType) ((StructPtrType) irRoot.types.get(node.name)).type;
         StmtNode stmt;
         for (int i = 0; i < node.members.size(); ++i) {
             stmt = node.members.get(i);
@@ -1656,9 +1655,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             );
         }
         if (node.type instanceof utility.type.ClassType classType) {
-            return new Storage(
-                    new StructPtrType((StructType) irRoot.types.get(classType.name))
-            );
+            return new Storage(irRoot.types.get(classType.name));
         } else {
             throw new InternalException("unexpected type in typeNode");
         }
