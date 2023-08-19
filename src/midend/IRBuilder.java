@@ -65,7 +65,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
     //当前的变量，尤其用于类成员访问
     //特殊处理内置类array、string
     //应该是指向当前类的指针（内存中的指针类型）
-    Storage currentVar = null;
+    Stack<Storage> currentVar = new Stack<>();
     boolean getFuncName = false;
     boolean getMemberVar = false;
     //全局变量的初始化块；负责变量的空间申请
@@ -877,11 +877,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
         }
     }
 
-//    //TODO:返回指针
-//    private Storage getAssignableValue(Entity entity) {
-//
-//    }
-
     /**
      * FuncCallExprNode
      * 函数调用
@@ -907,15 +902,16 @@ public class IRBuilder implements ASTVisitor<Entity> {
         LocalTmpVar result = null;
         Call stmt;
         //类的成员函数
-        if (currentVar != null) {
+        if (!currentVar.empty()) {
             //this指针（指向结构体类型的局部变量）
-            LocalTmpVar thisVar = new LocalTmpVar(currentVar.type, ++tmpCounter);
+            Storage current = currentVar.pop();
+            LocalTmpVar thisVar = new LocalTmpVar(current.type, ++tmpCounter);
             pushBack(
-                    new GetElementPtr(thisVar, currentVar, zero)
+                    new GetElementPtr(thisVar, current, zero)
             );
             params.add(0, thisVar);
             //自定义类
-            if (currentVar.type instanceof StructPtrType structPtrType) {
+            if (current.type instanceof StructPtrType structPtrType) {
                 StructType classType = (StructType) structPtrType.type;
                 function = irRoot.getFunc(classType.name + "." + callFuncName);
                 if (!(function.retType instanceof VoidType)) {
@@ -930,7 +926,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 result = new LocalTmpVar(function.retType, ++tmpCounter);
                 stmt = new Call(function, result, params);
             }
-            currentVar = null;
         }
         //普通函数
         else {
@@ -1120,7 +1115,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
     @Override
     public Entity visit(MemberVisExprNode node) {
         //左式，取值结果为指向class的指针
-        currentVar = getValue(node.lhs.accept(this));
+        currentVar.push(getValue(node.lhs.accept(this)));
         if (!(node.rhs instanceof FuncCallExprNode)) {
             getMemberVar = true;
         }
@@ -1477,17 +1472,22 @@ public class IRBuilder implements ASTVisitor<Entity> {
         //函数名
         if (getFuncName) {
             //普通函数
-            if (currentVar == null) {
-                callFuncName = node.name;
+            if (currentVar.empty()) {
+                if (currentClass != null && currentClass.funcNameSet.contains(node.name)) {
+                    callFuncName = currentClass.name + "." + node.name;
+                } else {
+                    callFuncName = node.name;
+                }
                 return null;
             }
+            Storage current = currentVar.peek();
             //类方法
-            if (currentVar.type instanceof StructPtrType) {
+            if (current.type instanceof StructPtrType) {
                 callFuncName = node.name;
                 return null;
             }
-            if (currentVar.type instanceof ArrayType) {
-                if (isString(currentVar)) {
+            if (current.type instanceof ArrayType) {
+                if (isString(current)) {
                     callFuncName = "_string_" + node.name;
                     return null;
                 }
@@ -1498,12 +1498,13 @@ public class IRBuilder implements ASTVisitor<Entity> {
         }
         //类成员
         if (getMemberVar) {
-            //currentVar存了一个指向结构体的指针的局部临时变量
-            StructType structType = (StructType) ((StructPtrType) currentVar.type).type;
+            //current存了一个指向结构体的指针的局部临时变量
+            Storage current = currentVar.pop();
+            StructType structType = (StructType) ((StructPtrType) current.type).type;
             //结构体
             LocalTmpVar struct = new LocalTmpVar(new PtrType(structType), ++tmpCounter);
             pushBack(
-                    new GetElementPtr(struct, currentVar, zero)
+                    new GetElementPtr(struct, current, zero)
             );
             Integer index = structType.members.get(node.name);
             //成员变量
@@ -1512,7 +1513,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
             pushBack(
                     new GetElementPtr(result, struct, new ConstInt(index.toString()))
             );
-            currentVar = null;
             getMemberVar = false;
             return result;
         }
@@ -1521,7 +1521,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             //该变量在当前的重命名
             return name2var(node.name);
         }
-        //类的成员直接访问
+        //类的成员变量直接访问
         //仅可能出现在类的成员函数中
         //相当于this.xx
         if (currentClass != null && currentClass.members.containsKey(node.name)) {

@@ -179,6 +179,7 @@ public class IRRoot {
                         //自定义类的所有函数
                         if (memberType instanceof FunctionType functionType) {
                             addFunc(typeName + "." + name, functionType);
+                            currentStruct.funcNameSet.add(name);
                         }
                         //自定义类的所有成员变量
                         else {

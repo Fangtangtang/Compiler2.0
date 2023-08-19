@@ -14,7 +14,7 @@ public class StructType extends IRType {
     public String name;
     public boolean padding = false;
     public HashMap<String, Integer> members = new HashMap<>();
-
+    public Set<String> funcNameSet = new HashSet<>();
     public ArrayList<IRType> memberTypes = new ArrayList<>();
 
     public StructType(String name) {
