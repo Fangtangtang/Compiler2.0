@@ -708,6 +708,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 pushBack(
                         new GetElementPtr(result, prev, idx)
                 );
+                //TODO:load?
                 return result;
             }
             //仍然访问到数组

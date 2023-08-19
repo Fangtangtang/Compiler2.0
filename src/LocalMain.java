@@ -21,9 +21,9 @@ public class LocalMain {
     //可能会抛出任何类型的异常
     public static void main(String[] args) throws Exception {
 
-//        String fileName = "testcases/codegen/t1.mx";
-//        String fileName = "testcases/codegen/t4.mx";
-        String fileName = "testcases/primary/1.mx";
+//        String fileName = "testcases/codegen/t1_debug.mx";
+        String fileName = "testcases/codegen/t4.mx";
+//        String fileName = "testcases/primary/1.mx";
 
 
 //        InputStream inputStream = System.in;
@@ -67,7 +67,7 @@ public class LocalMain {
         IRBuilder irBuilder = new IRBuilder(Scope.symbolTable);
         irBuilder.visit(astRoot);
 
-        PrintStream outputStream = new PrintStream(new FileOutputStream("output"));
+        PrintStream outputStream = new PrintStream(new FileOutputStream("C:/Users/21672/Desktop/buildin/main.ll"));
 //        PrintStream outputStream = System.out;
         IRPrinter printer = new IRPrinter(outputStream);
         printer.visit(irBuilder.irRoot);
