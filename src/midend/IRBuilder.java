@@ -1486,6 +1486,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         pushBack(
                 new Jump(endBlock.label)
         );
+        BasicBlock trueBlock = currentBlock;
         changeBlock(falseStmtBlock);
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         operator = null;
@@ -1493,6 +1494,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         pushBack(
                 new Jump(endBlock.label)
         );
+        BasicBlock falseBlock = currentBlock;
         changeBlock(endBlock);
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         LocalTmpVar result;
@@ -1500,7 +1502,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             result = new LocalTmpVar(trueAns.type, ++tmpCounter.cnt);
             pushBack(
                     new Phi(result, trueAns, falseAns,
-                            "cond.true" + label, "cond.false" + label)
+                            trueBlock.label, falseBlock.label)
             );
         } else {
             //仅用于表示类型
