@@ -40,13 +40,8 @@ public class Store extends Instruction {
             str = value.type.toString() + " " + value.toString();
         } else if (value instanceof Ptr ptr) {
             str = ptr.storage.type + " " + ptr;
-        } else if (value instanceof Null) {
-            if (pointer instanceof Ptr ptr) {
-                str = ptr.storage.type + " null";
-            } else {
-                str = ((PtrType) pointer.type).type + " null";
-            }
-        } else {
+        }
+        else {
             str = value.toString();
         }
         out.println("\tstore " + str

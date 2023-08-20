@@ -14,7 +14,4 @@ public abstract class Constant extends Storage {
         super(type);
     }
 
-//    public String printValue() {
-//        return "";
-//    }
 }

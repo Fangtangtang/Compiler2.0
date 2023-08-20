@@ -21,11 +21,11 @@ public class LocalMain {
     //可能会抛出任何类型的异常
     public static void main(String[] args) throws Exception {
 
-//        String fileName = "testcases/primary/1.mx";
-        String fileName = "testcases/codegen/t71.mx";
+//        String fileName = "testcases/optim/sha_1.mx";
+//        String fileName = "testcases/codegen/t18.mx";
 
+        String fileName = "testcases/primary/1.mx";
 
-//        InputStream inputStream = System.in;
         InputStream inputStream = new FileInputStream(fileName);
 
         try {
@@ -67,10 +67,9 @@ public class LocalMain {
         irBuilder.visit(astRoot);
 
         PrintStream outputStream = new PrintStream(new FileOutputStream("C:/Users/21672/Desktop/buildin/main.ll"));
-//        PrintStream outputStream = System.out;
         IRPrinter printer = new IRPrinter(outputStream);
         printer.visit(irBuilder.irRoot);
-//        new BuiltinIRPrinter(outputStream);
+
 
     }
 }

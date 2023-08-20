@@ -143,13 +143,5 @@ public class IRPrinter implements IRVisitor {
         stmt.print(output);
     }
 
-    @Override
-    public void visit(Malloc stmt) {
-        stmt.print(output);
-    }
 
-    @Override
-    public void visit(GlobalStr stmt) {
-        stmt.print(output);
-    }
 }

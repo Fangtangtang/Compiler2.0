@@ -8,6 +8,7 @@ import ir.irType.NullType;
  * 空值常量
  * 默认为null型
  * 可以指定为其他类型（array\ptr\struct）的空值
+ * 由被赋值对象确定类型
  */
 public class Null extends Constant {
     public Null() {
@@ -16,6 +17,6 @@ public class Null extends Constant {
 
     @Override
     public String toString() {
-        return this.type.toString();
+        return this.type.toString()+ " null";
     }
 }

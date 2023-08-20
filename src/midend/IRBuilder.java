@@ -611,6 +611,9 @@ public class IRBuilder implements ASTVisitor<Entity> {
             Entity val = getValue(
                     node.expression.accept(this)
             );
+            if (val instanceof Null) {
+                val.type = currentFunction.retType;
+            }
             pushBack(
                     new Store(fromBool(val), currentFunction.retVal)
             );
@@ -773,6 +776,15 @@ public class IRBuilder implements ASTVisitor<Entity> {
         Entity left = node.lhs.accept(this);
         operator = null;
         Entity right = getValue(node.rhs.accept(this));
+        if (right instanceof Null) {
+            IRType leftType;
+            if (left instanceof Ptr ptr) {
+                leftType = ptr.type;
+            } else {
+                leftType = ((PtrType) left.type).type;
+            }
+            right.type = leftType;
+        }
         pushBack(
                 new Store(fromBool(right), left)
         );
@@ -917,13 +929,17 @@ public class IRBuilder implements ASTVisitor<Entity> {
             currentVar.push(zero);
         }
         getMemberFunc = false;
+        //值为null的参数
+        ArrayList<Integer> nullList = new ArrayList<>();
         //参数表访问
         ArrayList<Storage> params = new ArrayList<>();
-        node.parameterList.forEach(
-                parameter -> params.add(
-                        getValue(parameter.accept(this))
-                )
-        );
+        for (int i = 0; i < node.parameterList.size(); ++i) {
+            Storage param = getValue(node.parameterList.get(i).accept(this));
+            if (param instanceof Null) {
+                nullList.add(i);
+            }
+            params.add(param);
+        }
         //得到函数名
         getFuncName = true;
         node.func.accept(this);
@@ -932,7 +948,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
         LocalTmpVar result = null;
         Call stmt;
         Storage current = currentVar.pop();
-        //类的成员函数
         if (current instanceof Constant) {
             //隐含的成员方法调用
             if (addThis) {
@@ -940,22 +955,23 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 Storage this1 = getValue(rename2mem.get("this1"));
                 params.add(0, this1);
                 addThis = false;
-                function = irRoot.getFunc(callFuncName);
-                if (!(function.retType instanceof VoidType)) {
-                    ++tmpCounter.cnt;
-                }
-                result = new LocalTmpVar(function.retType, tmpCounter.cnt);
-                stmt = new Call(function, result, params);
+                nullList.forEach(
+                        index -> index += 1
+                );
             }
             //普通函数
-            else {
-                function = irRoot.getFunc(callFuncName);
-                if (!(function.retType instanceof VoidType)) {
-                    ++tmpCounter.cnt;
-                }
-                result = new LocalTmpVar(function.retType, tmpCounter.cnt);
-                stmt = new Call(function, result, params);
+            function = irRoot.getFunc(callFuncName);
+            nullList.forEach(
+                    index -> {
+                        Storage nullParam = params.get(index);
+                        nullParam.type = function.parameterList.get(index).type;
+                    }
+            );
+            if (!(function.retType instanceof VoidType)) {
+                ++tmpCounter.cnt;
             }
+            result = new LocalTmpVar(function.retType, tmpCounter.cnt);
+            stmt = new Call(function, result, params);
         } else {
             //this指针（指向结构体类型的局部变量）
             LocalTmpVar thisVar = new LocalTmpVar(current.type, ++tmpCounter.cnt);
@@ -963,10 +979,19 @@ public class IRBuilder implements ASTVisitor<Entity> {
                     new GetElementPtr(thisVar, current, zero)
             );
             params.add(0, thisVar);
+            nullList.forEach(
+                    index -> index += 1
+            );
             //自定义类
             if (current.type instanceof StructPtrType structPtrType) {
                 StructType classType = (StructType) structPtrType.type;
                 function = irRoot.getFunc(classType.name + "." + callFuncName);
+                nullList.forEach(
+                        index -> {
+                            Storage nullParam = params.get(index);
+                            nullParam.type = function.parameterList.get(index).type;
+                        }
+                );
                 if (!(function.retType instanceof VoidType)) {
                     result = new LocalTmpVar(function.retType, ++tmpCounter.cnt);
                     stmt = new Call(function, result, params);
@@ -1767,6 +1792,9 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 operator = null;
                 entity = getValue(node.initExpr.accept(this));
                 if (entity instanceof Constant constant) {
+                    if (constant instanceof Null) {
+                        constant.type = irType;
+                    }
                     initVar = constant;
                 }
             }
@@ -1795,6 +1823,9 @@ public class IRBuilder implements ASTVisitor<Entity> {
             if (node.initExpr != null) {
                 operator = null;
                 entity = getValue(node.initExpr.accept(this));
+                if (entity instanceof Null) {
+                    entity.type = irType;
+                }
                 pushBack(
                         new Store(fromBool(entity), stmt.result)
                 );
