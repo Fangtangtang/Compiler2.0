@@ -123,7 +123,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
                 null,
                 classScope
         );
-        node.scope=currentScope;
+        node.scope = currentScope;
         ((FuncScope) currentScope).isConstructor = true;
         visit(node.suite);
         currentScope = currentScope.getParent();
@@ -178,7 +178,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
             throw new SemanticException(node.pos, "for loop should be in function");
         }
         currentScope = new LoopScope(currentScope, node.condition, node.step, funcScope, classScope);
-        node.scope=currentScope;
+        node.scope = currentScope;
         if (node.initializationStmt != null) {
             node.initializationStmt.accept(this);
         }
@@ -231,7 +231,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
                 type.parameters,
                 classScope
         );
-        node.scope=currentScope;
+        node.scope = currentScope;
         visit(node.functionBody);
         if (!((FuncScope) currentScope).hasReturn && !flag) {
             throw new SemanticException(node.pos, "invalid function without return");
@@ -262,7 +262,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
             FuncScope funcScope = currentScope.getParentFuncScope();
             LoopScope loopScope = currentScope.getParentLoopScope();
             currentScope = new BlockScope(currentScope, funcScope, loopScope, classScope);
-            node.scope=currentScope;
+            node.scope = currentScope;
             if (node.trueStatement != null) {
                 node.trueStatement.accept(this);
             }
@@ -277,7 +277,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
                 FuncScope funcScope = currentScope.getParentFuncScope();
                 LoopScope loopScope = currentScope.getParentLoopScope();
                 currentScope = new BlockScope(currentScope, funcScope, loopScope, classScope);
-                node.scope=currentScope;
+                node.falseScope = currentScope;
                 node.falseStatement.accept(this);
                 currentScope = currentScope.getParent();
             }
@@ -364,7 +364,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
                 funcScope,
                 classScope
         );
-        node.scope=currentScope;
+        node.scope = currentScope;
         if (!(node.condition.accept(this) instanceof BoolType)) {
             throw new SemanticException(node.condition.pos, "condition expr should be bool");
         }
@@ -774,7 +774,7 @@ public class SemanticChecker implements ASTVisitor<Type> {
         currentScope = new ClassScope(currentScope,
                 (ClassType) Scope.symbolTable.getSymbol(node.name, node.pos)
         );
-        node.scope=currentScope;
+        node.scope = currentScope;
         node.members.forEach(
                 stmt -> stmt.accept(this)
         );

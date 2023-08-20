@@ -131,6 +131,10 @@ public class IRBuilder implements ASTVisitor<Entity> {
         }
     }
 
+    private void enterScope(IfStmtNode node, boolean isFalseScope) {
+        currentScope = node.falseScope;
+    }
+
     //退出当前scope时，将所有新建的变量数目--
     //类的成员不作为新建变量
     private void exitScope() {
@@ -565,16 +569,29 @@ public class IRBuilder implements ASTVisitor<Entity> {
         );
         changeBlock(trueStmtBlock);
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
-        node.trueStatement.accept(this);
+        if (node.trueStatement instanceof BlockStmtNode) {
+            node.trueStatement.accept(this);
+        } else {
+            enterScope(node);
+            node.trueStatement.accept(this);
+            exitScope();
+        }
         if (currentBlock.tailStmt == null) {
             pushBack(
                     new Jump(endBlock.label)
             );
         }
+        //false
         if (node.falseStatement != null) {
             changeBlock(falseStmtBlock);
             currentFunction.blockMap.put(currentBlock.label, currentBlock);
-            node.falseStatement.accept(this);
+            if (node.falseStatement instanceof BlockStmtNode) {
+                node.falseStatement.accept(this);
+            } else {
+                enterScope(node, true);
+                node.falseStatement.accept(this);
+                exitScope();
+            }
             if (currentBlock.tailStmt == null) {
                 pushBack(
                         new Jump(endBlock.label)
@@ -1043,7 +1060,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         //可能左边为计算了一半的逻辑表达式串，返回值为null
         Entity entity = node.lhs.accept(this);
         if (entity != null) {
-            LocalTmpVar leftToBool = toBool(entity);
+            Storage leftToBool = toBool(entity);
             //结束当前块，跳转
             logicLabelList.add(currentBlock.label);
             if (node.operator.equals(LogicExprNode.LogicOperator.AndAnd)) {
@@ -1063,7 +1080,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         if (node.rhs instanceof LogicExprNode) {
             ++logicExprCounter;
         }
-        LocalTmpVar rightToBool = toBool(getValue(node.rhs.accept(this)));
+        Storage rightToBool = toBool(getValue(node.rhs.accept(this)));
         if (rootFlag) {//当前为根
             pushBack(
                     new Jump(endBlock.label)
@@ -1106,14 +1123,14 @@ public class IRBuilder implements ASTVisitor<Entity> {
         }
     }
 
-    private LocalTmpVar toBool(Entity entity) {
+    private Storage toBool(Entity entity) {
         LocalTmpVar tmp, toBool;
         if (entity instanceof ConstBool bool) {
-            toBool = new LocalTmpVar(tmpBoolType, ++tmpCounter.cnt);
-            pushBack(
-                    new Trunc(toBool, bool)
-            );
-            return toBool;
+//            toBool = new LocalTmpVar(tmpBoolType, ++tmpCounter.cnt);
+//            pushBack(
+//                    new Trunc(toBool, bool)
+//            );
+            return (Storage) entity;
         }
         if (entity instanceof Ptr) {
             tmp = new LocalTmpVar(((Ptr) entity).storage.type, ++tmpCounter.cnt);
