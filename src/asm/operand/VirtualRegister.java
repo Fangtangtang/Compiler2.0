@@ -8,8 +8,10 @@ package asm.operand;
 public class VirtualRegister extends Register {
     //相对fp的偏移量
     public int offset;
+    public int size;//bool:1 other:4
 
-    public VirtualRegister(int offset) {
+    public VirtualRegister(int offset, int size) {
         this.offset = offset;
+        this.size = size;
     }
 }

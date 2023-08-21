@@ -10,4 +10,12 @@ public class Imm extends Operand {
     public Imm(int value) {
         this.value = value;
     }
+
+    public Imm(boolean bool) {
+        if (bool) {
+            this.value = 1;
+        } else {
+            this.value = 0;
+        }
+    }
 }

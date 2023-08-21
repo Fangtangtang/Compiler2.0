@@ -9,8 +9,11 @@ import java.io.PrintStream;
 /**
  * @author F
  * load imm
+ * 将立即数加载到物理寄存器
+ * （随后sw等）
  * -------------------
  * li	a0, 1
+ * sb	a0, -11(s0)
  * -------------------
  */
 public class LiInst extends ASMInstruction {

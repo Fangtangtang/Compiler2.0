@@ -8,6 +8,9 @@ import java.io.PrintStream;
 /**
  * @author F
  * 存入内存
+ * rs1待存
+ * imm(rs2)存入位置
+ * TODO:判断sb\sw
  */
 public class StoreInst extends ASMInstruction {
     public Register rs1, rs2;

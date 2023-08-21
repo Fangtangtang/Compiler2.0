@@ -1126,10 +1126,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
     private Storage toBool(Entity entity) {
         LocalTmpVar tmp, toBool;
         if (entity instanceof ConstBool bool) {
-//            toBool = new LocalTmpVar(tmpBoolType, ++tmpCounter.cnt);
-//            pushBack(
-//                    new Trunc(toBool, bool)
-//            );
             return (Storage) entity;
         }
         if (entity instanceof Ptr) {

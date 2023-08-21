@@ -33,11 +33,11 @@ public class Func {
     public String name;
     public ArrayList<Block> funcBlocks = new ArrayList<>();
 
-    public int extraParamCnt = 0;//占用栈空间的传参
+    //virtual register（栈上，局部变量+临时量）占用
+    //默认含ra，fp
+    public int basicSpace = 8;
 
-    public int allocaCnt = 2;//alloca申请的栈空间 默认ra+fp(s0)
-
-    public int localTmpVarCnt = 0;//virtual register占用
+    public int extraParamCnt = 0;//占用栈空间的传参（全按4byte算）
 
     public Func(String name) {
         this.name = name;
