@@ -25,21 +25,18 @@ public class Phi extends Instruction {
     public Storage ans1, ans2;
     public ArrayList<String> label1 = new ArrayList<>(), label2 = new ArrayList<>();
 
-    public boolean inTernary=false;
     public Phi(LocalTmpVar result,
                Storage ans1,
                Storage ans2,
                String label1,
                String label2,
-               int phiLabel,
-               boolean inTernary) {
+               int phiLabel) {
         this.result = result;
         this.ans1 = ans1;
         this.ans2 = ans2;
         this.label1.add(label1);
         this.label2.add(label2);
         this.phiLabel = phiLabel;
-        this.inTernary=inTernary;
     }
 
     public Phi(LocalTmpVar result,
@@ -47,15 +44,13 @@ public class Phi extends Instruction {
                Storage ans2,
                ArrayList<String> label1,
                String label2,
-               int phiLabel,
-               boolean inTernary) {
+               int phiLabel) {
         this.result = result;
         this.ans1 = ans1;
         this.ans2 = ans2;
         this.label1 = label1;
         this.label2.add(label2);
         this.phiLabel = phiLabel;
-        this.inTernary=inTernary;
     }
 
     @Override

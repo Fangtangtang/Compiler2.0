@@ -1100,8 +1100,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 pushBack(
                         new Phi(result,
                                 new ConstBool(false), rightToBool,
-                                logicLabelList, str, phiCounter.cnt,
-                                false)
+                                logicLabelList, str, phiCounter.cnt)
                 );
                 currentFunction.phiMap.put(phiCounter.cnt.toString() + ".single", rightToBool);
                 currentFunction.phiMap.put(phiCounter.cnt.toString() + ".multi", new ConstBool(false));
@@ -1109,8 +1108,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 pushBack(
                         new Phi(result,
                                 new ConstBool(true), rightToBool,
-                                logicLabelList, str, phiCounter.cnt,
-                                false)
+                                logicLabelList, str, phiCounter.cnt)
                 );
                 currentFunction.phiMap.put(phiCounter.cnt.toString() + ".single", rightToBool);
                 currentFunction.phiMap.put(phiCounter.cnt.toString() + ".multi", new ConstBool(true));
@@ -1539,7 +1537,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             pushBack(
                     new Phi(result, trueAns, falseAns,
                             trueBlock.label, falseBlock.label,
-                            phiCounter.cnt, true)
+                            phiCounter.cnt)
             );
             currentFunction.phiMap.put(phiCounter.cnt.toString() + ".true", trueAns);
             currentFunction.phiMap.put(phiCounter.cnt.toString() + ".false", falseAns);

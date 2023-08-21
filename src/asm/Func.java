@@ -1,5 +1,6 @@
 package asm;
 
+import java.io.PrintStream;
 import java.util.ArrayList;
 
 /**
@@ -31,6 +32,8 @@ import java.util.ArrayList;
  */
 public class Func {
     public String name;
+    //不需要名字标签的块
+    public Block entry;
     public ArrayList<Block> funcBlocks = new ArrayList<>();
 
     //virtual register（栈上，局部变量+临时量）占用
@@ -41,5 +44,21 @@ public class Func {
 
     public Func(String name) {
         this.name = name;
+    }
+
+    public void print(PrintStream out) {
+        String end = ".L" + name + "_end";
+        out.println("\t.globl\t" + name);
+        out.println("\t.type\t" + name + ",@function");
+        out.println(name + ":");
+        entry.print(out);
+        funcBlocks.forEach(
+                block -> {
+                    out.println(block.name + ":");
+                    block.print(out);
+                }
+        );
+        out.println(end);
+        out.println("\t.size\t" + name + ", " + end + "-" + name);
     }
 }

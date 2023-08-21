@@ -6,4 +6,6 @@ package asm.operand;
  * 包括寄存器、立即数
  */
 public abstract class Operand {
+    @Override
+    public abstract String toString();
 }

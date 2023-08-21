@@ -2,6 +2,7 @@ package asm;
 
 import asm.instruction.ASMInstruction;
 
+import java.io.PrintStream;
 import java.util.ArrayList;
 
 /**
@@ -16,7 +17,14 @@ public class Block {
     public Block(String name) {
         this.name = name;
     }
-    public void pushBack(ASMInstruction instruction){
+
+    public void pushBack(ASMInstruction instruction) {
         instructions.add(instruction);
+    }
+
+    public void print(PrintStream out) {
+        instructions.forEach(
+                instruction -> instruction.print(out)
+        );
     }
 }

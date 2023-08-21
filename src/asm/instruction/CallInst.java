@@ -13,6 +13,10 @@ public class CallInst extends ASMInstruction {
 
     public String funcName;
 
+    public CallInst(String funcName) {
+        this.funcName = funcName;
+    }
+
     @Override
     public void print(PrintStream out) {
         out.println("\tcall\t" + funcName);

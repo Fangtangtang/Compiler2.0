@@ -18,4 +18,9 @@ public class Imm extends Operand {
             this.value = 0;
         }
     }
+
+    @Override
+    public String toString() {
+        return String.valueOf(value);
+    }
 }

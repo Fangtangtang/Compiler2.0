@@ -255,3 +255,40 @@ c:
 
 
 ```
+
+```agsl
+
+define dso_local noundef i32 @main() #0 {
+  %1 = alloca ptr, align 4
+  %2 = call noalias noundef nonnull ptr @_Znaj(i32 noundef 40) #2
+  store ptr %2, ptr %1, align 4
+  %3 = load ptr, ptr %1, align 4
+  %4 = getelementptr inbounds i32, ptr %3, i32 1
+  store i32 0, ptr %4, align 4
+  ret i32 0
+}
+
+# .s
+main:                                   # @main
+	.cfi_startproc
+# %bb.0:
+	addi	sp, sp, -16
+	.cfi_def_cfa_offset 16
+	sw	ra, 12(sp)                      # 4-byte Folded Spill
+	sw	s0, 8(sp)                       # 4-byte Folded Spill
+	.cfi_offset ra, -4
+	.cfi_offset s0, -8
+	addi	s0, sp, 16
+	.cfi_def_cfa s0, 0
+	li	a0, 40
+	call	_Znaj                       # 调用函数
+	sw	a0, -12(s0)                     # 存返回值 （数组首地址）store ptr %2, ptr %1
+	lw	a1, -12(s0)                     # %3 = load ptr, ptr %1
+	li	a0, 0
+	sw	a0, 4(a1)                       # 计算出a[1]地址4(a1)，存值
+	lw	ra, 12(sp)                      # 4-byte Folded Reload
+	lw	s0, 8(sp)                       # 4-byte Folded Reload
+	addi	sp, sp, 16
+	ret
+.Lfunc_end0:
+```

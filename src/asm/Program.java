@@ -3,6 +3,7 @@ package asm;
 import asm.section.Section;
 import asm.section.Text;
 
+import java.io.PrintStream;
 import java.util.ArrayList;
 
 /**
@@ -17,4 +18,14 @@ public class Program {
     //全局的变量、字符串常量
     public ArrayList<Section> globalDefs = new ArrayList<>();
 
+    public void print(PrintStream out) {
+        text.print(out);
+        out.println();
+        globalDefs.forEach(
+                def -> {
+                    def.print(out);
+                    out.println();
+                }
+        );
+    }
 }

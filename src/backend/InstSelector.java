@@ -12,14 +12,14 @@ import ir.entity.constant.*;
 import ir.entity.var.LocalTmpVar;
 import ir.entity.var.Ptr;
 import ir.function.*;
+import ir.irType.ArrayType;
 import ir.irType.IRType;
 import ir.irType.IntType;
+import ir.irType.VoidType;
 import ir.stmt.instruction.*;
 import ir.stmt.terminal.*;
-import org.antlr.v4.codegen.target.Python2Target;
 import utility.Pair;
 import utility.error.InternalException;
-import utility.type.Type;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -35,7 +35,7 @@ public class InstSelector implements IRVisitor {
     Program program;
 
     Func currentFunc;
-
+    Function currentIRFunc;
     Block currentBlock;
 
     int virtualRegSpace = 0;
@@ -85,8 +85,13 @@ public class InstSelector implements IRVisitor {
     }
 
     private VirtualRegister newVirtualReg(boolean isBool) {
-        ++virtualRegSpace;
-        return new VirtualRegister(virtualRegSpace, 1);
+        if (isBool) {
+            ++virtualRegSpace;
+            return new VirtualRegister(virtualRegSpace, 1);
+        } else {
+            virtualRegSpace += 4;
+            return new VirtualRegister(virtualRegSpace, 4);
+        }
     }
 
     /**
@@ -163,7 +168,11 @@ public class InstSelector implements IRVisitor {
         root.globalVarInitFunction.accept(this);
         //函数
         for (Map.Entry<String, Function> function : root.funcDef.entrySet()) {
-            function.getValue().accept(this);
+            Function func = function.getValue();
+            //有函数定义的函数
+            if (func.entry != null) {
+                function.getValue().accept(this);
+            }
         }
     }
 
@@ -181,6 +190,7 @@ public class InstSelector implements IRVisitor {
     public void visit(Function function) {
         //enter function
         currentFunc = new Func(function.funcName);
+        currentIRFunc = function;
         program.text.functions.add(currentFunc);
         virtualRegSpace = 8;
         maxParamCnt = 0;
@@ -188,6 +198,8 @@ public class InstSelector implements IRVisitor {
         //顺序访问每一个block
         for (Map.Entry<String, BasicBlock> entry : function.blockMap.entrySet()) {
             BasicBlock block = entry.getValue();
+            currentBlock = new Block(renameBlock(block.label));
+            currentFunc.funcBlocks.add(currentBlock);
             visit(block);
         }
         //exit function
@@ -195,14 +207,67 @@ public class InstSelector implements IRVisitor {
         currentFunc.extraParamCnt = (maxParamCnt > 8 ? maxParamCnt - 8 : 0);
         int stackSize = currentFunc.basicSpace
                 + (currentFunc.extraParamCnt << 2);
-        //TODO：在函数首尾添加开栈、回收指令
-
+        //进入函数时的额外指令(不加入funcBlocks)
+        currentFunc.entry = new Block(function.funcName);
+        currentBlock = currentFunc.entry;
+        PhysicalRegister sp = registerMap.getReg("sp");
+        PhysicalRegister fp = registerMap.getReg("fp");
+        currentBlock.pushBack(
+                new ImmBinaryInst(sp, new Imm(-stackSize), sp, ImmBinaryInst.Opcode.addi)
+        );
+        currentBlock.pushBack(
+                new StoreInst(registerMap.getReg("ra"), sp, new Imm(stackSize - 4))
+        );
+        currentBlock.pushBack(
+                new StoreInst(fp, sp, new Imm(stackSize - 8))
+        );
+        currentBlock.pushBack(
+                new ImmBinaryInst(sp, new Imm(stackSize), fp, ImmBinaryInst.Opcode.addi)
+        );
+        //入参（相当于局部变量）
+        //访问函数alloca开好了virtual reg，将值传入（store）
+        int i;
+        for (i = 0; i < 8; ++i) {
+            if (i == function.parameterList.size()) {
+                break;
+            }
+            storeVirtualRegister(
+                    registerMap.getReg("a" + i),
+                    getVirtualRegister(function.parameterList.get(i))
+            );
+        }
+        PhysicalRegister t2 = registerMap.getReg("t2");
+        for (; i < function.parameterList.size(); ++i) {
+            currentBlock.pushBack(
+                    new LoadInst(t2, fp, new Imm((i - 8) << 2))
+            );
+            storeVirtualRegister(
+                    t2,
+                    getVirtualRegister(function.parameterList.get(i))
+            );
+        }
+        //最后一个块
+        currentBlock = currentFunc.funcBlocks.get(currentFunc.funcBlocks.size() - 1);
+        //有返回值，返回值放在a0
+        if (!(function.retType instanceof VoidType)) {
+            loadVirtualRegister(registerMap.getReg("a0"), getVirtualRegister(function.retVal));
+        }
+        currentBlock.pushBack(
+                new LoadInst(sp, registerMap.getReg("ra"), new Imm(stackSize - 4))
+        );
+        currentBlock.pushBack(
+                new LoadInst(sp, fp, new Imm(stackSize - 8))
+        );
+        currentBlock.pushBack(
+                new ImmBinaryInst(sp, new Imm(stackSize), sp, ImmBinaryInst.Opcode.addi)
+        );
+        currentBlock.pushBack(
+                new RetInst()
+        );
     }
 
     @Override
     public void visit(BasicBlock basicBlock) {
-        currentBlock = new Block(renameBlock(basicBlock.label));
-        currentFunc.funcBlocks.add(currentBlock);
         //访问block内的每一个语句
         basicBlock.statements.forEach(
                 stmt -> stmt.accept(this)
@@ -345,23 +410,111 @@ public class InstSelector implements IRVisitor {
     }
 
     /**
-     * TODO
+     * Call
+     * 函数调用
+     * ----------------------------------
+     * |    int b=func(1);
+     * |
+     * |%2 = call  i32 @_Z4func(i32 1)
+     * |
+     * | 	li	a0, 1           # 入参
+     * |	call	_Z4func     # 调用
+     * |	sw	a0, -12(s0)     # 返回值
+     * ----------------------------------
      *
-     * @param stmt
+     * @param stmt call
      */
     @Override
     public void visit(Call stmt) {
+        maxParamCnt = Math.max(stmt.parameterList.size(), maxParamCnt);
+        //入参
+        //若参数<=8，直接使用寄存器a0-a7传递
+        PhysicalRegister t2 = registerMap.getReg("t2");
+        if (stmt.parameterList.size() <= 8) {
+            for (int i = 0; i < stmt.parameterList.size(); ++i) {
+                loadVirtualRegister(t2,
+                        getVirtualRegister(stmt.parameterList.get(i)));
+                currentBlock.pushBack(
+                        new MoveInst(registerMap.getReg("a" + i), t2)
+                );
+            }
+        } else {
+            int i;
+            for (i = 0; i < 8; ++i) {
+                loadVirtualRegister(t2,
+                        getVirtualRegister(stmt.parameterList.get(i)));
+                currentBlock.pushBack(
+                        new MoveInst(registerMap.getReg("a" + i), t2)
+                );
+            }
+            PhysicalRegister sp = registerMap.getReg("sp");
+            for (; i < stmt.parameterList.size(); ++i) {
+                loadVirtualRegister(t2,
+                        getVirtualRegister(stmt.parameterList.get(i)));
+                addParamsOnStack(t2, sp, i - 8);
+            }
+        }
+        //函数调用
+        currentBlock.pushBack(
+                new CallInst(stmt.function.funcName)
+        );
+        //存返回值
+        storeVirtualRegister(registerMap.getReg("a0"), getVirtualRegister(stmt.result));
+    }
 
+    //从栈顶（下）向栈底（上）分布
+    private void addParamsOnStack(PhysicalRegister t2, PhysicalRegister sp, int i) {
+        currentBlock.pushBack(
+                new StoreInst(t2, sp, new Imm((i << 2)))
+        );
     }
 
     /**
-     * TODO
+     * GetElementPtr
+     * 手动计算偏移量寻址
+     * ----------------
+     * |  %3 = load ptr, ptr %1
+     * |  %4 = getelementptr inbounds i32, ptr %3, i32 1
+     * |  store i32 0, ptr %4
+     * |
+     * |	lw	a1, -12(s0)
+     * |	li	a0, 0
+     * |	sw	a0, 4(a1)       # 计算出a[1]地址4(a1)，存值
+     * ---------------------------------
+     * bool数组：一字节寻址
+     * 其余（数组+指针+类）：4字节寻址
      *
-     * @param stmt
+     * @param stmt GetElementPtr
      */
     @Override
     public void visit(GetElementPtr stmt) {
-
+        //lw	a1, -12(s0)
+        PhysicalRegister a0 = registerMap.getReg("a0");
+        loadVirtualRegister(a0, getVirtualRegister(stmt.ptrVal));
+        //计算offset
+        int baseSize;
+        if (stmt.ptrVal.type instanceof ArrayType arrayType
+                && arrayType.dimension == 1
+                && arrayType.type instanceof IntType intType
+                && intType.typeName.equals(IntType.TypeName.BOOL)) {
+            baseSize = 1;
+        } else {
+            baseSize = 4;
+        }
+        PhysicalRegister a1 = registerMap.getReg("a1");
+        loadVirtualRegister(a1, getVirtualRegister(stmt.idx));
+        if (baseSize == 4) {
+            currentBlock.pushBack(
+                    new ImmBinaryInst(a1, new Imm(2), a1, ImmBinaryInst.Opcode.slli)
+            );
+        }
+        //计算地址
+        PhysicalRegister a2 = registerMap.getReg("a2");
+        currentBlock.pushBack(
+                new BinaryInst(a0, a1, a2, BinaryInst.Opcode.add)
+        );
+        //存值
+        storeVirtualRegister(a2, getVirtualRegister(stmt.result));
     }
 
     /**
@@ -543,6 +696,22 @@ public class InstSelector implements IRVisitor {
     @Override
     public void visit(Branch stmt) {
         PhysicalRegister a0 = registerMap.getReg("a0");
+        //phi
+        if (stmt.phiLabel != null) {
+            Entity ans = currentIRFunc.phiMap.get(stmt.index + stmt.phiLabel);
+            VirtualRegister des;
+            if (!toReg.containsKey(String.valueOf(stmt.index))) {
+                if (ans.type instanceof IntType intType && intType.typeName.equals(IntType.TypeName.BOOL)) {
+                    des = newVirtualReg(true);
+                } else {
+                    des = newVirtualReg();
+                }
+            } else {
+                des = toReg.get(String.valueOf(stmt.index));
+            }
+            loadVirtualRegister(a0, getVirtualRegister(ans));
+            storeVirtualRegister(a0, des);
+        }
         loadVirtualRegister(a0, getVirtualRegister(stmt.condition));
         currentBlock.pushBack(
                 new ImmBinaryInst(a0, new Imm(1), a0, ImmBinaryInst.Opcode.andi)
@@ -563,6 +732,23 @@ public class InstSelector implements IRVisitor {
      */
     @Override
     public void visit(Jump stmt) {
+        if (stmt.phiLabel != null) {
+            PhysicalRegister a0 = registerMap.getReg("a0");
+            Entity ans = currentIRFunc.phiMap.get(stmt.index + stmt.phiLabel);
+            VirtualRegister des;
+            if (!toReg.containsKey(String.valueOf(stmt.index))) {
+                if (ans.type instanceof IntType intType && intType.typeName.equals(IntType.TypeName.BOOL)) {
+                    des = newVirtualReg(true);
+                } else {
+                    des = newVirtualReg();
+                }
+                toReg.put(String.valueOf(stmt.index), des);
+            } else {
+                des = toReg.get(String.valueOf(stmt.index));
+            }
+            loadVirtualRegister(a0, getVirtualRegister(ans));
+            storeVirtualRegister(a0, des);
+        }
         currentBlock.pushBack(
                 new JumpInst(renameBlock(stmt.targetName))
         );
@@ -600,13 +786,18 @@ public class InstSelector implements IRVisitor {
 
     /**
      * Phi
-     *
+     * 在栈上为每一组phi分配一个空间
+     * branch、jump在跳转前由phiMap中取值存到这个空间
+     * 后进入的子跳转语句可以覆盖前面的
      *
      * @param stmt phi
      */
     @Override
     public void visit(Phi stmt) {
-
+        VirtualRegister result = getVirtualRegister(stmt.result);
+        PhysicalRegister a0 = registerMap.getReg("a0");
+        loadVirtualRegister(a0, toReg.get(String.valueOf(stmt.phiLabel)));
+        storeVirtualRegister(a0, result);
     }
 
 }
