@@ -1,5 +1,7 @@
 package asm;
 
+import java.util.ArrayList;
+
 /**
  * @author F
  * IR中的函数
@@ -28,4 +30,16 @@ package asm;
  * ---------------------------------------------------------------------------
  */
 public class Func {
+    public String name;
+    public ArrayList<Block> funcBlocks = new ArrayList<>();
+
+    public int extraParamCnt = 0;//占用栈空间的传参
+
+    public int allocaCnt = 2;//alloca申请的栈空间 默认ra+fp(s0)
+
+    public int localTmpVarCnt = 0;//virtual register占用
+
+    public Func(String name) {
+        this.name = name;
+    }
 }

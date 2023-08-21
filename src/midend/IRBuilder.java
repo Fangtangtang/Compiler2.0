@@ -1267,18 +1267,10 @@ public class IRBuilder implements ASTVisitor<Entity> {
             //数组长度
             Storage size = indexList.get(0);
             //给当前层分配空间
-            //计算单个元素需要的空间
-            LocalTmpVar mallocSpace = new LocalTmpVar(intType, ++tmpCounter.cnt);
-            pushBack(
-                    new Binary(BinaryExprNode.BinaryOperator.Divide,
-                            mallocSpace,
-                            new ConstInt((currentEleType.getSize()).toString()),
-                            new ConstInt("8")
-                    ));
             //指向当前数组的指针
             LocalTmpVar root = new LocalTmpVar(new PtrType(type), ++tmpCounter.cnt);
             Call callStmt = new Call(malloc_array, root);
-            callStmt.parameterList.add(mallocSpace);
+            callStmt.parameterList.add(new ConstInt(((Integer) (currentEleType.getSize() / 8)).toString()));
             callStmt.parameterList.add(size);
             pushBack(callStmt);
             //当前数组（本质是一个指针）
@@ -1351,14 +1343,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
         Storage size = indexList.get(layer);
         //给当前层分配空间
         //计算需要的空间
-        //计算单个元素需要的空间
-        LocalTmpVar mallocSpace = new LocalTmpVar(intType, ++tmpCounter.cnt);
-        pushBack(
-                new Binary(BinaryExprNode.BinaryOperator.Divide,
-                        mallocSpace,
-                        new ConstInt((type.getSize()).toString()),
-                        new ConstInt("8")
-                ));
         LocalTmpVar index = new LocalTmpVar(intType, ++tmpCounter.cnt);
         pushBack(
                 new Load(index, i)
@@ -1369,7 +1353,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         );
         LocalTmpVar tmpRoot = new LocalTmpVar(new PtrType(newRoot.type), ++tmpCounter.cnt);
         Call callStmt = new Call(malloc_array, tmpRoot);
-        callStmt.parameterList.add(mallocSpace);
+        callStmt.parameterList.add(new ConstInt(((Integer) (type.getSize() / 8)).toString()));
         callStmt.parameterList.add(size);
         pushBack(callStmt);
         LocalTmpVar result = new LocalTmpVar(newRoot.type, ++tmpCounter.cnt);

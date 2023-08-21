@@ -44,7 +44,7 @@ public class IRPrinter implements IRVisitor {
      * }
      * ----------------------------------------------------------------------------
      *
-     * @param function
+     * @param function 函数定义
      */
     @Override
     public void visit(Function function) {

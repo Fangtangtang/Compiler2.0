@@ -13,7 +13,7 @@ import java.io.PrintStream;
  * - 乘除法没有立即数版本
  */
 public class BinaryInst extends ASMInstruction {
-    enum Opcode {
+    public enum Opcode {
         add, sub, mul, div, rem,
         sll, xor, srl, or, and
     }
@@ -43,6 +43,15 @@ public class BinaryInst extends ASMInstruction {
             case or -> this.op = Opcode.or;
             default -> throw new InternalException("unexpected binary operator in ir");
         }
+    }
+
+    public BinaryInst(Register rs1, Register rs2,
+                      Register rd,
+                      Opcode op) {
+        this.rs1 = rs1;
+        this.rs2 = rs2;
+        this.rd = rd;
+        this.op = op;
     }
 
     @Override

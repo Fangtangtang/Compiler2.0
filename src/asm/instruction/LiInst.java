@@ -1,28 +1,31 @@
 package asm.instruction;
 
 import asm.ASMVisitor;
+import asm.operand.Imm;
 import asm.operand.Register;
 
 import java.io.PrintStream;
 
 /**
  * @author F
- * 寄存器赋值
- * mv	a0, sp
- * 用于call传参
+ * load imm
+ * -------------------
+ * li	a0, 1
+ * -------------------
  */
-public class MoveInst extends ASMInstruction {
-    public Register rd;
-    public Register rs1;
+public class LiInst extends ASMInstruction {
 
-    public MoveInst(Register rd, Register rs1) {
+    public Register rd;
+    public Imm imm;
+
+    public LiInst(Register rd, Imm imm) {
         this.rd = rd;
-        this.rs1 = rs1;
+        this.imm = imm;
     }
 
     @Override
     public void print(PrintStream out) {
-        out.println("\tj\t" + rd + ", " + rs1);
+        out.println("\tli\t" + rd + ", " + imm);
     }
 
     @Override

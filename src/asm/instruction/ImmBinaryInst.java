@@ -14,7 +14,7 @@ import java.io.PrintStream;
  * TODO：减去常数转为加上相反数
  */
 public class ImmBinaryInst extends ASMInstruction {
-    enum Opcode {
+    public enum Opcode {
         addi, slli, xori, srli, ori, andi
     }
 
@@ -38,6 +38,16 @@ public class ImmBinaryInst extends ASMInstruction {
             case or -> this.op = ImmBinaryInst.Opcode.ori;
             default -> throw new InternalException("unexpected binary operator in ir");
         }
+    }
+
+    public ImmBinaryInst(Register rs1,
+                         Imm imm,
+                         Register rd,
+                         Opcode op) {
+        this.rs1 = rs1;
+        this.imm = imm;
+        this.rd = rd;
+        this.op = op;
     }
 
     @Override

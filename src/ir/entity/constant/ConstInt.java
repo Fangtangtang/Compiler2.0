@@ -12,7 +12,7 @@ import ir.irType.IntType;
  */
 public class ConstInt extends Constant {
 
-    private final String value;
+    public String value;
 
     public ConstInt(String value) {
         super(new IntType(IntType.TypeName.INT));

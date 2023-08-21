@@ -9,7 +9,7 @@ import ir.irType.*;
  * 值为true、false
  */
 public class ConstBool extends Constant {
-    private final boolean value;
+    public boolean value;
 
     public ConstBool(boolean value) {
         super(new IntType(IntType.TypeName.TMP_BOOL));

@@ -33,7 +33,15 @@ public interface ASMVisitor {
 
     void visit(RetInst inst);
 
+    void visit(MoveInst inst);
+
+    void visit(LiInst inst);
+
+    void visit(LoadAddrInst inst);
+
     void visit(StoreInst inst);
+
+    void visit(LuiInst inst);
 
     //operand
     void visit(Imm operand);

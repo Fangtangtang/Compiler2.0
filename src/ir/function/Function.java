@@ -1,6 +1,7 @@
 package ir.function;
 
 import ir.BasicBlock;
+import ir.IRVisitor;
 import ir.entity.*;
 import ir.entity.var.*;
 import ir.irType.*;
@@ -58,5 +59,9 @@ public class Function {
         }
         str.append(")");
         return str.toString();
+    }
+
+    public void accept(IRVisitor irVisitor) {
+        irVisitor.visit(this);
     }
 }

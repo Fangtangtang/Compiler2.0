@@ -1,5 +1,6 @@
 package ir;
 
+import ir.entity.Storage;
 import ir.function.Function;
 import ir.stmt.instruction.*;
 import ir.stmt.terminal.*;
