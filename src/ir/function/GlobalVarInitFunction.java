@@ -13,7 +13,8 @@ import utility.Counter;
 public class GlobalVarInitFunction extends Function {
     public BasicBlock currentBlock;
 
-    public Counter tmpCounter=new Counter();
+    public Counter tmpCounter = new Counter();
+    public Counter phiCounter = new Counter();
 
     public GlobalVarInitFunction() {
         super(new VoidType(),

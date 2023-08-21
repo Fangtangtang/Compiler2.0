@@ -224,7 +224,7 @@ public class InstSelector implements IRVisitor {
 
     /**
      * 将int型数值转化为对应的操作数
-     * 利用physical register a6和a7计算
+     * 利用physical register a6计算
      *
      * @param num 数值
      * @return operand
@@ -240,20 +240,17 @@ public class InstSelector implements IRVisitor {
             currentBlock.pushBack(
                     new LuiInst(a7, new Imm((num >> 12)))
             );
-            if ((num & 0xFFF) == 0) {
-                return a7;
-            } else {
-                PhysicalRegister a6 = registerMap.getReg("a6");
+            if ((num & 0xFFF) != 0) {
                 currentBlock.pushBack(
                         new ImmBinaryInst(
                                 a7,
                                 new Imm(num & 0xFFF),
-                                a6,
+                                a7,
                                 ImmBinaryInst.Opcode.addi
                         )
                 );
-                return a6;
             }
+            return a7;
         }
     }
 
@@ -532,59 +529,80 @@ public class InstSelector implements IRVisitor {
 
 
     /**
-     * TODO
+     * ---------------------------------
+     * |br i1 %11, label %12, label %13
+     * |
+     * |	lbu	a0, -21(s0)
+     * |	andi	a0, a0, 1
+     * |	beqz	a0, .LBB0_2         # false
+     * |	j	.LBB0_1
+     * ------------------------------------
      *
-     * @param stmt
+     * @param stmt branch
      */
     @Override
     public void visit(Branch stmt) {
-
+        PhysicalRegister a0 = registerMap.getReg("a0");
+        loadVirtualRegister(a0, getVirtualRegister(stmt.condition));
+        currentBlock.pushBack(
+                new ImmBinaryInst(a0, new Imm(1), a0, ImmBinaryInst.Opcode.andi)
+        );
+        currentBlock.pushBack(
+                new BranchInst(a0, renameBlock(stmt.falseBranch))
+        );
+        currentBlock.pushBack(
+                new JumpInst(renameBlock(stmt.trueBranch))
+        );
     }
 
     /**
-     * TODO
+     * Jump
+     * 函数内跳转，block重命名
      *
-     * @param stmt
+     * @param stmt jump
      */
     @Override
     public void visit(Jump stmt) {
-
+        currentBlock.pushBack(
+                new JumpInst(renameBlock(stmt.targetName))
+        );
     }
 
     /**
-     * TODO
-     *
-     * @param stmt
+     * 每个函数仅有一个Return
+     * 在回收栈之后直接在函数访问中添加
      */
     @Override
     public void visit(Return stmt) {
-
     }
 
     /**
-     * TODO
+     * ir中将i8转变为i1
+     * asm中将entity名对应到同一个virtual register
      *
-     * @param stmt
+     * @param stmt trunc
      */
     @Override
     public void visit(Trunc stmt) {
-
+        toReg.put(stmt.result.toString(), getVirtualRegister(stmt.value));
     }
 
     /**
-     * TODO
+     * ir中将i1转变为i8
+     * asm中将entity名对应到同一个virtual register
      *
-     * @param stmt
+     * @param stmt zero ext
      */
     @Override
     public void visit(Zext stmt) {
-
+        toReg.put(stmt.result.toString(), getVirtualRegister(stmt.value));
     }
 
     /**
-     * TODO
+     * Phi
      *
-     * @param stmt
+     *
+     * @param stmt phi
      */
     @Override
     public void visit(Phi stmt) {

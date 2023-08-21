@@ -16,6 +16,9 @@ public class Branch extends TerminalStmt {
     //两个分支
     public String trueBranch, falseBranch;
 
+    public String phiLabel = null;
+    public int index = 0;
+
     public Branch(Entity condition,
                   String trueBranch,
                   String falseBranch) {
@@ -23,6 +26,19 @@ public class Branch extends TerminalStmt {
         this.condition = condition;
         this.trueBranch = trueBranch;
         this.falseBranch = falseBranch;
+    }
+
+    public Branch(Entity condition,
+                  String trueBranch,
+                  String falseBranch,
+                  int index,
+                  String phiLabel) {
+        super();
+        this.condition = condition;
+        this.trueBranch = trueBranch;
+        this.falseBranch = falseBranch;
+        this.index=index;
+        this.phiLabel = phiLabel;
     }
 
     //br i1 %cmp, label %return, label %if.end

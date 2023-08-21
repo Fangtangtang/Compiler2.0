@@ -11,9 +11,19 @@ import java.io.PrintStream;
 public class Jump extends TerminalStmt {
     public String targetName;
 
+    public String phiLabel = null;
+    public int index = 0;
+
     public Jump(String targetName) {
         super();
         this.targetName = targetName;
+    }
+
+    public Jump(String targetName, int index, String phiLabel) {
+        super();
+        this.targetName = targetName;
+        this.index = index;
+        this.phiLabel = phiLabel;
     }
 
     @Override

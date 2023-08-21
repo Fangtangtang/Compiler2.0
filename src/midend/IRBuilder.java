@@ -43,6 +43,8 @@ public class IRBuilder implements ASTVisitor<Entity> {
     Function malloc;
     Function malloc_array;
     Counter tmpCounter;
+
+    Counter phiCounter;
     //计数，确保函数block不重名
     Integer funcBlockCounter = 0;
     //当前的逻辑运算符
@@ -186,6 +188,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
     public Entity visit(RootNode node) {
         enterScope(node);
         tmpCounter = globalInitFunc.tmpCounter;
+        phiCounter = globalInitFunc.phiCounter;
         node.declarations.forEach(
                 def -> def.accept(this)
         );
@@ -374,6 +377,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         funcBlockCounter = 0;
         logicExprCounter = 0;
         tmpCounter = new Counter();
+        phiCounter = new Counter();
         logicBlockMap = new HashMap<>();
         enterScope(node);
         getCurrentFunc(node.name);
@@ -459,6 +463,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         funcBlockCounter = 0;
         logicExprCounter = 0;
         tmpCounter = new Counter();
+        phiCounter = new Counter();
         logicBlockMap = new HashMap<>();
         ClassScope classScope;
         //参数复制、局部变量定义
@@ -506,6 +511,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         }
         exitScope();
         tmpCounter = globalInitFunc.tmpCounter;
+        phiCounter = globalInitFunc.tmpCounter;
         return null;
     }
 
@@ -1039,6 +1045,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
      */
     @Override
     public Entity visit(LogicExprNode node) {
+        ++phiCounter.cnt;//会出现phi
         //换符号，换根
         if (!node.operator.equals(operator)) {
             ++logicExprCounter;
@@ -1065,11 +1072,11 @@ public class IRBuilder implements ASTVisitor<Entity> {
             logicLabelList.add(currentBlock.label);
             if (node.operator.equals(LogicExprNode.LogicOperator.AndAnd)) {
                 pushBack(
-                        new Branch(leftToBool, nextBlock.label, endBlock.label)
+                        new Branch(leftToBool, nextBlock.label, endBlock.label, phiCounter.cnt, ".multi")
                 );
             } else {
                 pushBack(
-                        new Branch(leftToBool, endBlock.label, nextBlock.label)
+                        new Branch(leftToBool, endBlock.label, nextBlock.label, phiCounter.cnt, ".multi")
                 );
             }
             changeBlock(nextBlock);
@@ -1083,7 +1090,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         Storage rightToBool = toBool(getValue(node.rhs.accept(this)));
         if (rootFlag) {//当前为根
             pushBack(
-                    new Jump(endBlock.label)
+                    new Jump(endBlock.label, phiCounter.cnt, ".single")
             );
             String str = currentBlock.label;
             changeBlock(endBlock);
@@ -1093,14 +1100,20 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 pushBack(
                         new Phi(result,
                                 new ConstBool(false), rightToBool,
-                                logicLabelList, str)
+                                logicLabelList, str, phiCounter.cnt,
+                                false)
                 );
+                currentFunction.phiMap.put(phiCounter.cnt.toString() + ".single", rightToBool);
+                currentFunction.phiMap.put(phiCounter.cnt.toString() + ".multi", new ConstBool(false));
             } else {
                 pushBack(
                         new Phi(result,
                                 new ConstBool(true), rightToBool,
-                                logicLabelList, str)
+                                logicLabelList, str, phiCounter.cnt,
+                                false)
                 );
+                currentFunction.phiMap.put(phiCounter.cnt.toString() + ".single", rightToBool);
+                currentFunction.phiMap.put(phiCounter.cnt.toString() + ".multi", new ConstBool(true));
             }
             logicLabelList = new ArrayList<>();
             return result;
@@ -1110,11 +1123,11 @@ public class IRBuilder implements ASTVisitor<Entity> {
             nextBlock = new BasicBlock("logic.next" + exprLabel);
             if (node.operator.equals(LogicExprNode.LogicOperator.AndAnd)) {
                 pushBack(
-                        new Branch(rightToBool, nextBlock.label, endBlock.label)
+                        new Branch(rightToBool, nextBlock.label, endBlock.label, phiCounter.cnt, ".multi")
                 );
             } else {
                 pushBack(
-                        new Branch(rightToBool, endBlock.label, nextBlock.label)
+                        new Branch(rightToBool, endBlock.label, nextBlock.label, phiCounter.cnt, ".multi")
                 );
             }
             changeBlock(nextBlock);
@@ -1491,6 +1504,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
      */
     @Override
     public Entity visit(TernaryExprNode node) {
+        ++phiCounter.cnt;
         int label = funcBlockCounter++;
         BasicBlock trueStmtBlock = new BasicBlock("cond.true" + label);
         BasicBlock falseStmtBlock = new BasicBlock("cond.false" + label);
@@ -1506,7 +1520,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         operator = null;
         Storage trueAns = getValue(node.trueExpr.accept(this));
         pushBack(
-                new Jump(endBlock.label)
+                new Jump(endBlock.label, phiCounter.cnt, ".true")
         );
         BasicBlock trueBlock = currentBlock;
         changeBlock(falseStmtBlock);
@@ -1514,7 +1528,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         operator = null;
         Storage falseAns = getValue(node.falseExpr.accept(this));
         pushBack(
-                new Jump(endBlock.label)
+                new Jump(endBlock.label, phiCounter.cnt, ".false")
         );
         BasicBlock falseBlock = currentBlock;
         changeBlock(endBlock);
@@ -1524,8 +1538,11 @@ public class IRBuilder implements ASTVisitor<Entity> {
             result = new LocalTmpVar(trueAns.type, ++tmpCounter.cnt);
             pushBack(
                     new Phi(result, trueAns, falseAns,
-                            trueBlock.label, falseBlock.label)
+                            trueBlock.label, falseBlock.label,
+                            phiCounter.cnt, true)
             );
+            currentFunction.phiMap.put(phiCounter.cnt.toString() + ".true", trueAns);
+            currentFunction.phiMap.put(phiCounter.cnt.toString() + ".false", falseAns);
         } else {
             //仅用于表示类型
             result = new LocalTmpVar(trueAns.type, tmpCounter.cnt);

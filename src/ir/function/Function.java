@@ -28,6 +28,7 @@ public class Function {
     //每个函数以自己的return块结尾
     public BasicBlock ret;
     public LinkedHashMap<String, BasicBlock> blockMap = new LinkedHashMap<>();
+    public HashMap<String, Storage> phiMap = new HashMap<>();
 
     public Function(IRType retType,
                     String funcName) {
