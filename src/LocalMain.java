@@ -24,8 +24,8 @@ public class LocalMain {
     public static void main(String[] args) throws Exception {
 
 //        String fileName = "testcases/optim/binary_tree.mx";
-        String fileName = "testcases/codegen/e1.mx";
-//        String fileName = "testcases/primary/1.mx";
+//        String fileName = "testcases/codegen/e2.mx";
+        String fileName = "testcases/primary/1.mx";
 
         InputStream inputStream = new FileInputStream(fileName);
 

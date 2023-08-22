@@ -13,19 +13,25 @@ import java.io.PrintStream;
  * TODO:判断sb\sw
  */
 public class StoreInst extends ASMInstruction {
-    public Register rs1, rs2;
+    public PhysicalRegister rs1;
+    public Register rs2;
     public Imm imm;
-
-    public StoreInst(Register rs1, Register rs2,
+    int size;
+    public StoreInst(PhysicalRegister rs1, Register rs2,
                      Imm imm) {
         this.rs1 = rs1;
         this.rs2 = rs2;
         this.imm = imm;
+        this.size=rs1.valueSize;
     }
 
     @Override
     public void print(PrintStream out) {
-        out.println("\tsw\t" + rs1 + ", " + imm + "(" + rs2 + ")");
+        if (size == 4) {
+            out.println("\tsw\t" + rs1 + ", " + imm + "(" + rs2 + ")");
+        } else {
+            out.println("\tsb\t" + rs1 + ", " + imm + "(" + rs2 + ")");
+        }
     }
 
     @Override

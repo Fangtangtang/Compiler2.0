@@ -16,19 +16,27 @@ import java.io.PrintStream;
  * lw	a0, -12(s0)
  */
 public class LoadInst extends ASMInstruction {
-    public Register rs1, rd;
+    public Register rs1;
+    public PhysicalRegister rd;
     public Imm imm;
+    int size;
 
-    public LoadInst(Register rs1, Register rd,
+    public LoadInst(Register rs1,
+                    PhysicalRegister rd,
                     Imm imm) {
         this.rs1 = rs1;
         this.rd = rd;
         this.imm = imm;
+        this.size = rd.valueSize;
     }
 
     @Override
     public void print(PrintStream out) {
-        out.println("\tlw\t" + rd + ", " + imm + "(" + rs1 + ")");
+        if (size == 4) {
+            out.println("\tlw\t" + rd + ", " + imm + "(" + rs1 + ")");
+        } else {
+            out.println("\tlbu\t" + rd + ", " + imm + "(" + rs1 + ")");
+        }
     }
 
     @Override

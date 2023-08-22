@@ -20,7 +20,7 @@ public class Rodata extends Section {
     public int length;
 
     public Rodata(String name, String value, int length) {
-        this.strName = ".L" + name;
+        this.strName = name;
         this.value = value;
         this.length = length + 1;
     }

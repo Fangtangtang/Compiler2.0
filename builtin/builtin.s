@@ -7,10 +7,19 @@
 	.type	print,@function
 print:                                  # @print
 # %bb.0:
-	mv	a1, a0
+	addi	sp, sp, -16
+	sw	ra, 12(sp)                      # 4-byte Folded Spill
+	sw	s0, 8(sp)                       # 4-byte Folded Spill
+	addi	s0, sp, 16
+	sw	a0, -12(s0)
+	lw	a1, -12(s0)
 	lui	a0, %hi(.L.str)
 	addi	a0, a0, %lo(.L.str)
-	tail	printf
+	call	printf
+	lw	ra, 12(sp)                      # 4-byte Folded Reload
+	lw	s0, 8(sp)                       # 4-byte Folded Reload
+	addi	sp, sp, 16
+	ret
 .Lfunc_end0:
 	.size	print, .Lfunc_end0-print
                                         # -- End function
@@ -19,10 +28,19 @@ print:                                  # @print
 	.type	println,@function
 println:                                # @println
 # %bb.0:
-	mv	a1, a0
+	addi	sp, sp, -16
+	sw	ra, 12(sp)                      # 4-byte Folded Spill
+	sw	s0, 8(sp)                       # 4-byte Folded Spill
+	addi	s0, sp, 16
+	sw	a0, -12(s0)
+	lw	a1, -12(s0)
 	lui	a0, %hi(.L.str.1)
 	addi	a0, a0, %lo(.L.str.1)
-	tail	printf
+	call	printf
+	lw	ra, 12(sp)                      # 4-byte Folded Reload
+	lw	s0, 8(sp)                       # 4-byte Folded Reload
+	addi	sp, sp, 16
+	ret
 .Lfunc_end1:
 	.size	println, .Lfunc_end1-println
                                         # -- End function
@@ -31,10 +49,19 @@ println:                                # @println
 	.type	printInt,@function
 printInt:                               # @printInt
 # %bb.0:
-	mv	a1, a0
+	addi	sp, sp, -16
+	sw	ra, 12(sp)                      # 4-byte Folded Spill
+	sw	s0, 8(sp)                       # 4-byte Folded Spill
+	addi	s0, sp, 16
+	sw	a0, -12(s0)
+	lw	a1, -12(s0)
 	lui	a0, %hi(.L.str.2)
 	addi	a0, a0, %lo(.L.str.2)
-	tail	printf
+	call	printf
+	lw	ra, 12(sp)                      # 4-byte Folded Reload
+	lw	s0, 8(sp)                       # 4-byte Folded Reload
+	addi	sp, sp, 16
+	ret
 .Lfunc_end2:
 	.size	printInt, .Lfunc_end2-printInt
                                         # -- End function
@@ -43,10 +70,19 @@ printInt:                               # @printInt
 	.type	printlnInt,@function
 printlnInt:                             # @printlnInt
 # %bb.0:
-	mv	a1, a0
+	addi	sp, sp, -16
+	sw	ra, 12(sp)                      # 4-byte Folded Spill
+	sw	s0, 8(sp)                       # 4-byte Folded Spill
+	addi	s0, sp, 16
+	sw	a0, -12(s0)
+	lw	a1, -12(s0)
 	lui	a0, %hi(.L.str.3)
 	addi	a0, a0, %lo(.L.str.3)
-	tail	printf
+	call	printf
+	lw	ra, 12(sp)                      # 4-byte Folded Reload
+	lw	s0, 8(sp)                       # 4-byte Folded Reload
+	addi	sp, sp, 16
+	ret
 .Lfunc_end3:
 	.size	printlnInt, .Lfunc_end3-printlnInt
                                         # -- End function
@@ -57,16 +93,18 @@ getString:                              # @getString
 # %bb.0:
 	addi	sp, sp, -16
 	sw	ra, 12(sp)                      # 4-byte Folded Spill
+	sw	s0, 8(sp)                       # 4-byte Folded Spill
+	addi	s0, sp, 16
 	li	a0, 256
 	call	malloc
-	mv	a1, a0
-	sw	a1, 8(sp)                       # 4-byte Folded Spill
+	sw	a0, -12(s0)
+	lw	a1, -12(s0)
 	lui	a0, %hi(.L.str)
 	addi	a0, a0, %lo(.L.str)
 	call	scanf
-                                        # kill: def $x11 killed $x10
-	lw	a0, 8(sp)                       # 4-byte Folded Reload
+	lw	a0, -12(s0)
 	lw	ra, 12(sp)                      # 4-byte Folded Reload
+	lw	s0, 8(sp)                       # 4-byte Folded Reload
 	addi	sp, sp, 16
 	ret
 .Lfunc_end4:
@@ -79,12 +117,15 @@ getInt:                                 # @getInt
 # %bb.0:
 	addi	sp, sp, -16
 	sw	ra, 12(sp)                      # 4-byte Folded Spill
+	sw	s0, 8(sp)                       # 4-byte Folded Spill
+	addi	s0, sp, 16
 	lui	a0, %hi(.L.str.2)
 	addi	a0, a0, %lo(.L.str.2)
-	addi	a1, sp, 8
+	addi	a1, s0, -12
 	call	scanf
-	lw	a0, 8(sp)
+	lw	a0, -12(s0)
 	lw	ra, 12(sp)                      # 4-byte Folded Reload
+	lw	s0, 8(sp)                       # 4-byte Folded Reload
 	addi	sp, sp, 16
 	ret
 .Lfunc_end5:
@@ -97,17 +138,20 @@ toString:                               # @toString
 # %bb.0:
 	addi	sp, sp, -16
 	sw	ra, 12(sp)                      # 4-byte Folded Spill
-	sw	a0, 4(sp)                       # 4-byte Folded Spill
+	sw	s0, 8(sp)                       # 4-byte Folded Spill
+	addi	s0, sp, 16
+	sw	a0, -12(s0)
 	li	a0, 256
 	call	malloc
-	lw	a2, 4(sp)                       # 4-byte Folded Reload
-	sw	a0, 8(sp)                       # 4-byte Folded Spill
+	sw	a0, -16(s0)
+	lw	a0, -16(s0)
+	lw	a2, -12(s0)
 	lui	a1, %hi(.L.str.2)
 	addi	a1, a1, %lo(.L.str.2)
 	call	sprintf
-                                        # kill: def $x11 killed $x10
-	lw	a0, 8(sp)                       # 4-byte Folded Reload
+	lw	a0, -16(s0)
 	lw	ra, 12(sp)                      # 4-byte Folded Reload
+	lw	s0, 8(sp)                       # 4-byte Folded Reload
 	addi	sp, sp, 16
 	ret
 .Lfunc_end6:
@@ -118,7 +162,16 @@ toString:                               # @toString
 	.type	_array_size,@function
 _array_size:                            # @_array_size
 # %bb.0:
+	addi	sp, sp, -16
+	sw	ra, 12(sp)                      # 4-byte Folded Spill
+	sw	s0, 8(sp)                       # 4-byte Folded Spill
+	addi	s0, sp, 16
+	sw	a0, -12(s0)
+	lw	a0, -12(s0)
 	lw	a0, -4(a0)
+	lw	ra, 12(sp)                      # 4-byte Folded Reload
+	lw	s0, 8(sp)                       # 4-byte Folded Reload
+	addi	sp, sp, 16
 	ret
 .Lfunc_end7:
 	.size	_array_size, .Lfunc_end7-_array_size
@@ -128,7 +181,17 @@ _array_size:                            # @_array_size
 	.type	_string_length,@function
 _string_length:                         # @_string_length
 # %bb.0:
-	tail	strlen
+	addi	sp, sp, -16
+	sw	ra, 12(sp)                      # 4-byte Folded Spill
+	sw	s0, 8(sp)                       # 4-byte Folded Spill
+	addi	s0, sp, 16
+	sw	a0, -12(s0)
+	lw	a0, -12(s0)
+	call	strlen
+	lw	ra, 12(sp)                      # 4-byte Folded Reload
+	lw	s0, 8(sp)                       # 4-byte Folded Reload
+	addi	sp, sp, 16
+	ret
 .Lfunc_end8:
 	.size	_string_length, .Lfunc_end8-_string_length
                                         # -- End function
@@ -139,26 +202,33 @@ _string_substring:                      # @_string_substring
 # %bb.0:
 	addi	sp, sp, -32
 	sw	ra, 28(sp)                      # 4-byte Folded Spill
-	sw	a1, 8(sp)                       # 4-byte Folded Spill
-	sw	a0, 12(sp)                      # 4-byte Folded Spill
-	sub	a0, a2, a1
-	sw	a0, 20(sp)                      # 4-byte Folded Spill
+	sw	s0, 24(sp)                      # 4-byte Folded Spill
+	addi	s0, sp, 32
+	sw	a0, -12(s0)
+	sw	a1, -16(s0)
+	sw	a2, -20(s0)
+	lw	a0, -20(s0)
+	lw	a1, -16(s0)
+	sub	a0, a0, a1
 	addi	a0, a0, 1
-	sw	a0, 16(sp)                      # 4-byte Folded Spill
+	sw	a0, -24(s0)
+	lw	a0, -24(s0)
 	call	malloc
-	lw	a3, 8(sp)                       # 4-byte Folded Reload
-	lw	a1, 12(sp)                      # 4-byte Folded Reload
-	lw	a2, 16(sp)                      # 4-byte Folded Reload
-	sw	a0, 24(sp)                      # 4-byte Folded Spill
-	add	a1, a1, a3
+	sw	a0, -28(s0)
+	lw	a0, -28(s0)
+	lw	a1, -12(s0)
+	lw	a2, -16(s0)
+	add	a1, a1, a2
+	lw	a2, -24(s0)
 	call	memcpy
-	lw	a1, 20(sp)                      # 4-byte Folded Reload
-                                        # kill: def $x12 killed $x10
-	lw	a0, 24(sp)                      # 4-byte Folded Reload
-	add	a2, a0, a1
-	li	a1, 0
-	sb	a1, 0(a2)
+	lw	a1, -28(s0)
+	lw	a0, -24(s0)
+	add	a1, a1, a0
+	li	a0, 0
+	sb	a0, -1(a1)
+	lw	a0, -28(s0)
 	lw	ra, 28(sp)                      # 4-byte Folded Reload
+	lw	s0, 24(sp)                      # 4-byte Folded Reload
 	addi	sp, sp, 32
 	ret
 .Lfunc_end9:
@@ -171,12 +241,17 @@ _string_parseInt:                       # @_string_parseInt
 # %bb.0:
 	addi	sp, sp, -16
 	sw	ra, 12(sp)                      # 4-byte Folded Spill
+	sw	s0, 8(sp)                       # 4-byte Folded Spill
+	addi	s0, sp, 16
+	sw	a0, -12(s0)
+	lw	a0, -12(s0)
 	lui	a1, %hi(.L.str.2)
 	addi	a1, a1, %lo(.L.str.2)
-	addi	a2, sp, 8
+	addi	a2, s0, -16
 	call	sscanf
-	lw	a0, 8(sp)
+	lw	a0, -16(s0)
 	lw	ra, 12(sp)                      # 4-byte Folded Reload
+	lw	s0, 8(sp)                       # 4-byte Folded Reload
 	addi	sp, sp, 16
 	ret
 .Lfunc_end10:
@@ -187,8 +262,19 @@ _string_parseInt:                       # @_string_parseInt
 	.type	_string_ord,@function
 _string_ord:                            # @_string_ord
 # %bb.0:
+	addi	sp, sp, -16
+	sw	ra, 12(sp)                      # 4-byte Folded Spill
+	sw	s0, 8(sp)                       # 4-byte Folded Spill
+	addi	s0, sp, 16
+	sw	a0, -12(s0)
+	sw	a1, -16(s0)
+	lw	a0, -12(s0)
+	lw	a1, -16(s0)
 	add	a0, a0, a1
 	lbu	a0, 0(a0)
+	lw	ra, 12(sp)                      # 4-byte Folded Reload
+	lw	s0, 8(sp)                       # 4-byte Folded Reload
+	addi	sp, sp, 16
 	ret
 .Lfunc_end11:
 	.size	_string_ord, .Lfunc_end11-_string_ord
@@ -200,9 +286,16 @@ _string_equal:                          # @_string_equal
 # %bb.0:
 	addi	sp, sp, -16
 	sw	ra, 12(sp)                      # 4-byte Folded Spill
+	sw	s0, 8(sp)                       # 4-byte Folded Spill
+	addi	s0, sp, 16
+	sw	a0, -12(s0)
+	sw	a1, -16(s0)
+	lw	a0, -12(s0)
+	lw	a1, -16(s0)
 	call	strcmp
 	seqz	a0, a0
 	lw	ra, 12(sp)                      # 4-byte Folded Reload
+	lw	s0, 8(sp)                       # 4-byte Folded Reload
 	addi	sp, sp, 16
 	ret
 .Lfunc_end12:
@@ -215,9 +308,16 @@ _string_notEqual:                       # @_string_notEqual
 # %bb.0:
 	addi	sp, sp, -16
 	sw	ra, 12(sp)                      # 4-byte Folded Spill
+	sw	s0, 8(sp)                       # 4-byte Folded Spill
+	addi	s0, sp, 16
+	sw	a0, -12(s0)
+	sw	a1, -16(s0)
+	lw	a0, -12(s0)
+	lw	a1, -16(s0)
 	call	strcmp
 	snez	a0, a0
 	lw	ra, 12(sp)                      # 4-byte Folded Reload
+	lw	s0, 8(sp)                       # 4-byte Folded Reload
 	addi	sp, sp, 16
 	ret
 .Lfunc_end13:
@@ -230,9 +330,16 @@ _string_less:                           # @_string_less
 # %bb.0:
 	addi	sp, sp, -16
 	sw	ra, 12(sp)                      # 4-byte Folded Spill
+	sw	s0, 8(sp)                       # 4-byte Folded Spill
+	addi	s0, sp, 16
+	sw	a0, -12(s0)
+	sw	a1, -16(s0)
+	lw	a0, -12(s0)
+	lw	a1, -16(s0)
 	call	strcmp
 	srli	a0, a0, 31
 	lw	ra, 12(sp)                      # 4-byte Folded Reload
+	lw	s0, 8(sp)                       # 4-byte Folded Reload
 	addi	sp, sp, 16
 	ret
 .Lfunc_end14:
@@ -245,9 +352,16 @@ _string_lessOrEqual:                    # @_string_lessOrEqual
 # %bb.0:
 	addi	sp, sp, -16
 	sw	ra, 12(sp)                      # 4-byte Folded Spill
+	sw	s0, 8(sp)                       # 4-byte Folded Spill
+	addi	s0, sp, 16
+	sw	a0, -12(s0)
+	sw	a1, -16(s0)
+	lw	a0, -12(s0)
+	lw	a1, -16(s0)
 	call	strcmp
 	slti	a0, a0, 1
 	lw	ra, 12(sp)                      # 4-byte Folded Reload
+	lw	s0, 8(sp)                       # 4-byte Folded Reload
 	addi	sp, sp, 16
 	ret
 .Lfunc_end15:
@@ -260,11 +374,18 @@ _string_greater:                        # @_string_greater
 # %bb.0:
 	addi	sp, sp, -16
 	sw	ra, 12(sp)                      # 4-byte Folded Spill
+	sw	s0, 8(sp)                       # 4-byte Folded Spill
+	addi	s0, sp, 16
+	sw	a0, -12(s0)
+	sw	a1, -16(s0)
+	lw	a0, -12(s0)
+	lw	a1, -16(s0)
 	call	strcmp
 	mv	a1, a0
 	li	a0, 0
 	slt	a0, a0, a1
 	lw	ra, 12(sp)                      # 4-byte Folded Reload
+	lw	s0, 8(sp)                       # 4-byte Folded Reload
 	addi	sp, sp, 16
 	ret
 .Lfunc_end16:
@@ -277,10 +398,17 @@ _string_greaterOrEqual:                 # @_string_greaterOrEqual
 # %bb.0:
 	addi	sp, sp, -16
 	sw	ra, 12(sp)                      # 4-byte Folded Spill
+	sw	s0, 8(sp)                       # 4-byte Folded Spill
+	addi	s0, sp, 16
+	sw	a0, -12(s0)
+	sw	a1, -16(s0)
+	lw	a0, -12(s0)
+	lw	a1, -16(s0)
 	call	strcmp
 	not	a0, a0
 	srli	a0, a0, 31
 	lw	ra, 12(sp)                      # 4-byte Folded Reload
+	lw	s0, 8(sp)                       # 4-byte Folded Reload
 	addi	sp, sp, 16
 	ret
 .Lfunc_end17:
@@ -293,27 +421,32 @@ _string_add:                            # @_string_add
 # %bb.0:
 	addi	sp, sp, -32
 	sw	ra, 28(sp)                      # 4-byte Folded Spill
-	sw	a1, 20(sp)                      # 4-byte Folded Spill
-	sw	a0, 16(sp)                      # 4-byte Folded Spill
+	sw	s0, 24(sp)                      # 4-byte Folded Spill
+	addi	s0, sp, 32
+	sw	a0, -12(s0)
+	sw	a1, -16(s0)
+	lw	a0, -12(s0)
+	call	strlen
+	sw	a0, -24(s0)                     # 4-byte Folded Spill
+	lw	a0, -16(s0)
 	call	strlen
 	mv	a1, a0
-	lw	a0, 20(sp)                      # 4-byte Folded Reload
-	sw	a1, 12(sp)                      # 4-byte Folded Spill
-	call	strlen
-	mv	a1, a0
-	lw	a0, 12(sp)                      # 4-byte Folded Reload
+	lw	a0, -24(s0)                     # 4-byte Folded Reload
 	add	a0, a0, a1
 	addi	a0, a0, 1
 	call	malloc
-	lw	a1, 16(sp)                      # 4-byte Folded Reload
-	sw	a0, 24(sp)                      # 4-byte Folded Spill
+	sw	a0, -20(s0)
+	lw	a0, -20(s0)
+	lw	a1, -12(s0)
 	call	strcpy
-	lw	a1, 20(sp)                      # 4-byte Folded Reload
-                                        # kill: def $x12 killed $x10
-	lw	a0, 24(sp)                      # 4-byte Folded Reload
+	lw	a0, -20(s0)
+	lw	a1, -16(s0)
+	call	strcat
+	lw	a0, -20(s0)
 	lw	ra, 28(sp)                      # 4-byte Folded Reload
+	lw	s0, 24(sp)                      # 4-byte Folded Reload
 	addi	sp, sp, 32
-	tail	strcat
+	ret
 .Lfunc_end18:
 	.size	_string_add, .Lfunc_end18-_string_add
                                         # -- End function
@@ -322,7 +455,17 @@ _string_add:                            # @_string_add
 	.type	_malloc,@function
 _malloc:                                # @_malloc
 # %bb.0:
-	tail	malloc
+	addi	sp, sp, -16
+	sw	ra, 12(sp)                      # 4-byte Folded Spill
+	sw	s0, 8(sp)                       # 4-byte Folded Spill
+	addi	s0, sp, 16
+	sw	a0, -12(s0)
+	lw	a0, -12(s0)
+	call	malloc
+	lw	ra, 12(sp)                      # 4-byte Folded Reload
+	lw	s0, 8(sp)                       # 4-byte Folded Reload
+	addi	sp, sp, 16
+	ret
 .Lfunc_end19:
 	.size	_malloc, .Lfunc_end19-_malloc
                                         # -- End function
@@ -331,17 +474,26 @@ _malloc:                                # @_malloc
 	.type	_malloc_array,@function
 _malloc_array:                          # @_malloc_array
 # %bb.0:
-	addi	sp, sp, -16
-	sw	ra, 12(sp)                      # 4-byte Folded Spill
-	sw	a1, 8(sp)                       # 4-byte Folded Spill
-	mul	a0, a1, a0
+	addi	sp, sp, -32
+	sw	ra, 28(sp)                      # 4-byte Folded Spill
+	sw	s0, 24(sp)                      # 4-byte Folded Spill
+	addi	s0, sp, 32
+	sw	a0, -12(s0)
+	sw	a1, -16(s0)
+	lw	a0, -12(s0)
+	lw	a1, -16(s0)
+	mul	a0, a0, a1
 	addi	a0, a0, 4
 	call	malloc
-	lw	a1, 8(sp)                       # 4-byte Folded Reload
-	sw	a1, 0(a0)
+	sw	a0, -20(s0)
+	lw	a0, -16(s0)
+	lw	a1, -20(s0)
+	sw	a0, 0(a1)
+	lw	a0, -20(s0)
 	addi	a0, a0, 4
-	lw	ra, 12(sp)                      # 4-byte Folded Reload
-	addi	sp, sp, 16
+	lw	ra, 28(sp)                      # 4-byte Folded Reload
+	lw	s0, 24(sp)                      # 4-byte Folded Reload
+	addi	sp, sp, 32
 	ret
 .Lfunc_end20:
 	.size	_malloc_array, .Lfunc_end20-_malloc_array
@@ -370,3 +522,13 @@ _malloc_array:                          # @_malloc_array
 	.ident	"Ubuntu clang version 17.0.0 (++20230814093516+04b49144ace0-1~exp1~20230814093619.21)"
 	.section	".note.GNU-stack","",@progbits
 	.addrsig
+	.addrsig_sym printf
+	.addrsig_sym malloc
+	.addrsig_sym scanf
+	.addrsig_sym sprintf
+	.addrsig_sym strlen
+	.addrsig_sym memcpy
+	.addrsig_sym sscanf
+	.addrsig_sym strcmp
+	.addrsig_sym strcpy
+	.addrsig_sym strcat

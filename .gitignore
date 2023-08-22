@@ -8,3 +8,5 @@ output
 code
 ravel
 *.out
+src/LocalIR.java
+ir.output
