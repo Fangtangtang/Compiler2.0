@@ -14,7 +14,7 @@ import java.io.PrintStream;
  */
 public class ImmCmpInst extends ASMInstruction {
     enum Opcode {
-        slti, sgti, slei, sgei,
+        slti, sqti, slei, sqei,
         eqi, nei
     }
 
@@ -32,9 +32,9 @@ public class ImmCmpInst extends ASMInstruction {
         this.rd = rd;
         switch (operator) {
             case slt -> this.op = ImmCmpInst.Opcode.slti;
-            case sgt -> this.op = ImmCmpInst.Opcode.sgti;
+            case sgt -> this.op = ImmCmpInst.Opcode.sqti;
             case sle -> this.op = ImmCmpInst.Opcode.slei;
-            case sge -> this.op = ImmCmpInst.Opcode.sgei;
+            case sge -> this.op = ImmCmpInst.Opcode.sqei;
             case eq -> this.op = ImmCmpInst.Opcode.eqi;
             case ne -> this.op = ImmCmpInst.Opcode.nei;
             default -> throw new InternalException("unexpected operator in ir icmp");

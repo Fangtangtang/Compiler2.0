@@ -5,7 +5,7 @@ package asm.operand;
  * ASM立即数
  */
 public class Imm extends Operand {
-    int value;
+    public int value;
 
     public Imm(int value) {
         this.value = value;

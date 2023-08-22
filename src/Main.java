@@ -1,4 +1,6 @@
+import asm.Program;
 import ast.*;
+import backend.InstSelector;
 import frontend.*;
 import midend.IRBuilder;
 import org.antlr.v4.runtime.*;
@@ -69,9 +71,12 @@ public class Main {
 //        PrintStream outputStream = new PrintStream(new FileOutputStream("output"));
         PrintStream outputStream = System.out;
         IRPrinter printer = new IRPrinter(outputStream);
-        printer.visit(irBuilder.irRoot);
-//        new BuiltinIRPrinter(outputStream);
+//        printer.visit(irBuilder.irRoot);
 
+        Program program = new Program();
+        InstSelector instSelector = new InstSelector(program);
+        instSelector.visit(irBuilder.irRoot);
+        program.print(outputStream);
     }
 }
 

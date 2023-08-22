@@ -43,7 +43,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
     Function malloc;
     Function malloc_array;
     Counter tmpCounter;
-
+    Counter retCounter;
     Counter phiCounter;
     //计数，确保函数block不重名
     Integer funcBlockCounter = 0;
@@ -378,6 +378,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         logicExprCounter = 0;
         tmpCounter = new Counter();
         phiCounter = new Counter();
+        retCounter=new Counter();
         logicBlockMap = new HashMap<>();
         enterScope(node);
         getCurrentFunc(node.name);
@@ -464,6 +465,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         logicExprCounter = 0;
         tmpCounter = new Counter();
         phiCounter = new Counter();
+        retCounter=new Counter();
         logicBlockMap = new HashMap<>();
         ClassScope classScope;
         //参数复制、局部变量定义
@@ -644,6 +646,9 @@ public class IRBuilder implements ASTVisitor<Entity> {
         pushBack(
                 new Jump(currentFunction.ret.label)
         );
+        BasicBlock block=new BasicBlock("ret_"+(++retCounter.cnt));
+        currentFunction.blockMap.put(block.label,block);
+        changeBlock(block);
         terminated = true;
         currentScope.terminated = true;
         return null;

@@ -25,7 +25,6 @@ public class LocalMain {
 
 //        String fileName = "testcases/optim/binary_tree.mx";
         String fileName = "testcases/codegen/e1.mx";
-
 //        String fileName = "testcases/primary/1.mx";
 
         InputStream inputStream = new FileInputStream(fileName);
@@ -71,7 +70,7 @@ public class LocalMain {
 //        PrintStream outputStream = new PrintStream(new FileOutputStream("C:/Users/21672/Desktop/buildin/main.ll"));
         PrintStream outputStream = new PrintStream(new FileOutputStream("output"));
         IRPrinter printer = new IRPrinter(outputStream);
-        //printer.visit(irBuilder.irRoot);
+//        printer.visit(irBuilder.irRoot);
 
         Program program = new Program();
         InstSelector instSelector = new InstSelector(program);

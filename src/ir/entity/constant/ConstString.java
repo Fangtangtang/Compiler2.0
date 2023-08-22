@@ -13,6 +13,7 @@ import ir.irType.PtrType;
 public class ConstString extends Constant {
 
     public String value;
+    String converted;
     public int strLength;
 
     public ConstString(String value) {
@@ -28,7 +29,7 @@ public class ConstString extends Constant {
 
     private void convertStr() {
         String val = this.value;
-        this.value = "";
+        this.converted = "";
         for (int i = 0; i < val.length(); ++i) {
             char c = val.charAt(i);
             if (c == '\\') {
@@ -37,31 +38,31 @@ public class ConstString extends Constant {
                     --strLength;//转义字符
                     c = val.charAt(i);
                     if (c == 'n') {
-                        this.value += "\\0A";
+                        this.converted += "\\0A";
                     } else if (c == '\"') {
-                        this.value += "\\22";
+                        this.converted += "\\22";
                     } else if (c == '\\') {
-                        this.value += "\\\\";
+                        this.converted += "\\\\";
                     } else {
-                        this.value += '\\';
-                        this.value += c;
+                        this.converted += '\\';
+                        this.converted += c;
                     }
                 } else {
-                    this.value += '\\';
+                    this.converted += '\\';
                 }
             } else {
-                this.value += c;
+                this.converted += c;
             }
         }
-        this.value += "\\00";
+        this.converted += "\\00";
     }
 
     @Override
     public String toString() {
 //        return type.toString() + " " + value;
-        if (this.value.length() > 0) {
+        if (this.converted.length() > 0) {
             return ("[" + (strLength + 1) + " x i8] c" +
-                    "\"" + this.value + "\""
+                    "\"" + this.converted + "\""
             );
         } else {
             return "[1 x i8] zeroinitializer";
