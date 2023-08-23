@@ -49,6 +49,8 @@ public interface ASMVisitor {
 
     void visit(StoreGlobalInst inst);
 
+    void visit(GlobalAddrInst inst);
+
     //operand
     void visit(Imm operand);
 
