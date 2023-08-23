@@ -13,7 +13,6 @@ import ir.entity.constant.*;
 import ir.entity.var.GlobalVar;
 import ir.entity.var.LocalTmpVar;
 import ir.entity.var.LocalVar;
-import ir.entity.var.Ptr;
 import ir.function.*;
 import ir.irType.ArrayType;
 import ir.irType.IRType;
@@ -308,9 +307,8 @@ public class InstSelector implements IRVisitor {
 
     /**
      * @param entity ir
-     * @return physical reg
      */
-    private PhysicalRegister entity2value(Entity entity, PhysicalRegister reg) {
+    private void entity2value(Entity entity, PhysicalRegister reg) {
         setPhysicalRegSize(reg, entity);
         if (entity instanceof Constant constant) {
             Operand operand = const2operand(constant);
@@ -323,10 +321,9 @@ public class InstSelector implements IRVisitor {
                         new MoveInst(reg, (PhysicalRegister) operand)
                 );
             }
-            return reg;
+            return;
         }
         loadRegister(reg, entity);
-        return reg;
     }
 
     @Override
@@ -568,12 +565,12 @@ public class InstSelector implements IRVisitor {
      * 手动计算偏移量寻址
      * ----------------
      * |  %3 = load ptr, ptr %1
-     * |  %4 = getelementptr inbounds i32, ptr %3, i32 1
+     * |  %4 = getelementptr inbounds i32, ptr %3, i32 1    # %4被一个地址赋值（32位的大整数）
      * |  store i32 0, ptr %4
      * |
-     * |	lw	a1, -12(s0)
+     * |	lw	a1, -12(s0)     # 首地址
      * |	li	a0, 0
-     * |	sw	a0, 4(a1)       # 计算出a[1]地址4(a1)，存值
+     * |	sw	a0, 4(a1)       # 计算出a[1]地址4(a1)，存值（从offset取值）
      * ---------------------------------
      * bool数组：一字节寻址
      * 其余（数组+指针+类）：4字节寻址
@@ -582,7 +579,7 @@ public class InstSelector implements IRVisitor {
      */
     @Override
     public void visit(GetElementPtr stmt) {
-        //lw	a1, -12(s0)
+        //首地址lw	a1, -12(s0)
         PhysicalRegister a0 = registerMap.getReg("a0");
         a0.valueSize = 4;
         loadRegister(a0, stmt.ptrVal);
@@ -611,7 +608,7 @@ public class InstSelector implements IRVisitor {
                 new BinaryInst(a0, a1, a2, BinaryInst.Opcode.add)
         );
         //存值
-        storeRegister(a2, stmt.result);
+        storeRegister(a2, stmt.result);//指向对象的指针
     }
 
     /**
@@ -698,7 +695,6 @@ public class InstSelector implements IRVisitor {
             return;
         }
         //其余
-        Operand operand1, operand2;
         PhysicalRegister a0 = registerMap.getReg("a0");
         PhysicalRegister a1 = registerMap.getReg("a1");
         PhysicalRegister a2 = registerMap.getReg("a2");
@@ -731,12 +727,18 @@ public class InstSelector implements IRVisitor {
     @Override
     public void visit(Load stmt) {
         PhysicalRegister a0 = registerMap.getReg("a0");
-        loadRegister(a0, stmt.pointer);
-        storeRegister(a0, stmt.result);
+        loadRegister(a0, stmt.pointer);//%1值：一个地址
+        //取指针指向的对象（地址中的值）
+        PhysicalRegister a1 = registerMap.getReg("a1");
+        currentBlock.pushBack(
+                new LoadInst(a0, a1, zero)
+        );
+        storeRegister(a1, stmt.result);
     }
 
     /**
      * Store
+     * 将值存到指针指向的地址
      * -----------------------------------------------------
      * store i32 1, ptr %1
      * li	a0, 1
@@ -750,9 +752,13 @@ public class InstSelector implements IRVisitor {
      */
     @Override
     public void visit(Store stmt) {
-        storeRegister(
-                entity2value(stmt.value, registerMap.getReg("a0")),
-                stmt.pointer
+        PhysicalRegister a0 = registerMap.getReg("a0");
+        loadRegister(a0, stmt.pointer);//%1值：一个地址
+        //取值
+        PhysicalRegister a1 = registerMap.getReg("a1");
+        entity2value( stmt.value,a1);
+        currentBlock.pushBack(
+                new StoreInst(a1, a0, zero)
         );
     }
 
