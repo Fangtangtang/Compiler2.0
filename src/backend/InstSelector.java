@@ -125,21 +125,26 @@ public class InstSelector implements IRVisitor {
      */
     private void loadRegister(PhysicalRegister tmp, Entity entity) {
         if (entity instanceof GlobalVar globalVar) {
-            //全局变量地址载入
-            PhysicalRegister a4 = registerMap.getReg("a4");
-            currentBlock.pushBack(
-                    new GlobalAddrInst(a4, globalVar.identity)
-            );
-            if (globalVar.storage.type instanceof IntType intType
-                    && intType.typeName.equals(IntType.TypeName.BOOL)) {
-                tmp.valueSize = 1;
-            } else {
-                tmp.valueSize = 4;
+            if (globalVar.storage instanceof ConstString) {
+                currentBlock.pushBack(
+                        new GlobalAddrInst(tmp, globalVar.identity)
+                );
+            } else { //全局变量地址载入
+                PhysicalRegister a4 = registerMap.getReg("a4");
+                currentBlock.pushBack(
+                        new GlobalAddrInst(a4, globalVar.identity)
+                );
+                if (globalVar.storage.type instanceof IntType intType
+                        && intType.typeName.equals(IntType.TypeName.BOOL)) {
+                    tmp.valueSize = 1;
+                } else {
+                    tmp.valueSize = 4;
+                }
+                //全局变量的值
+                currentBlock.pushBack(
+                        new LoadInst(a4, tmp, zero)
+                );
             }
-            //全局变量的值
-            currentBlock.pushBack(
-                    new LoadInst(a4, tmp, zero)
-            );
         } else if (entity instanceof Constant constant) {
             const2value(constant, tmp);
         } else {
@@ -737,6 +742,32 @@ public class InstSelector implements IRVisitor {
         storeRegister(a2, stmt.result);
     }
 
+    /**
+     * 已知entity为指针
+     * 求指向地址
+     *
+     * @param reg    base
+     * @param entity globalVar、localVar、localTmpVar
+     * @return offset
+     */
+    private Pair<Register, Imm> getPointedAddr(PhysicalRegister reg, Entity entity) {
+        reg.valueSize = 4;//addr
+        //data section，label对应地址
+        if (entity instanceof GlobalVar globalVar) {
+            currentBlock.pushBack(
+                    new GlobalAddrInst(reg, globalVar.identity)
+            );
+            return new Pair<>(reg, zero);
+        }
+        //stack上地址
+        if (entity instanceof LocalVar localVar) {
+            return getRegAddress(getVirtualRegister(localVar));
+        }
+        //指针类型的localTmpVar
+        //值为地址
+        loadRegister(reg, entity);
+        return new Pair<>(reg, zero);
+    }
 
     /**
      * Load
@@ -746,17 +777,14 @@ public class InstSelector implements IRVisitor {
      */
     @Override
     public void visit(Load stmt) {
-        //a0：pointer指向地址
         PhysicalRegister a0 = registerMap.getReg("a0");
-        a0.valueSize = 4;
-        loadRegister(a0, stmt.pointer);
-        //取指针指向的对象（地址中的值）
+        Pair<Register, Imm> pair = getPointedAddr(a0, stmt.pointer);
+        //指针指向的值
         PhysicalRegister a1 = registerMap.getReg("a1");
         setPhysicalRegSize(a1, stmt.result);
         currentBlock.pushBack(
-                new LoadInst(a0, a1, zero)
+                new LoadInst(pair.getFirst(), a1, pair.getSecond())
         );
-        //reg -> mem
         storeRegister(a1, stmt.result);
     }
 
@@ -776,14 +804,14 @@ public class InstSelector implements IRVisitor {
      */
     @Override
     public void visit(Store stmt) {
-        //a0：pointer指向地址
+        //store to
         PhysicalRegister a0 = registerMap.getReg("a0");
-        a0.valueSize = 4;
-        loadRegister(a0, stmt.pointer);
+        Pair<Register, Imm> pair = getPointedAddr(a0, stmt.pointer);
+        //value
         PhysicalRegister a1 = registerMap.getReg("a1");
         loadRegister(a1, stmt.value);
         currentBlock.pushBack(
-                new StoreInst(a1, a0, zero)
+                new StoreInst(a1, pair.getFirst(), pair.getSecond())
         );
     }
 

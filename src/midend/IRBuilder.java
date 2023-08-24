@@ -1625,17 +1625,12 @@ public class IRBuilder implements ASTVisitor<Entity> {
         if (currentClass != null && currentClass.members.containsKey(node.name)) {
             //先取this
             Storage this1 = getValue(rename2mem.get("this1"));
-            //结构体
-            LocalTmpVar struct = new LocalTmpVar(new PtrType(currentClass), ++tmpCounter.cnt);
-            pushBack(
-                    new GetElementPtr(struct, this1, zero)
-            );
             Integer index = currentClass.members.get(node.name);
             //成员变量
             IRType type = currentClass.memberTypes.get(index);
             LocalTmpVar result = new LocalTmpVar(new PtrType(type), ++tmpCounter.cnt);
             pushBack(
-                    new GetElementPtr(result, struct, new ConstInt(index.toString()))
+                    new GetElementPtr(result, this1, new ConstInt(index.toString()))
             );
             return result;
         }
