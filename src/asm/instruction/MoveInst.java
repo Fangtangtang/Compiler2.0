@@ -22,7 +22,7 @@ public class MoveInst extends ASMInstruction {
 
     @Override
     public void print(PrintStream out) {
-        out.println("\tj\t" + rd + ", " + rs1);
+        out.println("\tmv\t" + rd + ", " + rs1);
     }
 
     @Override

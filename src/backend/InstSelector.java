@@ -107,15 +107,11 @@ public class InstSelector implements IRVisitor {
         }
         PhysicalRegister t0 = registerMap.getReg("t0");
         t0.valueSize = 4;
-        //原offset的基地址
-        currentBlock.pushBack(
-                new LoadAddrInst(t0, registerMap.getReg("fp"))
-        );
         //offset
         Register num = (Register) number2operand(register.offset);
         //计算真正地址
         currentBlock.pushBack(
-                new BinaryInst(t0, num, t0, BinaryInst.Opcode.sub)
+                new BinaryInst(registerMap.getReg("fp"), num, t0, BinaryInst.Opcode.sub)
         );
         return new Pair<>(t0, zero);
     }
@@ -897,7 +893,8 @@ public class InstSelector implements IRVisitor {
      */
     @Override
     public void visit(Jump stmt) {
-        if (stmt.phiLabel != null) {
+        if (stmt.phiLabel != null
+                && currentIRFunc.phiMap.containsKey(stmt.index + stmt.phiLabel)) {
             PhysicalRegister a0 = registerMap.getReg("a0");
             Entity ans = currentIRFunc.phiMap.get(stmt.index + stmt.phiLabel);
             setPhysicalRegSize(a0, ans);
