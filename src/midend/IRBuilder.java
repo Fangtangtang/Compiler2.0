@@ -378,7 +378,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         logicExprCounter = 0;
         tmpCounter = new Counter();
         phiCounter = new Counter();
-        retCounter=new Counter();
+        retCounter = new Counter();
         logicBlockMap = new HashMap<>();
         enterScope(node);
         getCurrentFunc(node.name);
@@ -465,7 +465,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         logicExprCounter = 0;
         tmpCounter = new Counter();
         phiCounter = new Counter();
-        retCounter=new Counter();
+        retCounter = new Counter();
         logicBlockMap = new HashMap<>();
         ClassScope classScope;
         //参数复制、局部变量定义
@@ -645,8 +645,8 @@ public class IRBuilder implements ASTVisitor<Entity> {
         pushBack(
                 new Jump(currentFunction.ret.label)
         );
-        BasicBlock block=new BasicBlock("ret_"+(++retCounter.cnt));
-        currentFunction.blockMap.put(block.label,block);
+        BasicBlock block = new BasicBlock("ret_" + (++retCounter.cnt));
+        currentFunction.blockMap.put(block.label, block);
         changeBlock(block);
         terminated = true;
         currentScope.terminated = true;
@@ -1506,7 +1506,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
      */
     @Override
     public Entity visit(TernaryExprNode node) {
-        ++phiCounter.cnt;
+        Integer phiLabel = ++phiCounter.cnt;
         int label = funcBlockCounter++;
         BasicBlock trueStmtBlock = new BasicBlock("cond.true" + label);
         BasicBlock falseStmtBlock = new BasicBlock("cond.false" + label);
@@ -1522,7 +1522,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         operator = null;
         Storage trueAns = getValue(node.trueExpr.accept(this));
         pushBack(
-                new Jump(endBlock.label, phiCounter.cnt, ".true")
+                new Jump(endBlock.label, phiLabel, ".true")
         );
         BasicBlock trueBlock = currentBlock;
         changeBlock(falseStmtBlock);
@@ -1530,7 +1530,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         operator = null;
         Storage falseAns = getValue(node.falseExpr.accept(this));
         pushBack(
-                new Jump(endBlock.label, phiCounter.cnt, ".false")
+                new Jump(endBlock.label, phiLabel, ".false")
         );
         BasicBlock falseBlock = currentBlock;
         changeBlock(endBlock);
@@ -1541,10 +1541,10 @@ public class IRBuilder implements ASTVisitor<Entity> {
             pushBack(
                     new Phi(result, trueAns, falseAns,
                             trueBlock.label, falseBlock.label,
-                            phiCounter.cnt)
+                            phiLabel)
             );
-            currentFunction.phiMap.put(phiCounter.cnt.toString() + ".true", trueAns);
-            currentFunction.phiMap.put(phiCounter.cnt.toString() + ".false", falseAns);
+            currentFunction.phiMap.put(phiLabel.toString() + ".true", trueAns);
+            currentFunction.phiMap.put(phiLabel.toString() + ".false", falseAns);
         } else {
             //仅用于表示类型
             result = new LocalTmpVar(trueAns.type, tmpCounter.cnt);
