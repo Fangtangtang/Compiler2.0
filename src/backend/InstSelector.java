@@ -62,15 +62,19 @@ public class InstSelector implements IRVisitor {
         } else {
             throw new InternalException("get virtual register of unexpected entity " + entity);
         }
-        boolean flag = type instanceof IntType intType &&
-                (intType.typeName.equals(IntType.TypeName.BOOL)
-                        || intType.typeName.equals(IntType.TypeName.TMP_BOOL));
+        boolean flag = isBool(type);
         if (toReg.containsKey(name)) {
             return toReg.get(name);
         }
         VirtualRegister register = newVirtualReg(flag);
         toReg.put(name, register);
         return register;
+    }
+
+    private boolean isBool(IRType type) {
+        return type instanceof IntType intType &&
+                (intType.typeName.equals(IntType.TypeName.BOOL)
+                        || intType.typeName.equals(IntType.TypeName.TMP_BOOL));
     }
 
     private VirtualRegister newVirtualReg() {
@@ -131,11 +135,11 @@ public class InstSelector implements IRVisitor {
                 );
             } else { //全局变量地址载入
                 PhysicalRegister a4 = registerMap.getReg("a4");
+                a4.valueSize = 4;
                 currentBlock.pushBack(
                         new GlobalAddrInst(a4, globalVar.identity)
                 );
-                if (globalVar.storage.type instanceof IntType intType
-                        && intType.typeName.equals(IntType.TypeName.BOOL)) {
+                if (isBool(globalVar.storage.type)) {
                     tmp.valueSize = 1;
                 } else {
                     tmp.valueSize = 4;
@@ -171,11 +175,11 @@ public class InstSelector implements IRVisitor {
         if (entity instanceof GlobalVar globalVar) {
             //地址载入
             PhysicalRegister a4 = registerMap.getReg("a4");
+            a4.valueSize = 4;
             currentBlock.pushBack(
                     new GlobalAddrInst(a4, globalVar.identity)
             );
-            if (globalVar.storage.type instanceof IntType intType
-                    && intType.typeName.equals(IntType.TypeName.BOOL)) {
+            if (isBool(globalVar.storage.type)) {
                 tmp.valueSize = 1;
             } else {
                 tmp.valueSize = 4;
@@ -227,8 +231,7 @@ public class InstSelector implements IRVisitor {
     }
 
     private void setPhysicalRegSize(PhysicalRegister reg, Entity entity) {
-        if (entity.type instanceof IntType intType
-                && intType.typeName.equals(IntType.TypeName.BOOL)) {
+        if (isBool(entity.type)) {
             reg.valueSize = 1;
         } else {
             reg.valueSize = 4;
@@ -288,18 +291,20 @@ public class InstSelector implements IRVisitor {
         //入参（相当于局部变量）
         //访问函数alloca开好了virtual reg，将值传入（store）
         int i;
+        Storage param;
+        PhysicalRegister reg;
         for (i = 0; i < 8; ++i) {
             if (i == function.parameterList.size()) {
                 break;
             }
-            storeRegister(
-                    registerMap.getReg("a" + i),
-                    function.parameterList.get(i)
-            );
+            reg = registerMap.getReg("a" + i);
+            param = function.parameterList.get(i);
+            setPhysicalRegSize(reg, param);
+            storeRegister(reg, param);
         }
         PhysicalRegister t2 = registerMap.getReg("t2");
         for (; i < function.parameterList.size(); ++i) {
-            Storage param = function.parameterList.get(i);
+            param = function.parameterList.get(i);
             setPhysicalRegSize(t2, param);
             currentBlock.pushBack(
                     new LoadInst(fp, t2, new Imm((i - 8) << 2))
@@ -310,7 +315,9 @@ public class InstSelector implements IRVisitor {
         currentBlock = currentFunc.funcBlocks.get(currentFunc.funcBlocks.size() - 1);
         //有返回值，返回值放在a0
         if (!(function.retType instanceof VoidType)) {
-            storeRegister(registerMap.getReg("a0"), function.retVal);
+            PhysicalRegister a0 = registerMap.getReg("a0");
+            setPhysicalRegSize(a0, function.retVal);
+            loadRegister(a0, function.retVal);
         }
         currentBlock.pushBack(
                 new LoadInst(sp, registerMap.getReg("ra"), new Imm(stackSize - 4))
@@ -325,18 +332,6 @@ public class InstSelector implements IRVisitor {
                 new RetInst()
         );
     }
-
-//    /**
-//     * @param entity ir
-//     */
-//    private void entity2value(Entity entity, PhysicalRegister reg) {
-//        setPhysicalRegSize(reg, entity);
-//        if (entity instanceof Constant constant) {
-//            const2value(constant, reg);
-//        } else {
-//            loadRegister(reg, entity);
-//        }
-//    }
 
     private void const2value(Constant constant, PhysicalRegister reg) {
         Operand operand = const2operand(constant);
@@ -420,6 +415,8 @@ public class InstSelector implements IRVisitor {
             } else {
                 return new Imm(0);
             }
+        } else if (constant instanceof Null) {
+            return registerMap.getReg("zero");
         } else {
             throw new InternalException("can not resolve constant");
         }
@@ -469,26 +466,26 @@ public class InstSelector implements IRVisitor {
         if (stmt.op1 instanceof ConstInt c1) {
             operand1 = number2operand(Integer.parseInt(c1.value));
         } else {
-            operand1 = registerMap.getReg("a0");
-            loadRegister((PhysicalRegister) operand1, stmt.op1);
+            PhysicalRegister a0 = registerMap.getReg("a0");
+            a0.valueSize = 4;
+            loadRegister(a0, stmt.op1);
+            operand1 = a0;
         }
         if (stmt.op2 instanceof ConstInt c2) {
             operand2 = number2operand(Integer.parseInt(c2.value));
         } else {
-            operand2 = registerMap.getReg("a1");
-            loadRegister((PhysicalRegister) operand2, stmt.op2);
+            PhysicalRegister a1 = registerMap.getReg("a1");
+            a1.valueSize = 4;
+            loadRegister(a1, stmt.op2);
+            operand2 = a1;
         }
         PhysicalRegister a2 = registerMap.getReg("a2");
         a2.valueSize = 4;
         PhysicalRegister a3 = registerMap.getReg("a3");
         a3.valueSize = 4;
         if (operand1 instanceof Imm imm) {
-            if (stmt.operator.equals(Binary.Operator.sub)) {
-                imm = new Imm(-imm.value);
-                currentBlock.pushBack(
-                        new ImmBinaryInst((Register) operand2, imm, a2, ImmBinaryInst.Opcode.addi)
-                );
-            } else if (stmt.operator.equals(Binary.Operator.mul) ||
+            if (stmt.operator.equals(Binary.Operator.sub) ||
+                    stmt.operator.equals(Binary.Operator.mul) ||
                     stmt.operator.equals(Binary.Operator.sdiv) ||
                     stmt.operator.equals(Binary.Operator.srem)) {
                 currentBlock.pushBack(
@@ -551,18 +548,26 @@ public class InstSelector implements IRVisitor {
         //入参
         //若参数<=8，直接使用寄存器a0-a7传递
         PhysicalRegister t2 = registerMap.getReg("t2");
+        PhysicalRegister reg;
+        Storage param;
         if (stmt.parameterList.size() <= 8) {
             for (int i = 0; i < stmt.parameterList.size(); ++i) {
-                loadRegister(registerMap.getReg("a" + i), stmt.parameterList.get(i));
+                reg = registerMap.getReg("a" + i);
+                param = stmt.parameterList.get(i);
+                setPhysicalRegSize(reg, param);
+                loadRegister(reg, param);
             }
         } else {
             int i;
             for (i = 0; i < 8; ++i) {
-                loadRegister(registerMap.getReg("a" + i), stmt.parameterList.get(i));
+                reg = registerMap.getReg("a" + i);
+                param = stmt.parameterList.get(i);
+                setPhysicalRegSize(reg, param);
+                loadRegister(reg, param);
             }
             PhysicalRegister sp = registerMap.getReg("sp");
             for (; i < stmt.parameterList.size(); ++i) {
-                Storage param = stmt.parameterList.get(i);
+                param = stmt.parameterList.get(i);
                 setPhysicalRegSize(t2, param);
                 loadRegister(t2, param);
                 addParamsOnStack(t2, sp, i - 8);
@@ -574,7 +579,9 @@ public class InstSelector implements IRVisitor {
         );
         //存返回值
         if (!(stmt.function.retType instanceof VoidType)) {
-            storeRegister(registerMap.getReg("a0"), stmt.result);
+            PhysicalRegister a0 = registerMap.getReg("a0");
+            setPhysicalRegSize(a0, stmt.result);
+            storeRegister(a0, stmt.result);
         }
     }
 
@@ -728,9 +735,25 @@ public class InstSelector implements IRVisitor {
         loadRegister(a0, stmt.op1);
         loadRegister(a1, stmt.op2);
         if (!(stmt.cond.equals(Icmp.Cond.eq) || stmt.cond.equals(Icmp.Cond.ne))) {
-            currentBlock.pushBack(
-                    new CmpInst(a0, a1, a2, stmt.cond)
-            );
+            if (stmt.cond.equals(Icmp.Cond.sle)) {
+                currentBlock.pushBack(
+                        new CmpInst(a0, a1, a2, Icmp.Cond.sgt)
+                );
+                currentBlock.pushBack(
+                        new NotInst(a2, a2)
+                );
+            } else if (stmt.cond.equals(Icmp.Cond.sge)) {
+                currentBlock.pushBack(
+                        new CmpInst(a0, a1, a2, Icmp.Cond.slt)
+                );
+                currentBlock.pushBack(
+                        new NotInst(a2, a2)
+                );
+            } else {
+                currentBlock.pushBack(
+                        new CmpInst(a0, a1, a2, stmt.cond)
+                );
+            }
         } else {
             currentBlock.pushBack(
                     new BinaryInst(a0, a1, a2, BinaryInst.Opcode.sub)
@@ -778,6 +801,7 @@ public class InstSelector implements IRVisitor {
     @Override
     public void visit(Load stmt) {
         PhysicalRegister a0 = registerMap.getReg("a0");
+        a0.valueSize = 4;
         Pair<Register, Imm> pair = getPointedAddr(a0, stmt.pointer);
         //指针指向的值
         PhysicalRegister a1 = registerMap.getReg("a1");
@@ -806,9 +830,11 @@ public class InstSelector implements IRVisitor {
     public void visit(Store stmt) {
         //store to
         PhysicalRegister a0 = registerMap.getReg("a0");
+        a0.valueSize = 4;
         Pair<Register, Imm> pair = getPointedAddr(a0, stmt.pointer);
         //value
         PhysicalRegister a1 = registerMap.getReg("a1");
+        setPhysicalRegSize(a1, stmt.value);
         loadRegister(a1, stmt.value);
         currentBlock.pushBack(
                 new StoreInst(a1, pair.getFirst(), pair.getSecond())
@@ -834,23 +860,27 @@ public class InstSelector implements IRVisitor {
         //phi
         if (stmt.phiLabel != null) {
             Entity ans = currentIRFunc.phiMap.get(stmt.index + stmt.phiLabel);
+            setPhysicalRegSize(a0, ans);
             VirtualRegister des;
             if (!toReg.containsKey(String.valueOf(stmt.index))) {
-                if (ans.type instanceof IntType intType && intType.typeName.equals(IntType.TypeName.BOOL)) {
+                if (isBool(ans.type)) {
                     des = newVirtualReg(true);
                 } else {
                     des = newVirtualReg();
                 }
+                toReg.put(String.valueOf(stmt.index), des);
             } else {
                 des = toReg.get(String.valueOf(stmt.index));
             }
             loadRegister(a0, ans);
             storeVirtualRegister(a0, des);
         }
+        a0.valueSize = 1;
         loadRegister(a0, stmt.condition);
         currentBlock.pushBack(
                 new ImmBinaryInst(a0, new Imm(1), a0, ImmBinaryInst.Opcode.andi)
         );
+        //neqz branch
         currentBlock.pushBack(
                 new BranchInst(a0, renameBlock(stmt.trueBranch))
         );
@@ -870,9 +900,10 @@ public class InstSelector implements IRVisitor {
         if (stmt.phiLabel != null) {
             PhysicalRegister a0 = registerMap.getReg("a0");
             Entity ans = currentIRFunc.phiMap.get(stmt.index + stmt.phiLabel);
+            setPhysicalRegSize(a0, ans);
             VirtualRegister des;
             if (!toReg.containsKey(String.valueOf(stmt.index))) {
-                if (ans.type instanceof IntType intType && intType.typeName.equals(IntType.TypeName.BOOL)) {
+                if (isBool(ans.type)) {
                     des = newVirtualReg(true);
                 } else {
                     des = newVirtualReg();
@@ -917,7 +948,22 @@ public class InstSelector implements IRVisitor {
      */
     @Override
     public void visit(Zext stmt) {
-        toReg.put(stmt.result.toString(), getVirtualRegister(stmt.value));
+        if (stmt.value instanceof ConstBool bool) {
+            PhysicalRegister a0 = registerMap.getReg("a0");
+            a0.valueSize = 1;
+            if (bool.value) {
+                currentBlock.pushBack(
+                        new LiInst(a0, new Imm(1))
+                );
+            } else {
+                currentBlock.pushBack(
+                        new LiInst(a0, zero)
+                );
+            }
+            storeRegister(a0, stmt.result);
+        } else {
+            toReg.put(stmt.result.toString(), getVirtualRegister(stmt.value));
+        }
     }
 
     /**
@@ -931,6 +977,7 @@ public class InstSelector implements IRVisitor {
     @Override
     public void visit(Phi stmt) {
         PhysicalRegister a0 = registerMap.getReg("a0");
+        setPhysicalRegSize(a0, stmt.result);
         loadVirtualRegister(a0, toReg.get(String.valueOf(stmt.phiLabel)));
         storeRegister(a0, stmt.result);
     }

@@ -5,7 +5,7 @@ import ir.irType.*;
 /**
  * @author F
  * bool常量
- * IR类型为i8
+ * IR类型为i1
  * 值为true、false
  */
 public class ConstBool extends Constant {
