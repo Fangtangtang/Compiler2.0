@@ -25,8 +25,6 @@ public interface ASMVisitor {
 
     void visit(ImmBinaryInst inst);
 
-    void visit(ImmCmpInst inst);
-
     void visit(JumpInst inst);
 
     void visit(LoadInst inst);
@@ -44,10 +42,6 @@ public interface ASMVisitor {
     void visit(EqualZeroInst inst);
 
     void visit(LuiInst inst);
-
-    void visit(LoadGlobalInst inst);
-
-    void visit(StoreGlobalInst inst);
 
     void visit(GlobalAddrInst inst);
 

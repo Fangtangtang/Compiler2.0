@@ -527,13 +527,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         currentFunction = irRoot.getFunc(funcName);
         currentInitBlock = new BasicBlock("_var_def");
         currentFunction.entry = currentInitBlock;
-        if ("main".equals(funcName)) {
-            currentInitBlock.pushBack(
-                    new Call(irRoot.globalVarInitFunction, new LocalTmpVar(new VoidType(), tmpCounter.cnt))
-            );
-        }
         //进入函数的第一个块为变量、参数初始化
-        currentFunction.entry = currentInitBlock;
         currentFunction.blockMap.put(currentInitBlock.label, currentInitBlock);
         //如果有返回值，先给retVal分配空间
         if (!(currentFunction.retType instanceof VoidType)) {
@@ -546,6 +540,11 @@ public class IRBuilder implements ASTVisitor<Entity> {
                         new Store(zero, stmt.result)
                 );
             }
+        }
+        if ("main".equals(funcName)) {
+            currentInitBlock.pushBack(
+                    new Call(irRoot.globalVarInitFunction, new LocalTmpVar(new VoidType(), tmpCounter.cnt))
+            );
         }
     }
 
