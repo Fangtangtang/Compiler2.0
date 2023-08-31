@@ -1,6 +1,6 @@
 package utility.scope;
 
-import utility.type.ClassType;
+import ast.type.ClassType;
 
 /**
  * @author F

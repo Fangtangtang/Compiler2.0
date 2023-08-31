@@ -1,13 +1,13 @@
 import asm.Program;
-import ast.*;
+import ast.other.RootNode;
 import backend.InstSelector;
 import frontend.*;
+import midend.CFGBuilder;
 import midend.IRBuilder;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 import parser.*;
-import tool.*;
-import utility.MxErrorListener;
+import utility.error.MxErrorListener;
 import utility.SymbolTable;
 import utility.error.MxException;
 import utility.scope.Scope;
@@ -70,9 +70,11 @@ public class Main {
 
 //        PrintStream outputStream = new PrintStream(new FileOutputStream("output"));
         PrintStream outputStream = System.out;
-        IRPrinter printer = new IRPrinter(outputStream);
+//        IRPrinter printer = new IRPrinter(outputStream);
 //        printer.visit(irBuilder.irRoot);
 
+        CFGBuilder cfgBuilder=new CFGBuilder(irBuilder.irRoot);
+        cfgBuilder.build();
         Program program = new Program();
         InstSelector instSelector = new InstSelector(program);
         instSelector.visit(irBuilder.irRoot);

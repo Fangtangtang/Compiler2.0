@@ -2,7 +2,6 @@ package ast.other;
 
 import ast.ASTNode;
 import ast.ASTVisitor;
-import ast.ExprNode;
 import utility.Position;
 
 import java.util.ArrayList;

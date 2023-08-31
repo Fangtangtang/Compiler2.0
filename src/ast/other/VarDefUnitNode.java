@@ -2,7 +2,7 @@ package ast.other;
 
 import ast.ASTNode;
 import ast.ASTVisitor;
-import ast.ExprNode;
+import ast.expr.ExprNode;
 import utility.Position;
 
 /**

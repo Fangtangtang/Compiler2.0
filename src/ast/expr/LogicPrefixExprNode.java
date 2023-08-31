@@ -1,10 +1,8 @@
 package ast.expr;
 
 import ast.ASTVisitor;
-import ast.ExprNode;
 import utility.Position;
-import utility.type.BoolType;
-import utility.type.Type;
+import ast.type.BoolType;
 
 /**
  * @author F

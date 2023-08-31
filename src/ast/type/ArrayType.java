@@ -1,6 +1,6 @@
-package utility.type;
+package ast.type;
 
-import ast.ExprNode;
+import ast.expr.ExprNode;
 
 import java.util.ArrayList;
 import java.util.HashMap;

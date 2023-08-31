@@ -2,19 +2,17 @@ package frontend;
 
 import ast.*;
 import ast.other.ClassDefNode;
+import ast.other.RootNode;
 import ast.other.TypeNode;
 import ast.stmt.ConstructorDefStmtNode;
 import ast.stmt.FuncDefStmtNode;
 import ast.stmt.VarDefStmtNode;
 import utility.*;
 import utility.error.SemanticException;
-import utility.scope.Scope;
-import utility.type.ArrayType;
-import utility.type.ClassType;
-import utility.type.FunctionType;
-import utility.type.Type;
-
-import java.util.Objects;
+import ast.type.ArrayType;
+import ast.type.ClassType;
+import ast.type.FunctionType;
+import ast.type.Type;
 
 /**
  * @author F

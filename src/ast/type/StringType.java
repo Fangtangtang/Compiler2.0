@@ -1,4 +1,4 @@
-package utility.type;
+package ast.type;
 
 import utility.ParameterUnit;
 

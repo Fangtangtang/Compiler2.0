@@ -1,7 +1,8 @@
-package ast;
+package ast.expr;
 
+import ast.ASTNode;
 import utility.Position;
-import utility.type.Type;
+import ast.type.Type;
 
 /**
  * @author F

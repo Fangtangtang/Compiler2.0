@@ -35,8 +35,6 @@ public interface ASMVisitor {
 
     void visit(LiInst inst);
 
-    void visit(LoadAddrInst inst);
-
     void visit(StoreInst inst);
 
     void visit(EqualZeroInst inst);

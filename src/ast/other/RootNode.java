@@ -1,6 +1,7 @@
-package ast;
+package ast.other;
 
-import ast.other.ClassDefNode;
+import ast.ASTNode;
+import ast.ASTVisitor;
 import utility.Position;
 
 import java.util.*;

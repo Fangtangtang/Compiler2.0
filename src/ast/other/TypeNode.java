@@ -2,9 +2,8 @@ package ast.other;
 
 import ast.ASTNode;
 import ast.ASTVisitor;
-import org.antlr.v4.runtime.ParserRuleContext;
 import utility.Position;
-import utility.type.*;
+import ast.type.*;
 
 /**
  * @author F

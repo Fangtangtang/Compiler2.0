@@ -96,7 +96,6 @@ public class InstSelector implements IRVisitor {
      * 获得load、store需要的register的位置
      * - offset不超过12位，直接fp(值为address)+offset
      * - 超过12位，直接寻址(计算出直接地址，存到临时量reg(t0))
-     * TODO:t0安全？
      *
      * @param register 栈上虚拟寄存器
      * @return <baseReg,offset>
@@ -206,7 +205,6 @@ public class InstSelector implements IRVisitor {
      * 访问全局变量的定义（Global指令转为全局变量表示）
      * 初始化函数
      * 一一访问函数
-     * TODO:内建函数是否需要声明？怎么声明？
      *
      * @param root Mx的根
      */
@@ -878,10 +876,10 @@ public class InstSelector implements IRVisitor {
         );
         //neqz branch
         currentBlock.pushBack(
-                new BranchInst(a0, renameBlock(stmt.trueBranch))
+                new BranchInst(a0, renameBlock(stmt.trueBranch.label))
         );
         currentBlock.pushBack(
-                new JumpInst(renameBlock(stmt.falseBranch))
+                new JumpInst(renameBlock(stmt.falseBranch.label))
         );
     }
 

@@ -1,8 +1,4 @@
-package utility.type;
-
-import ir.irType.IRType;
-
-import java.util.HashMap;
+package ast.type;
 
 /**
  * @author F

@@ -10,7 +10,7 @@ import java.io.PrintStream;
  */
 public class Jump extends TerminalStmt {
     public String targetName;
-
+    public BasicBlock target = null;
     public String phiLabel = null;
     public int index = 0;
 
@@ -19,9 +19,16 @@ public class Jump extends TerminalStmt {
         this.targetName = targetName;
     }
 
-    public Jump(String targetName, int index, String phiLabel) {
+    public Jump(BasicBlock target) {
         super();
-        this.targetName = targetName;
+        this.targetName = target.label;
+        this.target = target;
+    }
+
+    public Jump(BasicBlock target, int index, String phiLabel) {
+        super();
+        this.targetName = target.label;
+        this.target = target;
         this.index = index;
         this.phiLabel = phiLabel;
     }

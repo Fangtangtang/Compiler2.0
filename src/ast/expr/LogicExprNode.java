@@ -1,14 +1,8 @@
 package ast.expr;
 
 import ast.ASTVisitor;
-import ast.ExprNode;
-import ast.stmt.IfStmtNode;
-import ir.BasicBlock;
-import ir.entity.Entity;
-import ir.stmt.terminal.Branch;
-import ir.stmt.terminal.Jump;
 import utility.Position;
-import utility.type.BoolType;
+import ast.type.BoolType;
 
 /**
  * @author F

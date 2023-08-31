@@ -1,20 +1,16 @@
 package frontend;
 
 import ast.ASTVisitor;
-import ast.*;
 import ast.expr.*;
 import ast.expr.ConstantExprNode.BoolConstantExprNode;
 import ast.expr.ConstantExprNode.IntConstantExprNode;
 import ast.expr.ConstantExprNode.NullConstantExprNode;
 import ast.expr.ConstantExprNode.StrConstantExprNode;
-import ast.other.ClassDefNode;
-import ast.other.InitNode;
-import ast.other.TypeNode;
-import ast.other.VarDefUnitNode;
+import ast.other.*;
 import ast.stmt.*;
 import utility.error.SemanticException;
 import utility.scope.*;
-import utility.type.*;
+import ast.type.*;
 
 
 /**

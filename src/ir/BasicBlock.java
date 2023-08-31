@@ -4,6 +4,7 @@ import ir.stmt.Stmt;
 import ir.stmt.terminal.TerminalStmt;
 import utility.error.InternalException;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 
 /**
@@ -18,6 +19,10 @@ public class BasicBlock {
 
     public LinkedList<Stmt> statements = new LinkedList<>();
     public TerminalStmt tailStmt = null;
+
+    //CFG上的前驱后继
+    public ArrayList<String> predecessorList = new ArrayList<>();
+    public ArrayList<String> successorList = new ArrayList<>();
 
     public BasicBlock(String label) {
         this.label = label;

@@ -2,7 +2,7 @@ package ast.other;
 
 import ast.ASTNode;
 import ast.ASTVisitor;
-import ast.StmtNode;
+import ast.stmt.StmtNode;
 import utility.Position;
 
 import java.util.ArrayList;

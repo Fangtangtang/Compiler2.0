@@ -1,9 +1,9 @@
 //package ast.expr;
 //
 //import ast.ASTVisitor;
-//import ast.ExprNode;
+//import ast.expr.ExprNode;
 //import utility.Position;
-//import utility.type.Type;
+//import ast.type.Type;
 //
 ///**
 // * @author F

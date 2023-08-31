@@ -1,6 +1,5 @@
-package utility.type;
+package ast.type;
 
-import ast.other.*;
 import ast.stmt.*;
 import utility.ParameterUnit;
 

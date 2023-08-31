@@ -1,7 +1,6 @@
 package ast.stmt;
 
 import ast.ASTVisitor;
-import ast.StmtNode;
 import ast.other.VarDefUnitNode;
 import utility.Position;
 

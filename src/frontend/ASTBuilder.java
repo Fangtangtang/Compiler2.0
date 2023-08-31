@@ -1,23 +1,20 @@
 package frontend;
 
 import ast.ASTNode;
-import ast.ExprNode;
-import ast.RootNode;
-import ast.StmtNode;
+import ast.expr.ExprNode;
+import ast.other.RootNode;
+import ast.stmt.StmtNode;
 import ast.expr.ConstantExprNode.*;
 import ast.other.*;
 import ast.stmt.*;
 import ast.expr.*;
-import org.antlr.v4.runtime.CodePointBuffer;
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 import parser.MxParser;
 import parser.MxParser.*;
 import parser.MxVisitor;
 import utility.Position;
 import utility.error.SyntaxException;
-import utility.type.*;
-
-import java.util.Objects;
+import ast.type.*;
 
 /**
  * @author F

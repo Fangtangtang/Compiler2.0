@@ -1,9 +1,8 @@
 package utility.scope;
 
-import ir.entity.Storage;
 import utility.*;
 import utility.error.SemanticException;
-import utility.type.*;
+import ast.type.*;
 
 import java.util.HashMap;
 

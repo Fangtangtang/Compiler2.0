@@ -1,9 +1,9 @@
 package ast.expr.ConstantExprNode;
 
 import ast.ASTVisitor;
-import ast.ExprNode;
+import ast.expr.ExprNode;
 import utility.Position;
-import utility.type.BoolType;
+import ast.type.BoolType;
 
 /**
  * @author F

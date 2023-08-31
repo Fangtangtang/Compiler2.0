@@ -1,8 +1,8 @@
 package utility.scope;
 
 import utility.ParameterUnit;
-import utility.type.Type;
-import utility.type.VoidType;
+import ast.type.Type;
+import ast.type.VoidType;
 
 import java.util.ArrayList;
 

@@ -1,6 +1,4 @@
-package utility.type;
-
-import javax.print.attribute.standard.NumberUp;
+package ast.type;
 
 /**
  * @author F

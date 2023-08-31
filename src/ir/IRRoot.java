@@ -11,7 +11,7 @@ import ir.irType.NullType;
 import ir.irType.VoidType;
 import utility.SymbolTable;
 import utility.error.InternalException;
-import utility.type.*;
+import ast.type.*;
 
 import java.io.PrintStream;
 import java.util.*;
@@ -65,7 +65,7 @@ public class IRRoot {
         //特殊函数main，直接覆盖原先建的main
         funcDef.put("main", new MainFunc());
         //添加array的方法
-        for (Map.Entry<String, Type> entry : utility.type.ArrayType.members.entrySet()) {
+        for (Map.Entry<String, Type> entry : ast.type.ArrayType.members.entrySet()) {
             String name = entry.getKey();
             FunctionType functionType = (FunctionType) entry.getValue();
             addBuiltinFunc("_array_" + name, functionType, new ArrayType());
@@ -115,16 +115,16 @@ public class IRRoot {
      * @return IRType
      */
     public IRType type2irType(Type type) {
-        if (type instanceof utility.type.IntType) {
+        if (type instanceof ast.type.IntType) {
             return types.get("int");
         } else if (type instanceof BoolType) {
             return types.get("bool");
-        } else if (type instanceof utility.type.VoidType) {
+        } else if (type instanceof ast.type.VoidType) {
             return types.get("void");
         } else if (type instanceof StringType) {
             //字符串：指向一维字符数组的指针
             return types.get("string");
-        } else if (type instanceof utility.type.ArrayType arrayType) {
+        } else if (type instanceof ast.type.ArrayType arrayType) {
             return new ir.irType.ArrayType(
                     type2irType(arrayType.eleType),
                     arrayType.dimensions

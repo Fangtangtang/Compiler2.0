@@ -1,6 +1,6 @@
 package utility;
 
-import utility.type.Type;
+import ast.type.Type;
 
 /**
  * @author F

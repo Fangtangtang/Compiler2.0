@@ -14,14 +14,14 @@ public class Branch extends TerminalStmt {
     //判断条件
     public Entity condition;
     //两个分支
-    public String trueBranch, falseBranch;
+    public BasicBlock trueBranch, falseBranch;
 
     public String phiLabel = null;
     public int index = 0;
 
     public Branch(Entity condition,
-                  String trueBranch,
-                  String falseBranch) {
+                  BasicBlock trueBranch,
+                  BasicBlock falseBranch) {
         super();
         this.condition = condition;
         this.trueBranch = trueBranch;
@@ -29,15 +29,15 @@ public class Branch extends TerminalStmt {
     }
 
     public Branch(Entity condition,
-                  String trueBranch,
-                  String falseBranch,
+                  BasicBlock trueBranch,
+                  BasicBlock falseBranch,
                   int index,
                   String phiLabel) {
         super();
         this.condition = condition;
         this.trueBranch = trueBranch;
         this.falseBranch = falseBranch;
-        this.index=index;
+        this.index = index;
         this.phiLabel = phiLabel;
     }
 
@@ -45,8 +45,8 @@ public class Branch extends TerminalStmt {
     @Override
     public void print(PrintStream out) {
         String str = "\tbr " + condition.type.toString() + " " + condition.toString() +
-                ", label %" + trueBranch +
-                ", label %" + falseBranch;
+                ", label %" + trueBranch.label +
+                ", label %" + falseBranch.label;
         out.println(str);
     }
 

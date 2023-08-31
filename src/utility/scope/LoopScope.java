@@ -1,6 +1,6 @@
 package utility.scope;
 
-import ast.*;
+import ast.expr.ExprNode;
 
 /**
  * @author F

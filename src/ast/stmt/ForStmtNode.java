@@ -1,9 +1,7 @@
 package ast.stmt;
 
 import ast.ASTVisitor;
-import ast.ExprNode;
-import ast.StmtNode;
-import ast.other.InitNode;
+import ast.expr.ExprNode;
 import utility.Position;
 
 /**

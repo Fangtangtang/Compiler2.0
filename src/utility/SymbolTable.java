@@ -1,7 +1,7 @@
 package utility;
 
 import utility.error.SemanticException;
-import utility.type.*;
+import ast.type.*;
 
 import java.util.HashMap;
 

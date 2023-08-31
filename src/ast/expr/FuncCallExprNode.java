@@ -1,10 +1,7 @@
 package ast.expr;
 
 import ast.ASTVisitor;
-import ast.ExprNode;
-import ast.other.InitNode;
 import utility.Position;
-import utility.type.FunctionType;
 
 import java.util.ArrayList;
 

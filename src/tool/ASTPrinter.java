@@ -1,7 +1,7 @@
 package tool;
 
 import ast.ASTVisitor;
-import ast.RootNode;
+import ast.other.RootNode;
 import ast.expr.*;
 import ast.expr.ConstantExprNode.*;
 
