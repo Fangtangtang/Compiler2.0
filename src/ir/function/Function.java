@@ -7,6 +7,7 @@ import ir.entity.var.*;
 import ir.irType.*;
 import ir.stmt.instruction.Load;
 import ir.stmt.terminal.Return;
+import utility.dominance.DomTree;
 
 import java.io.PrintStream;
 import java.util.*;
@@ -28,6 +29,7 @@ public class Function {
     //每个函数以自己的return块结尾
     public BasicBlock ret;
     public LinkedHashMap<String, BasicBlock> blockMap = new LinkedHashMap<>();
+    public DomTree domTree;
     public HashMap<String, Storage> phiMap = new HashMap<>();
 
     public Function(IRType retType,

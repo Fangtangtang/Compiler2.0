@@ -21,8 +21,9 @@ public class BasicBlock {
     public TerminalStmt tailStmt = null;
 
     //CFG上的前驱后继
-    public ArrayList<String> predecessorList = new ArrayList<>();
-    public ArrayList<String> successorList = new ArrayList<>();
+    public ArrayList<BasicBlock> predecessorList = new ArrayList<>();
+    public ArrayList<BasicBlock> successorList = new ArrayList<>();
+    public int reversePostorder;
 
     public BasicBlock(String label) {
         this.label = label;

@@ -1,4 +1,4 @@
-package midend;
+package midend.optimizer;
 
 import ir.BasicBlock;
 import ir.IRRoot;
@@ -47,16 +47,16 @@ public class CFGBuilder {
         for (Map.Entry<String, BasicBlock> entry : function.blockMap.entrySet()) {
             BasicBlock block = entry.getValue();
             if (block.tailStmt instanceof Jump jump) {
-                block.successorList.add(jump.targetName);
                 if (jump.target == null) {
                     jump.target = function.blockMap.get(jump.targetName);
                 }
-                jump.target.predecessorList.add(block.label);
+                block.successorList.add(jump.target);
+                jump.target.predecessorList.add(block);
             } else if (block.tailStmt instanceof Branch branch) {
-                block.successorList.add(branch.trueBranch.label);
-                block.successorList.add(branch.falseBranch.label);
-                branch.trueBranch.predecessorList.add(block.label);
-                branch.falseBranch.predecessorList.add(block.label);
+                block.successorList.add(branch.trueBranch);
+                block.successorList.add(branch.falseBranch);
+                branch.trueBranch.predecessorList.add(block);
+                branch.falseBranch.predecessorList.add(block);
             }
         }
     }

@@ -2,7 +2,9 @@ import asm.Program;
 import ast.other.RootNode;
 import backend.InstSelector;
 import frontend.*;
-import midend.CFGBuilder;
+import midend.IROptimizer;
+import midend.optimizer.CFGBuilder;
+import midend.optimizer.DomTreeBuilder;
 import midend.IRBuilder;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
@@ -73,8 +75,9 @@ public class Main {
 //        IRPrinter printer = new IRPrinter(outputStream);
 //        printer.visit(irBuilder.irRoot);
 
-        CFGBuilder cfgBuilder=new CFGBuilder(irBuilder.irRoot);
-        cfgBuilder.build();
+        IROptimizer optimizer = new IROptimizer(irBuilder.irRoot);
+        optimizer.execute();
+
         Program program = new Program();
         InstSelector instSelector = new InstSelector(program);
         instSelector.visit(irBuilder.irRoot);

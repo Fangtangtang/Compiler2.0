@@ -81,7 +81,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
     HashMap<String, GlobalVar> constStringMap = new HashMap<>();
     int constStrCounter = -1;
     //当前的函数初始化块,
-    private BasicBlock currentInitBlock;
+    private LinkedList<Stmt> currentInitStmts;
 
     //变量名 -> <覆盖层次,对应mem空间>
     //变量重命名即为 int+name
@@ -385,17 +385,16 @@ public class IRBuilder implements ASTVisitor<Entity> {
         //添加隐含的this参数
         addThisParam();
         changeBlock(new BasicBlock("_start"));
+        currentFunction.entry = currentBlock;
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
-        currentFunction.blockMap.put("_start", currentBlock);
         node.suite.accept(this);
         if (currentBlock.tailStmt == null) {
             pushBack(
                     new Jump(currentFunction.ret)
             );
         }
-        currentInitBlock.pushBack(
-                new Jump("_start")
-        );
+        currentInitStmts.addAll(currentFunction.entry.statements);
+        currentFunction.entry.statements = currentInitStmts;
         currentFunction.blockMap.put(node.name + "_return", currentFunction.ret);
         currentFunction.ret.pushBack(
                 new Return()
@@ -418,8 +417,8 @@ public class IRBuilder implements ASTVisitor<Entity> {
         rename2mem.put(var.identity, var);
         //构建var_def
         Alloca stmt = new Alloca(var.storage.type, name);
-        currentInitBlock.pushBack(stmt);
-        currentInitBlock.pushBack(
+        currentInitStmts.add(stmt);
+        currentInitStmts.add(
                 new Store(var, stmt.result)
         );
         rename2mem.put(name, stmt.result);
@@ -435,8 +434,8 @@ public class IRBuilder implements ASTVisitor<Entity> {
         rename2mem.put(var.identity, var);
         //构建var_def
         Alloca stmt = new Alloca(var.storage.type, "this1");
-        currentInitBlock.pushBack(stmt);
-        currentInitBlock.pushBack(
+        currentInitStmts.add(stmt);
+        currentInitStmts.add(
                 new Store(var, stmt.result)
         );
         rename2mem.put("this1", stmt.result);
@@ -487,6 +486,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         //函数作用域
         enterScope(node);
         changeBlock(new BasicBlock("_start"));
+        currentFunction.entry=currentBlock;
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         node.functionBody.accept(this);
         if (currentBlock.tailStmt == null) {
@@ -494,9 +494,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
                     new Jump(currentFunction.ret)
             );
         }
-        currentInitBlock.pushBack(
-                new Jump("_start")
-        );
         currentFunction.blockMap.put("return", currentFunction.ret);
         if (currentFunction.retType instanceof VoidType) {
             currentFunction.ret.pushBack(
@@ -511,6 +508,9 @@ public class IRBuilder implements ASTVisitor<Entity> {
                     new Return(tmp)
             );
         }
+        //合并currentInitStmts和_start
+        currentInitStmts.addAll(currentFunction.entry.statements);
+        currentFunction.entry.statements = currentInitStmts;
         exitScope();
         tmpCounter = globalInitFunc.tmpCounter;
         phiCounter = globalInitFunc.tmpCounter;
@@ -519,30 +519,27 @@ public class IRBuilder implements ASTVisitor<Entity> {
 
     /**
      * 根据函数名取出函数
-     * 构建变量定义块，将其作为currentInitBlock
+     * 构建变量定义list，将其作为currentInitStmts
      *
      * @param funcName 转化过后的函数名
      */
     private void getCurrentFunc(String funcName) {
         currentFunction = irRoot.getFunc(funcName);
-        currentInitBlock = new BasicBlock("_var_def");
-        currentFunction.entry = currentInitBlock;
-        //进入函数的第一个块为变量、参数初始化
-        currentFunction.blockMap.put(currentInitBlock.label, currentInitBlock);
-        //如果有返回值，先给retVal分配空间
+        currentInitStmts=new LinkedList<>();
+         //如果有返回值，先给retVal分配空间
         if (!(currentFunction.retType instanceof VoidType)) {
             Alloca stmt = new Alloca(currentFunction.retType, "retVal");
-            currentInitBlock.pushBack(stmt);
+            currentInitStmts.add(stmt);
             currentFunction.retVal = stmt.result;
             //main有缺省的返回值
             if ("main".equals(funcName)) {
-                currentInitBlock.pushBack(
+                currentInitStmts.add(
                         new Store(zero, stmt.result)
                 );
             }
         }
         if ("main".equals(funcName)) {
-            currentInitBlock.pushBack(
+            currentInitStmts.add(
                     new Call(irRoot.globalVarInitFunction, new LocalTmpVar(new VoidType(), tmpCounter.cnt))
             );
         }
@@ -1827,7 +1824,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             name = rename(node.name);
             //普通局部变量，Alloca分配空间
             Alloca stmt = new Alloca(irType, name);
-            currentInitBlock.pushBack(stmt);
+            currentInitStmts.add(stmt);
             //将rename -> mem映射存入map
             rename2mem.put(name, stmt.result);
             //若有初始化语句，在走到该部分时用赋值语句
