@@ -2,6 +2,7 @@ package ir;
 
 import ir.stmt.Stmt;
 import ir.stmt.terminal.TerminalStmt;
+import utility.Pair;
 import utility.error.InternalException;
 
 import java.util.ArrayList;
@@ -26,7 +27,8 @@ public class BasicBlock {
     public ArrayList<BasicBlock> successorList = new ArrayList<>();
     public int reversePostorder;
     //所有mem2reg生成的phi
-    public HashMap<String, String[]> phiMap;
+    //name -> <rename,phiList>
+    public HashMap<String, Pair<String, String[]>> phiMap;
 
     public BasicBlock(String label) {
         this.label = label;

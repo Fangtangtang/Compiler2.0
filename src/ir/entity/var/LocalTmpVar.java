@@ -9,7 +9,7 @@ import ir.irType.IRType;
  * 任意类型
  */
 public class LocalTmpVar extends Storage {
-    private final int index;
+    public int index;
 
     public LocalTmpVar(IRType type, int num) {
         super(type);

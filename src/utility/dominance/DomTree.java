@@ -25,7 +25,10 @@ public class DomTree {
         iDomArray = new int[reorderedBlock.size()];
         buildDomTree();
         for (int i = 0; i < reorderedBlock.size(); ++i) {
-            reorderedBlock.get(i).iDom = reorderedBlock.get(iDomArray[i]);
+            DomTreeNode father = reorderedBlock.get(iDomArray[i]);
+            DomTreeNode son = reorderedBlock.get(i);
+            son.iDom = father;
+            father.successors.add(son);
         }
         //计算df
         calDomFrontier();

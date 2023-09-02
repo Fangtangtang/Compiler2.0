@@ -7,11 +7,13 @@ import ir.entity.var.LocalTmpVar;
 import ir.entity.var.Ptr;
 import ir.function.Function;
 import ir.stmt.Stmt;
-import ir.stmt.instruction.Alloca;
-import ir.stmt.instruction.Global;
-import ir.stmt.terminal.Return;
+import ir.stmt.instruction.*;
+import ir.stmt.terminal.*;
+import utility.Counter;
 import utility.Pair;
 import utility.dominance.DomTree;
+import utility.dominance.DomTreeNode;
+import utility.error.InternalException;
 
 import java.util.*;
 
@@ -39,7 +41,13 @@ public class Mem2Reg {
         if (entity instanceof Constant) {
             return null;
         }
-        return entity.toString();
+        if (entity instanceof Ptr ptr) {
+            return ptr.identity;
+        }
+        if (entity instanceof LocalTmpVar tmpVar) {
+            return String.valueOf(tmpVar.index);
+        }
+        throw new InternalException("invalid entity");
     }
 
     void addVarDefInBlock(String varName, String blockLabel) {
@@ -96,13 +104,116 @@ public class Mem2Reg {
     void insertPhiFunction(DomTree domTree) {
         HashSet<String> workList;
         HashSet<String> defInBlock;
+        DomTreeNode node, dfNode;
+        Iterator<String> iterator;
         for (String name : globalName) {
             workList = blocksSets.get(name);
-
+            while (!workList.isEmpty()) {
+                //删除结点n
+                iterator = workList.iterator();
+                String label = iterator.next();
+                iterator.remove();
+                node = domTree.label2node.get(label);
+                defInBlock = defInBlockSets.get(label);
+                //遍历DF[n]
+                for (int i = 0; i < node.domFrontier.size(); i++) {
+                    dfNode = node.domFrontier.get(i);
+                    if (!dfNode.phiFuncDef.contains(name)) {
+                        dfNode.phiFuncDef.add(name);
+                        if (!defInBlock.contains(name)) {
+                            workList.add(label);
+                        }
+                    }
+                }
+            }
         }
     }
 
-    void rename(DomTree domTree) {
+    //记录不同变量名的重命名数
+    HashMap<String, Counter> counterMap;
 
+    //记录不同变量名的当前重命名
+    HashMap<String, Stack<String>> renameStack;
+
+    String newName(String varName) {
+        Counter counter = counterMap.get(varName);
+        Stack<String> stack = renameStack.get(varName);
+        ++counter.cnt;
+        String rename = varName + "." + counter.cnt;
+        stack.push(rename);
+        return rename;
+    }
+
+    HashMap<String, DomTreeNode> label2node;
+
+    void rename(DomTree domTree) {
+        //initialize
+        for (String name : globalName) {
+            counterMap.put(name, new Counter());
+            renameStack.put(name, new Stack<>());
+        }
+        label2node = domTree.label2node;
+        //recursive
+        recursiveRename(domTree.reorderedBlock.get(0));
+    }
+
+    void recursiveRename(DomTreeNode node) {
+        HashSet<String> defInBlock = defInBlockSets.get(node.block.label);
+        //rename variable in phi
+        int predecessorSize = node.block.predecessorList.size();
+        for (String name : node.phiFuncDef) {
+            defInBlock.add(name);//phi也是一种def
+            node.block.phiMap.put(name,
+                    new Pair<>(newName(name), new String[predecessorSize])
+            );
+        }
+        //rename entity in stmt
+        Stmt stmt;
+        Entity varDef;
+        ArrayList<Entity> varUse;
+        for (int i = 0; i < node.block.statements.size(); ++i) {
+            stmt = node.block.statements.get(i);
+            if (stmt instanceof Global ||
+                    stmt instanceof Alloca ||
+                    stmt instanceof Return) {
+                continue;
+            }
+            varDef = stmt.getDef();
+            varUse = stmt.getUse();
+            //def
+            if (varDef != null) {
+                varDef.rename = newName(getVarName(varDef));
+            }
+            //use: top(stack[var])
+            for (Entity entity : varUse) {
+                String name = getVarName(entity);
+                if (name != null) {
+                    entity.rename = renameStack.get(name).peek();
+                }
+            }
+        }
+        //rename param in successors
+        BasicBlock successor;
+        DomTreeNode successorNode;
+        String[] phiList;
+        for (int i = 0; i < node.block.successorList.size(); i++) {
+            successor = node.block.successorList.get(i);
+            successorNode = label2node.get(successor.label);
+            int idx = successor.predecessorList.indexOf(node.block);
+            for (String name : successorNode.phiFuncDef) {
+                if (defInBlock.contains(name)) {
+                    phiList = successor.phiMap.get(name).getSecond();
+                    phiList[idx] = renameStack.get(name).peek();
+                }
+            }
+        }
+        //recurse on dom tree
+        node.successors.forEach(
+                this::recursiveRename
+        );
+        //maintain def rename
+        defInBlock.forEach(
+                def -> renameStack.get(def).pop()
+        );
     }
 }

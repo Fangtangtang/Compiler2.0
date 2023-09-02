@@ -3,6 +3,7 @@ package utility.dominance;
 import ir.BasicBlock;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 /**
  * @author F
@@ -17,9 +18,12 @@ public class DomTreeNode {
 
     //immediate dominator
     public DomTreeNode iDom;
-
+    public ArrayList<DomTreeNode> successors;
     //dominance frontier
     public ArrayList<DomTreeNode> domFrontier = new ArrayList<>();
+
+    //在当前结点必须phi的变量名
+    public HashSet<String> phiFuncDef = new HashSet<>();
 
     public DomTreeNode(BasicBlock block) {
         this.block = block;
