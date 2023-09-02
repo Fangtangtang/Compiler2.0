@@ -1,8 +1,10 @@
 package ir.stmt;
 
 import ir.IRVisitor;
+import ir.entity.Entity;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 
 /**
  * @author F
@@ -13,4 +15,8 @@ public abstract class Stmt {
     public abstract void print(PrintStream out);
 
     public abstract void accept(IRVisitor irVisitor);
+
+    public abstract ArrayList<Entity> getUse();
+
+    public abstract Entity getDef();
 }

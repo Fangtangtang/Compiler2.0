@@ -5,6 +5,7 @@ import ir.IRVisitor;
 import ir.entity.Entity;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 
 /**
  * @author F
@@ -53,5 +54,17 @@ public class Branch extends TerminalStmt {
     @Override
     public void accept(IRVisitor irVisitor) {
         irVisitor.visit(this);
+    }
+
+    @Override
+    public ArrayList<Entity> getUse() {
+        ArrayList<Entity> ret = new ArrayList<>();
+        ret.add(condition);
+        return ret;
+    }
+
+    @Override
+    public Entity getDef() {
+        return null;
     }
 }

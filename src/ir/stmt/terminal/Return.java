@@ -6,6 +6,7 @@ import ir.entity.Storage;
 import ir.irType.VoidType;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 
 /**
  * @author F
@@ -41,5 +42,17 @@ public class Return extends TerminalStmt {
     @Override
     public void accept(IRVisitor irVisitor) {
         irVisitor.visit(this);
+    }
+
+    @Override
+    public ArrayList<Entity> getUse() {
+        ArrayList<Entity> ret = new ArrayList<>();
+        ret.add(value);
+        return ret;
+    }
+
+    @Override
+    public Entity getDef() {
+        return null;
     }
 }

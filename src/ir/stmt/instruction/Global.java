@@ -1,6 +1,7 @@
 package ir.stmt.instruction;
 
 import ir.IRVisitor;
+import ir.entity.Entity;
 import ir.entity.Storage;
 import ir.entity.constant.Constant;
 import ir.entity.var.GlobalVar;
@@ -10,6 +11,7 @@ import ir.irType.PtrType;
 import ir.irType.StructType;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 
 /**
  * @author F
@@ -51,5 +53,15 @@ public class Global extends Instruction {
     @Override
     public void accept(IRVisitor irVisitor) {
         irVisitor.visit(this);
+    }
+
+    @Override
+    public ArrayList<Entity> getUse() {
+        return null;
+    }
+
+    @Override
+    public Entity getDef() {
+        return result;
     }
 }

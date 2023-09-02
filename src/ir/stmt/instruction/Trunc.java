@@ -1,10 +1,12 @@
 package ir.stmt.instruction;
 
 import ir.IRVisitor;
+import ir.entity.Entity;
 import ir.entity.Storage;
 import ir.entity.var.LocalTmpVar;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 
 /**
  * @author F
@@ -32,7 +34,7 @@ public class Trunc extends Instruction {
     @Override
     public void print(PrintStream out) {
         out.println(
-              "\t"+  result.toString() + " = trunc "
+                "\t" + result.toString() + " = trunc "
                         + value.type + " " + value.toString()
                         + " to " + result.type
         );
@@ -41,5 +43,17 @@ public class Trunc extends Instruction {
     @Override
     public void accept(IRVisitor irVisitor) {
         irVisitor.visit(this);
+    }
+
+    @Override
+    public ArrayList<Entity> getUse() {
+        ArrayList<Entity> ret = new ArrayList<>();
+        ret.add(value);
+        return ret;
+    }
+
+    @Override
+    public Entity getDef() {
+        return result;
     }
 }

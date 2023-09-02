@@ -5,6 +5,7 @@ import ir.entity.Entity;
 import ir.entity.var.*;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 
 
 /**
@@ -45,5 +46,17 @@ public class Load extends Instruction {
     @Override
     public void accept(IRVisitor irVisitor) {
         irVisitor.visit(this);
+    }
+
+    @Override
+    public ArrayList<Entity> getUse() {
+        ArrayList<Entity> ret = new ArrayList<>();
+        ret.add(pointer);
+        return ret;
+    }
+
+    @Override
+    public Entity getDef() {
+        return result;
     }
 }

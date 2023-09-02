@@ -1,6 +1,7 @@
 package ir.stmt.instruction;
 
 import ir.IRVisitor;
+import ir.entity.Entity;
 import ir.entity.Storage;
 import ir.entity.var.LocalTmpVar;
 
@@ -71,5 +72,18 @@ public class Phi extends Instruction {
     @Override
     public void accept(IRVisitor irVisitor) {
         irVisitor.visit(this);
+    }
+
+    @Override
+    public ArrayList<Entity> getUse() {
+        ArrayList<Entity> ret = new ArrayList<>();
+        ret.add(ans1);
+        ret.add(ans2);
+        return ret;
+    }
+
+    @Override
+    public Entity getDef() {
+        return result;
     }
 }

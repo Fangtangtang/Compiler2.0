@@ -1,6 +1,7 @@
 package ir.stmt.instruction;
 
 import ir.IRVisitor;
+import ir.entity.Entity;
 import ir.entity.Storage;
 import ir.entity.var.LocalTmpVar;
 import ir.entity.var.Ptr;
@@ -91,5 +92,15 @@ public class Call extends Instruction {
     @Override
     public void accept(IRVisitor irVisitor) {
         irVisitor.visit(this);
+    }
+
+    @Override
+    public ArrayList<Entity> getUse() {
+        return new ArrayList<>(parameterList);
+    }
+
+    @Override
+    public Entity getDef() {
+        return result;
     }
 }

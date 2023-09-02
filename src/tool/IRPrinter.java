@@ -66,11 +66,12 @@ public class IRPrinter implements IRVisitor {
 
     @Override
     public void visit(BasicBlock basicBlock) {
-        if (basicBlock.statements.size() == 0) {
+        if (basicBlock.statements.size() == 0 && basicBlock.tailStmt == null) {
             return;
         }
         output.println(basicBlock.label + ":");
         basicBlock.statements.forEach(stmt -> stmt.accept(this));
+        basicBlock.tailStmt.accept(this);
     }
 
     @Override

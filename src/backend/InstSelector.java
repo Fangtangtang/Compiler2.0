@@ -211,7 +211,9 @@ public class InstSelector implements IRVisitor {
     @Override
     public void visit(IRRoot root) {
         //全局变量、字符串常量
-        root.globalVarDefBlock.accept(this);
+        root.globalVarDefBlock.statements.forEach(
+                stmt -> stmt.accept(this)
+        );
         //全局变量的初始化函数
         root.globalVarInitFunction.accept(this);
         //函数
@@ -346,6 +348,8 @@ public class InstSelector implements IRVisitor {
         basicBlock.statements.forEach(
                 stmt -> stmt.accept(this)
         );
+        //单独访问terminal
+        basicBlock.tailStmt.accept(this);
     }
 
     /**
@@ -966,6 +970,7 @@ public class InstSelector implements IRVisitor {
      * 在栈上为每一组phi分配一个空间
      * branch、jump在跳转前由phiMap中取值存到这个空间
      * 后进入的子跳转语句可以覆盖前面的
+     * TODO:修改phi实现，避免在内存做额外操作
      *
      * @param stmt phi
      */

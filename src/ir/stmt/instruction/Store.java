@@ -7,6 +7,7 @@ import ir.entity.var.*;
 import ir.irType.PtrType;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 
 /**
  * @author F
@@ -51,5 +52,18 @@ public class Store extends Instruction {
     @Override
     public void accept(IRVisitor irVisitor) {
         irVisitor.visit(this);
+    }
+
+    @Override
+    public ArrayList<Entity> getUse() {
+        ArrayList<Entity> ret = new ArrayList<>();
+        ret.add(value);
+        ret.add(pointer);
+        return ret;
+    }
+
+    @Override
+    public Entity getDef() {
+        return null;
     }
 }

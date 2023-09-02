@@ -2,10 +2,12 @@ package ir.stmt.instruction;
 
 
 import ir.IRVisitor;
+import ir.entity.Entity;
 import ir.entity.Storage;
 import ir.entity.var.LocalTmpVar;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 
 /**
  * @author F
@@ -42,5 +44,17 @@ public class Zext extends Instruction {
     @Override
     public void accept(IRVisitor irVisitor) {
         irVisitor.visit(this);
+    }
+
+    @Override
+    public ArrayList<Entity> getUse() {
+        ArrayList<Entity> ret = new ArrayList<>();
+        ret.add(value);
+        return ret;
+    }
+
+    @Override
+    public Entity getDef() {
+        return result;
     }
 }

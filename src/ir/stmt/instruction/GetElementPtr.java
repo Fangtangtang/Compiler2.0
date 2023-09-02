@@ -6,18 +6,17 @@ import ir.entity.constant.Constant;
 import ir.entity.var.LocalTmpVar;
 import ir.entity.var.Ptr;
 import ir.irType.ArrayType;
-import ir.irType.PtrType;
 import ir.irType.StructType;
 import utility.error.InternalException;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 
 /**
  * @author F
  * 取元素指针指令，转为逐层解析
  * <result> = getelementptr <ty>, ptr <ptrval>{, <ty> <idx>}*
  * .                  ptrval point to         索引类型
- * TODO:都有一个i32 0,表示取当前？
  * +----------------------------------------------
  * |
  * |    char d=b[1];
@@ -42,7 +41,6 @@ public class GetElementPtr extends Instruction {
         this.idx = index;
     }
 
-    //TODO:ptrType?
     @Override
     public void print(PrintStream out) {
         String ptrType;
@@ -75,5 +73,18 @@ public class GetElementPtr extends Instruction {
     @Override
     public void accept(IRVisitor irVisitor) {
         irVisitor.visit(this);
+    }
+
+    @Override
+    public ArrayList<Entity> getUse() {
+        ArrayList<Entity> ret = new ArrayList<>();
+        ret.add(idx);
+        ret.add(ptrVal);
+        return ret;
+    }
+
+    @Override
+    public Entity getDef() {
+        return result;
     }
 }

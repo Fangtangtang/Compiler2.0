@@ -5,6 +5,7 @@ import ir.stmt.terminal.TerminalStmt;
 import utility.error.InternalException;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 
 /**
@@ -24,6 +25,8 @@ public class BasicBlock {
     public ArrayList<BasicBlock> predecessorList = new ArrayList<>();
     public ArrayList<BasicBlock> successorList = new ArrayList<>();
     public int reversePostorder;
+    //所有mem2reg生成的phi
+    public HashMap<String, String[]> phiMap;
 
     public BasicBlock(String label) {
         this.label = label;
@@ -32,20 +35,21 @@ public class BasicBlock {
     /**
      * 将语句按出现顺序加入到链表中
      * 记录语句块的终结语句
-     * 每个语句块以TerminalStmt（branch、jump）结尾
+     * 每个语句块以TerminalStmt（branch、jump，ret）结尾
      * 每个语句块仅有一个终结语句
      *
      * @param stmt 出现在block中的语句
      */
     public void pushBack(Stmt stmt) {
-        statements.add(stmt);
         if (stmt instanceof TerminalStmt terminalStmt) {
             if (tailStmt == null) {
                 tailStmt = terminalStmt;
+                return;
             } else {
                 throw new InternalException("basic block " + label + " has multiple exits");
             }
         }
+        statements.add(stmt);
     }
 
     @Override

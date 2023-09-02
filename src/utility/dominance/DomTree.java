@@ -16,6 +16,7 @@ public class DomTree {
     //按照RPO序排列的basic block
     public ArrayList<DomTreeNode> reorderedBlock = new ArrayList<>();
     public int[] iDomArray;
+    public HashMap<String, DomTreeNode> label2node = new HashMap<>();
 
     public DomTree(Function function) {
         //计算RPO
@@ -57,10 +58,10 @@ public class DomTree {
         int maxIndex = postorder.size() - 1;
         for (int index = maxIndex; index >= 0; --index) {
             BasicBlock block = postorder.get(index);
-            reorderedBlock.add(
-                    new DomTreeNode(block)
-            );
+            DomTreeNode node = new DomTreeNode(block);
+            reorderedBlock.add(node);
             block.reversePostorder = maxIndex - index;
+            label2node.put(block.label, node);
         }
     }
 
@@ -68,10 +69,10 @@ public class DomTree {
     //b1、b2：当前结点的两个前驱的RPO
     private int intersect(int b1, int b2) {
         while (b1 != b2) {
-            while (b1 < b2) {
+            while (b1 > b2) {
                 b1 = iDomArray[b1];
             }
-            while (b2 < b1) {
+            while (b2 > b1) {
                 b2 = iDomArray[b2];
             }
         }
@@ -82,9 +83,6 @@ public class DomTree {
         int size = reorderedBlock.size();
         //初始化
         iDomArray[0] = 0;
-//        if (size == 1) {
-//            return;
-//        }
         for (int i = 1; i < size; ++i) {
             iDomArray[i] = -1;
         }
@@ -111,6 +109,7 @@ public class DomTree {
                 int pred1, pred2;
                 int newImmDom;
                 int index = 0;
+                //the first processed predecessor
                 while (index < predecessorSize
                         && iDomArray[currentNode.block.predecessorList.get(index).reversePostorder] == -1) {
                     ++index;
@@ -118,7 +117,6 @@ public class DomTree {
                 if (index == predecessorSize) {
                     throw new InternalException("unexpected CFG: no predecessor updated");
                 }
-                //第一个被更新过的前驱
                 newImmDom = pred1 = index;
                 fullyUpdated[i] = fullyUpdated[index];
                 ++index;

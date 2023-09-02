@@ -8,6 +8,7 @@ import ir.entity.var.*;
 import utility.error.InternalException;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 
 /**
  * @author F
@@ -20,7 +21,6 @@ import java.io.PrintStream;
  * |                    store i32 %add, ptr %a
  * |
  * + --------------------------------------------
- * TODO:小心数位 xor
  */
 public class Binary extends Instruction {
     public enum Operator {
@@ -78,5 +78,18 @@ public class Binary extends Instruction {
     @Override
     public void accept(IRVisitor irVisitor) {
         irVisitor.visit(this);
+    }
+
+    @Override
+    public ArrayList<Entity> getUse() {
+        ArrayList<Entity> ret = new ArrayList<>();
+        ret.add(op1);
+        ret.add(op2);
+        return ret;
+    }
+
+    @Override
+    public Entity getDef() {
+        return result;
     }
 }

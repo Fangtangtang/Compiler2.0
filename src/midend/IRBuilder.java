@@ -159,9 +159,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
 
     //作用域有提前终止符，该作用域后面的语句无用
     private void pushBack(Stmt stmt) {
-//        if (!terminated && !currentScope.terminated) {
         currentBlock.pushBack(stmt);
-//        }
     }
 
     public IRBuilder(SymbolTable symbolTable) {
@@ -642,11 +640,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
         pushBack(
                 new Jump(currentFunction.ret)
         );
-        BasicBlock block = new BasicBlock("ret_" + (++retCounter.cnt));
-        currentFunction.blockMap.put(block.label, block);
-        changeBlock(block);
-        terminated = true;
-        currentScope.terminated = true;
         return null;
     }
 

@@ -1,8 +1,10 @@
 package ir.stmt.terminal;
 
 import ir.*;
+import ir.entity.Entity;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 
 /**
  * @author F
@@ -41,5 +43,15 @@ public class Jump extends TerminalStmt {
     @Override
     public void accept(IRVisitor irVisitor) {
         irVisitor.visit(this);
+    }
+
+    @Override
+    public ArrayList<Entity> getUse() {
+        return null;
+    }
+
+    @Override
+    public Entity getDef() {
+        return null;
     }
 }

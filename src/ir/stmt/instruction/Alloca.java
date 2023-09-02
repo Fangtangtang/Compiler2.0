@@ -6,6 +6,7 @@ import ir.entity.var.*;
 import ir.irType.IRType;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 
 
 /**
@@ -37,5 +38,15 @@ public class Alloca extends Instruction {
     @Override
     public void accept(IRVisitor irVisitor) {
         irVisitor.visit(this);
+    }
+
+    @Override
+    public ArrayList<Entity> getUse() {
+        return null;
+    }
+
+    @Override
+    public Entity getDef() {
+        return result;
     }
 }

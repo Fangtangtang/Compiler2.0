@@ -20,7 +20,6 @@ public class Storage extends Entity {
         super(type);
     }
 
-    //TODO:print
     @Override
     public String toString() {
         return type.toString();

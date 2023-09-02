@@ -70,13 +70,12 @@ public class Main {
         IRBuilder irBuilder = new IRBuilder(Scope.symbolTable);
         irBuilder.visit(astRoot);
 
-//        PrintStream outputStream = new PrintStream(new FileOutputStream("output"));
         PrintStream outputStream = System.out;
 //        IRPrinter printer = new IRPrinter(outputStream);
 //        printer.visit(irBuilder.irRoot);
 
-        IROptimizer optimizer = new IROptimizer(irBuilder.irRoot);
-        optimizer.execute();
+//        IROptimizer optimizer = new IROptimizer(irBuilder.irRoot);
+//        optimizer.execute();
 
         Program program = new Program();
         InstSelector instSelector = new InstSelector(program);
