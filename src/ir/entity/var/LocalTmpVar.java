@@ -20,4 +20,9 @@ public class LocalTmpVar extends Storage {
     public String toString() {
         return "%" + this.index;
     }
+
+    @Override
+    public String renamedToString() {
+        return "%" + this.rename;
+    }
 }

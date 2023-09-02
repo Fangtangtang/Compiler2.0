@@ -41,6 +41,11 @@ public class Jump extends TerminalStmt {
     }
 
     @Override
+    public void printSSA(PrintStream out) {
+        out.println("\tbr label %" + targetName);
+    }
+
+    @Override
     public void accept(IRVisitor irVisitor) {
         irVisitor.visit(this);
     }

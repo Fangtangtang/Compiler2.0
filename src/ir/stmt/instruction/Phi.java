@@ -70,6 +70,21 @@ public class Phi extends Instruction {
     }
 
     @Override
+    public void printSSA(PrintStream out) {
+        StringBuilder l1 = new StringBuilder(" [ " + ans1.renamedToString() + ", %" + label1.get(0) + " ]");
+        StringBuilder l2 = new StringBuilder(" [ " + ans2.renamedToString() + ", %" + label2.get(0) + " ]");
+        for (int i = 1; i < label1.size(); ++i) {
+            l1.append(", [ ").append(ans1.renamedToString()).append(", %").append(label1.get(i)).append(" ]");
+        }
+        for (int i = 1; i < label2.size(); ++i) {
+            l2.append(", [ ").append(ans2.renamedToString()).append(", %").append(label2.get(i)).append(" ]");
+        }
+        out.println(
+                "\t" + result.renamedToString() + " = phi " + ans1.type + l1 + "," + l2
+        );
+    }
+
+    @Override
     public void accept(IRVisitor irVisitor) {
         irVisitor.visit(this);
     }

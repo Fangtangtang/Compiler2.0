@@ -21,4 +21,8 @@ public class ConstBool extends Constant {
         return value ? "1" : "0";
     }
 
+    @Override
+    public String renamedToString() {
+        return value ? "1" : "0";
+    }
 }

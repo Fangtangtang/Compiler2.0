@@ -41,6 +41,15 @@ public class Trunc extends Instruction {
     }
 
     @Override
+    public void printSSA(PrintStream out) {
+        out.println(
+                "\t" + result.renamedToString() + " = trunc "
+                        + value.type + " " + value.renamedToString()
+                        + " to " + result.type
+        );
+    }
+
+    @Override
     public void accept(IRVisitor irVisitor) {
         irVisitor.visit(this);
     }

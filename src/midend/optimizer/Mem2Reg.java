@@ -34,6 +34,7 @@ public class Mem2Reg {
         findGlobalNames(function.blockMap);
         insertPhiFunction(function.domTree);
         rename(function.domTree);
+        breakCriticalEdge(function);
     }
 
     String getVarName(Entity entity) {
@@ -162,9 +163,10 @@ public class Mem2Reg {
         //rename variable in phi
         int predecessorSize = node.block.predecessorList.size();
         for (String name : node.phiFuncDef) {
-            defInBlock.add(name);//phi也是一种def
             node.block.phiMap.put(name,
-                    new Pair<>(newName(name), new String[predecessorSize])
+                    new Pair<>(newName(name),
+                            new Pair<>(new String[predecessorSize], new String[predecessorSize])
+                    )
             );
         }
         //rename entity in stmt
@@ -195,15 +197,16 @@ public class Mem2Reg {
         //rename param in successors
         BasicBlock successor;
         DomTreeNode successorNode;
-        String[] phiList;
+        Pair<String[], String[]> phiList;
         for (int i = 0; i < node.block.successorList.size(); i++) {
             successor = node.block.successorList.get(i);
             successorNode = label2node.get(successor.label);
             int idx = successor.predecessorList.indexOf(node.block);
             for (String name : successorNode.phiFuncDef) {
-                if (defInBlock.contains(name)) {
+                if (defInBlock.contains(name) || node.phiFuncDef.contains(name)) {
                     phiList = successor.phiMap.get(name).getSecond();
-                    phiList[idx] = renameStack.get(name).peek();
+                    phiList.getFirst()[idx] = node.block.label;
+                    phiList.getSecond()[idx] = renameStack.get(name).peek();
                 }
             }
         }
@@ -215,5 +218,114 @@ public class Mem2Reg {
         defInBlock.forEach(
                 def -> renameStack.get(def).pop()
         );
+        node.phiFuncDef.forEach(//phi为一种def
+                def -> renameStack.get(def).pop()
+        );
+    }
+
+    /**
+     * 在特殊critical edge插入结点
+     * - 带phi结点的前驱
+     * - 前驱有多个后继
+     *
+     * @param function 函数的CFG
+     */
+    void breakCriticalEdge(Function function) {
+        for (Map.Entry<String, BasicBlock> entry : function.blockMap.entrySet()) {
+            BasicBlock block = entry.getValue();
+            BasicBlock predecessor;
+            if (block.phiMap.size() > 0) {
+                for (int i = 0; i < block.predecessorList.size(); i++) {
+                    predecessor = block.predecessorList.get(i);
+                    if (predecessor.successorList.size() > 1) {
+                        addBasicBlock(predecessor, block);
+                    }
+                }
+            }
+        }
+    }
+
+    void addBasicBlock(BasicBlock source, BasicBlock destination) {
+        BasicBlock add = new BasicBlock(source.label + "_to_" + destination.label);
+        add.tailStmt = new Jump(destination);
+        //source
+        if (source.tailStmt instanceof Jump jumpStmt) {
+            jumpStmt.target = add;
+            source.successorList.set(0, add);
+        } else if (source.tailStmt instanceof Branch branchStmt) {
+            if (branchStmt.falseBranch.label.equals(destination.label)) {
+                branchStmt.falseBranch = destination;
+                source.successorList.set(1, add);
+            } else {
+                branchStmt.trueBranch = destination;
+                source.successorList.set(0, add);
+            }
+        } else {
+            throw new InternalException("unexpected predecessor");
+        }
+        //destination
+        for (int i = 0; i < destination.predecessorList.size(); i++) {
+            if (destination.predecessorList.get(i).label.equals(source.label)) {
+                destination.predecessorList.set(i, add);
+            }
+        }
+    }
+
+    /**
+     * 所有的basic block消除phi
+     * 向前驱加入规划次序的mv指令
+     *
+     * @param function CFG
+     */
+    void eliminatePhi(Function function) {
+        for (Map.Entry<String, BasicBlock> entry : function.blockMap.entrySet()) {
+            BasicBlock block = entry.getValue();
+            if (block.phiMap.size() > 0) {
+                for (int i = 0; i < block.predecessorList.size(); i++) {
+                    block.predecessorList.get(i).mvInst = reorderPhi(i, block.phiMap);
+                }
+            }
+        }
+    }
+
+    /**
+     * 规划顺序，模拟”并行“
+     *
+     * @param phiMap mem2reg生成的phi
+     * @return mvInst
+     */
+    ArrayList<Pair<String, String>> reorderPhi(int index,
+                                               HashMap<String, Pair<String, Pair<String[], String[]>>> phiMap) {
+        ArrayList<Pair<String, String>> mvInst = new ArrayList<>();
+        //<des , <cnt（用到des的） , src>>
+        LinkedHashMap<String, Pair<Counter, String>> phi = new LinkedHashMap<>();
+        for (Map.Entry<String, Pair<String, Pair<String[], String[]>>> entry : phiMap.entrySet()) {
+            Pair<String, Pair<String[], String[]>> pair = entry.getValue();
+            Pair<Counter, String> cntSrc = new Pair<>(new Counter(0), pair.getSecond().getSecond()[index]);
+            phi.put(pair.getSecond().getFirst()[index], cntSrc);
+        }
+        for (Map.Entry<String, Pair<Counter, String>> entry : phi.entrySet()) {
+            String src = entry.getValue().getSecond();
+            if (phi.containsKey(src)) {
+                ++phi.get(src).getFirst().cnt;
+            }
+        }
+        //循环至所有phi都被转化
+        while (!phi.isEmpty()) {
+            ArrayList<String> added = new ArrayList<>();
+            for (Map.Entry<String, Pair<Counter, String>> entry : phi.entrySet()) {
+                String des = entry.getKey();
+                Pair<Counter, String> pair = entry.getValue();
+                if (pair.getFirst().cnt == 0) {
+                    added.add(des);
+                    mvInst.add(new Pair<>(des, pair.getSecond()));
+                    --phi.get(pair.getSecond()).getFirst().cnt;
+                }
+            }
+            for (String s : added) {
+                phi.remove(s);
+            }
+        }
+        return mvInst;
     }
 }

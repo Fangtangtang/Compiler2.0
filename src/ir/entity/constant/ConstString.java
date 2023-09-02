@@ -59,7 +59,17 @@ public class ConstString extends Constant {
 
     @Override
     public String toString() {
-//        return type.toString() + " " + value;
+        if (this.converted.length() > 0) {
+            return ("[" + (strLength + 1) + " x i8] c" +
+                    "\"" + this.converted + "\""
+            );
+        } else {
+            return "[1 x i8] zeroinitializer";
+        }
+    }
+
+    @Override
+    public String renamedToString() {
         if (this.converted.length() > 0) {
             return ("[" + (strLength + 1) + " x i8] c" +
                     "\"" + this.converted + "\""

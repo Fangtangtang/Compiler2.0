@@ -74,9 +74,30 @@ public class Icmp extends Instruction {
                 + " " + op1.type + " "
                 + s1 + ", " + s2
         );
-
     }
-
+    @Override
+    public void printSSA(PrintStream out) {
+        String s1, s2;
+        if (op1 instanceof ConstInt constant) {
+            s1 = constant.printValue();
+        } else if (op1 instanceof Null) {
+            s1 = "null";
+        } else {
+            s1 = op1.renamedToString();
+        }
+        if (op2 instanceof ConstInt constant) {
+            s2 = constant.printValue();
+        } else if (op2 instanceof Null) {
+            s2 = "null";
+        } else {
+            s2 = op2.renamedToString();
+        }
+        out.println("\t" + result.renamedToString()
+                + " = icmp " + cond.name()
+                + " " + op1.type + " "
+                + s1 + ", " + s2
+        );
+    }
     @Override
     public void accept(IRVisitor irVisitor) {
         irVisitor.visit(this);

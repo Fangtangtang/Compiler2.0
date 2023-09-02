@@ -76,6 +76,26 @@ public class Binary extends Instruction {
     }
 
     @Override
+    public void printSSA(PrintStream out) {
+        String s1, s2;
+        if (op1 instanceof ConstInt constant) {
+            s1 = constant.printValue();
+        } else {
+            s1 = op1.renamedToString();
+        }
+        if (op2 instanceof ConstInt constant) {
+            s2 = constant.printValue();
+        } else {
+            s2 = op2.renamedToString();
+        }
+        out.println("\t" + result.renamedToString()
+                + " = " + operator.name()
+                + " " + result.type.toString() + ' '
+                + s1 + ", " + s2
+        );
+    }
+
+    @Override
     public void accept(IRVisitor irVisitor) {
         irVisitor.visit(this);
     }

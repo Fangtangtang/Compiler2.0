@@ -42,7 +42,11 @@ public class Load extends Instruction {
         out.println("\t"+ result.toString() + " = load "
                 + result.type.toString() + ", ptr " + pointer.toString());
     }
-
+    @Override
+    public void printSSA(PrintStream out) {
+        out.println("\t"+ result.renamedToString() + " = load "
+                + result.type.toString() + ", ptr " + pointer.renamedToString());
+    }
     @Override
     public void accept(IRVisitor irVisitor) {
         irVisitor.visit(this);

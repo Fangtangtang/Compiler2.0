@@ -90,6 +90,38 @@ public class Call extends Instruction {
     }
 
     @Override
+    public void printSSA(PrintStream out) {
+        StringBuilder str = new StringBuilder("\t");
+        if (result != null && !(result.type instanceof VoidType)) {
+            str.append(result.renamedToString()).append(" = ");
+        }
+        str.append("call ").append(function.retType).append(" @").append(function.funcName)
+                .append("(");
+        Storage param;
+        if (parameterList != null) {
+            if (parameterList.size() > 0) {
+                param = parameterList.get(0);
+                if (param instanceof LocalTmpVar tmp) {
+                    str.append(tmp.type).append(" ").append(tmp.renamedToString());
+                } else {
+                    str.append(param);
+                }
+            }
+            for (int i = 1; i < parameterList.size(); ++i) {
+                str.append(", ");
+                param = parameterList.get(i);
+                if (param instanceof LocalTmpVar tmp) {
+                    str.append(tmp.type).append(" ").append(tmp.renamedToString());
+                } else {
+                    str.append(param);
+                }
+            }
+        }
+        str.append(")");
+        out.println(str);
+    }
+
+    @Override
     public void accept(IRVisitor irVisitor) {
         irVisitor.visit(this);
     }

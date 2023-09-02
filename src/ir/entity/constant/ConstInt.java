@@ -24,6 +24,11 @@ public class ConstInt extends Constant {
         return this.type.toString() + " " + value;
     }
 
+    @Override
+    public String renamedToString() {
+        return this.type.toString() + " " + value;
+    }
+
     public String printValue() {
         return value;
     }

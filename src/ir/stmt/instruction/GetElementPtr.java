@@ -69,7 +69,34 @@ public class GetElementPtr extends Instruction {
                 ", " + str
         );
     }
-
+    @Override
+    public void printSSA(PrintStream out) {
+        String ptrType;
+        if (ptrVal.type instanceof ArrayType arrayType) {
+            if (arrayType.dimension == 1) {
+                ptrType = arrayType.type.toString();
+            } else {
+                ptrType = "ptr";
+            }
+        } else if (ptrVal.type instanceof StructType structType) {
+            ptrType = structType.toString();
+        } else if (ptrVal instanceof Ptr || ptrVal instanceof LocalTmpVar) {
+            ptrType = "ptr";
+        } else {
+            throw new InternalException("unexpected type in GetElementPtr");
+        }
+        String str;
+        if (idx instanceof Constant) {
+            str = idx.renamedToString();
+        } else {
+            str = idx.type + " " + idx;
+        }
+        out.println("\t" + result.renamedToString() + " = getelementptr " +
+                ptrType + ", ptr " +
+                ptrVal.renamedToString() +
+                ", " + str
+        );
+    }
     @Override
     public void accept(IRVisitor irVisitor) {
         irVisitor.visit(this);

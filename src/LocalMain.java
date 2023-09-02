@@ -71,8 +71,8 @@ public class LocalMain {
 //        IRPrinter printer = new IRPrinter(outputStream);
 //        printer.visit(irBuilder.irRoot);
 
-        IROptimizer optimizer = new IROptimizer(irBuilder.irRoot);
-        optimizer.execute();
+//        IROptimizer optimizer = new IROptimizer(irBuilder.irRoot);
+//        optimizer.execute();
 
         Program program = new Program();
         InstSelector instSelector = new InstSelector(program);

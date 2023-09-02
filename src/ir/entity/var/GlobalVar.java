@@ -17,4 +17,9 @@ public class GlobalVar extends Ptr {
     public String toString() {
         return "@" + this.identity;
     }
+
+    @Override
+    public String renamedToString() {
+        return "@" + this.rename;
+    }
 }

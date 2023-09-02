@@ -52,6 +52,14 @@ public class Branch extends TerminalStmt {
     }
 
     @Override
+    public void printSSA(PrintStream out) {
+        String str = "\tbr " + condition.type.toString() + " " + condition.renamedToString() +
+                ", label %" + trueBranch.label +
+                ", label %" + falseBranch.label;
+        out.println(str);
+    }
+
+    @Override
     public void accept(IRVisitor irVisitor) {
         irVisitor.visit(this);
     }

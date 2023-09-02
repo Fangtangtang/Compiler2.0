@@ -23,4 +23,9 @@ public abstract class Ptr extends Storage {
     public String toString() {
         return null;
     }
+
+    @Override
+    public String renamedToString() {
+        return null;
+    }
 }

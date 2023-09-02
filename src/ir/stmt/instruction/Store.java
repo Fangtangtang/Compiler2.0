@@ -50,6 +50,21 @@ public class Store extends Instruction {
     }
 
     @Override
+    public void printSSA(PrintStream out) {
+        String str;
+        if (value instanceof LocalTmpVar) {
+            str = value.type.toString() + " " + value.renamedToString();
+        } else if (value instanceof Ptr ptr) {
+            str = ptr.storage.type + " " + ptr;
+        }
+        else {
+            str = value.renamedToString();
+        }
+        out.println("\tstore " + str
+                + ", ptr " + pointer.renamedToString());
+    }
+
+    @Override
     public void accept(IRVisitor irVisitor) {
         irVisitor.visit(this);
     }

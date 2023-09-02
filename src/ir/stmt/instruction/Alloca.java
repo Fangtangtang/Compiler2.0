@@ -36,6 +36,11 @@ public class Alloca extends Instruction {
     }
 
     @Override
+    public void printSSA(PrintStream out) {
+        out.println("\t" + result.renamedToString() + " = alloca " + result.storage.renamedToString());
+    }
+
+    @Override
     public void accept(IRVisitor irVisitor) {
         irVisitor.visit(this);
     }

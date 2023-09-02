@@ -40,6 +40,17 @@ public class Return extends TerminalStmt {
     }
 
     @Override
+    public void printSSA(PrintStream out) {
+        StringBuilder str = new StringBuilder("\tret");
+        if (value.type instanceof VoidType) {
+            str.append(" void");
+        } else {
+            str.append(" ").append(value.type.toString()).append(" ").append(value.renamedToString());
+        }
+        out.println(str.toString());
+    }
+
+    @Override
     public void accept(IRVisitor irVisitor) {
         irVisitor.visit(this);
     }

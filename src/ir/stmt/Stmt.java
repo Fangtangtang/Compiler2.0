@@ -14,6 +14,8 @@ import java.util.ArrayList;
 public abstract class Stmt {
     public abstract void print(PrintStream out);
 
+    public abstract void printSSA(PrintStream out);
+
     public abstract void accept(IRVisitor irVisitor);
 
     public abstract ArrayList<Entity> getUse();

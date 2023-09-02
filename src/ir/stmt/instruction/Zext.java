@@ -42,6 +42,15 @@ public class Zext extends Instruction {
     }
 
     @Override
+    public void printSSA(PrintStream out) {
+        out.println(
+                "\t" + result.renamedToString() + " = zext "
+                        + value.type + " " + value.renamedToString()
+                        + " to " + result.type
+        );
+    }
+
+    @Override
     public void accept(IRVisitor irVisitor) {
         irVisitor.visit(this);
     }

@@ -49,7 +49,21 @@ public class Global extends Instruction {
         }
         out.println("\t" + result.toString() + " = global " + str);
     }
-
+    @Override
+    public void printSSA(PrintStream out) {
+        String str;
+        if (result.storage instanceof Constant) {
+            str = result.storage.renamedToString();
+        } else if (result.storage.type instanceof PtrType) {
+            str = "ptr null";
+        } else if (result.storage.type instanceof StructType
+                || result.storage.type instanceof ArrayType) {
+            str = result.storage.type + " zeroinitializer";
+        } else {
+            str = result.storage.type + " 0";
+        }
+        out.println("\t" + result.renamedToString() + " = global " + str);
+    }
     @Override
     public void accept(IRVisitor irVisitor) {
         irVisitor.visit(this);

@@ -27,8 +27,10 @@ public class BasicBlock {
     public ArrayList<BasicBlock> successorList = new ArrayList<>();
     public int reversePostorder;
     //所有mem2reg生成的phi
-    //name -> <rename,phiList>
-    public HashMap<String, Pair<String, String[]>> phiMap;
+    //name -> <rename,<blockLabel,phi>List>
+    public HashMap<String, Pair<String, Pair<String[], String[]>>> phiMap;
+    //后继的phi引入的mv
+    public ArrayList<Pair<String, String>> mvInst;
 
     public BasicBlock(String label) {
         this.label = label;

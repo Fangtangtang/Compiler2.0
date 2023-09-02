@@ -19,4 +19,9 @@ public class Null extends Constant {
     public String toString() {
         return this.type.toString()+ " null";
     }
+
+    @Override
+    public String renamedToString() {
+        return this.type.toString()+ " null";
+    }
 }
