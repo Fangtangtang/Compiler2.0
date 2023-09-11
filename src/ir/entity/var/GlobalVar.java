@@ -20,6 +20,6 @@ public class GlobalVar extends Ptr {
 
     @Override
     public String renamedToString() {
-        return "@" + this.rename;
+        return "@" + this.lr.rename;
     }
 }

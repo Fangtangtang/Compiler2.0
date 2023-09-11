@@ -6,10 +6,12 @@ import ir.entity.constant.*;
 import ir.entity.var.LocalTmpVar;
 import ir.entity.var.Ptr;
 import ir.function.Function;
+import ir.irType.VoidType;
 import ir.stmt.Stmt;
 import ir.stmt.instruction.*;
 import ir.stmt.terminal.*;
 import utility.Counter;
+import utility.GlobalLiveRange;
 import utility.Pair;
 import utility.dominance.DomTree;
 import utility.dominance.DomTreeNode;
@@ -23,8 +25,8 @@ import java.util.*;
  * TODO:更多操作
  */
 public class Mem2Reg {
-    //在多于一个BB中被use的变量名
-    HashSet<String> globalName;
+    //在多于一个BB中被use的变量名 -> 变量
+    HashMap<String, Entity> globalName;
     //变量名 -> 所有def该变量的BB
     HashMap<String, HashSet<String>> blocksSets;
     //blockLabel -> 所有def在block的变量名
@@ -34,7 +36,8 @@ public class Mem2Reg {
         findGlobalNames(function.blockMap);
         insertPhiFunction(function.domTree);
         rename(function.domTree);
-        breakCriticalEdge(function);
+//        TODO：处理关键边
+//        breakCriticalEdge(function);
     }
 
     String getVarName(Entity entity) {
@@ -46,6 +49,9 @@ public class Mem2Reg {
             return ptr.identity;
         }
         if (entity instanceof LocalTmpVar tmpVar) {
+            if (tmpVar.type instanceof VoidType) {
+                return null;
+            }
             return String.valueOf(tmpVar.index);
         }
         throw new InternalException("invalid entity");
@@ -62,7 +68,7 @@ public class Mem2Reg {
     }
 
     void findGlobalNames(LinkedHashMap<String, BasicBlock> blockMap) {
-        globalName = new HashSet<>();
+        globalName = new HashMap<>();
         blocksSets = new HashMap<>();
         defInBlockSets = new HashMap<>();
         //for each block
@@ -77,7 +83,7 @@ public class Mem2Reg {
             for (int i = 0; i < block.statements.size(); ++i) {
                 stmt = block.statements.get(i);
                 if (stmt instanceof Global ||
-                        stmt instanceof Alloca ||
+//                        stmt instanceof Alloca ||
                         stmt instanceof Return) {
                     continue;
                 }
@@ -86,15 +92,19 @@ public class Mem2Reg {
                 //def
                 if (varDef != null) {
                     String name = getVarName(varDef);
-                    defInBlock.add(name);
-                    addVarDefInBlock(name, block.label);
+                    if (name != null) {
+                        defInBlock.add(name);
+                        addVarDefInBlock(name, block.label);
+                    }
                 }
                 //use
-                for (Entity entity : varUse) {
-                    String name = getVarName(entity);
-                    if (name != null) {
-                        if (!defInBlock.contains(name)) {
-                            globalName.add(name);
+                if (varUse != null) {
+                    for (Entity entity : varUse) {
+                        String name = getVarName(entity);
+                        if (name != null) {
+                            if (!defInBlock.contains(name)) {
+                                globalName.put(name, entity);
+                            }
                         }
                     }
                 }
@@ -107,7 +117,8 @@ public class Mem2Reg {
         HashSet<String> defInBlock;
         DomTreeNode node, dfNode;
         Iterator<String> iterator;
-        for (String name : globalName) {
+        for (Map.Entry<String, Entity> var : globalName.entrySet()) {
+            String name = var.getKey();
             workList = blocksSets.get(name);
             while (!workList.isEmpty()) {
                 //删除结点n
@@ -119,8 +130,8 @@ public class Mem2Reg {
                 //遍历DF[n]
                 for (int i = 0; i < node.domFrontier.size(); i++) {
                     dfNode = node.domFrontier.get(i);
-                    if (!dfNode.phiFuncDef.contains(name)) {
-                        dfNode.phiFuncDef.add(name);
+                    if (!dfNode.phiFuncDef.containsKey(name)) {
+                        dfNode.phiFuncDef.put(name, var.getValue());
                         if (!defInBlock.contains(name)) {
                             workList.add(label);
                         }
@@ -131,17 +142,19 @@ public class Mem2Reg {
     }
 
     //记录不同变量名的重命名数
-    HashMap<String, Counter> counterMap;
+    HashMap<String, Counter> counterMap = new HashMap<>();
 
     //记录不同变量名的当前重命名
-    HashMap<String, Stack<String>> renameStack;
+    HashMap<String, Stack<Entity>> renameStack = new HashMap<>();
 
-    String newName(String varName) {
+    String newName(Entity var) {
+        String varName = getVarName(var);
         Counter counter = counterMap.get(varName);
-        Stack<String> stack = renameStack.get(varName);
+        Stack<Entity> stack = renameStack.get(varName);
         ++counter.cnt;
         String rename = varName + "." + counter.cnt;
-        stack.push(rename);
+        var.lr = new GlobalLiveRange(varName);
+        stack.push(var);
         return rename;
     }
 
@@ -149,7 +162,8 @@ public class Mem2Reg {
 
     void rename(DomTree domTree) {
         //initialize
-        for (String name : globalName) {
+        for (Map.Entry<String, Entity> var : globalName.entrySet()) {
+            String name = var.getKey();
             counterMap.put(name, new Counter());
             renameStack.put(name, new Stack<>());
         }
@@ -162,10 +176,10 @@ public class Mem2Reg {
         HashSet<String> defInBlock = defInBlockSets.get(node.block.label);
         //rename variable in phi
         int predecessorSize = node.block.predecessorList.size();
-        for (String name : node.phiFuncDef) {
-            node.block.phiMap.put(name,
-                    new Pair<>(newName(name),
-                            new Pair<>(new String[predecessorSize], new String[predecessorSize])
+        for (Map.Entry<String, Entity> phiVar : node.phiFuncDef.entrySet()) {
+            node.block.phiMap.put(phiVar.getKey(),
+                    new Pair<>(newName(phiVar.getValue()),
+                            new Pair<>(new String[predecessorSize], new Entity[predecessorSize])
                     )
             );
         }
@@ -184,26 +198,29 @@ public class Mem2Reg {
             varUse = stmt.getUse();
             //def
             if (varDef != null) {
-                varDef.rename = newName(getVarName(varDef));
+                newName(varDef);
             }
             //use: top(stack[var])
             for (Entity entity : varUse) {
                 String name = getVarName(entity);
                 if (name != null) {
-                    entity.rename = renameStack.get(name).peek();
+                    entity.lr = new GlobalLiveRange(
+                            renameStack.get(name).peek().lr.rename
+                    );
                 }
             }
         }
         //rename param in successors
         BasicBlock successor;
         DomTreeNode successorNode;
-        Pair<String[], String[]> phiList;
+        Pair<String[], Entity[]> phiList;
         for (int i = 0; i < node.block.successorList.size(); i++) {
             successor = node.block.successorList.get(i);
             successorNode = label2node.get(successor.label);
             int idx = successor.predecessorList.indexOf(node.block);
-            for (String name : successorNode.phiFuncDef) {
-                if (defInBlock.contains(name) || node.phiFuncDef.contains(name)) {
+            for (Map.Entry<String, Entity> phiVar : node.phiFuncDef.entrySet()) {
+                String name = phiVar.getKey();
+                if (defInBlock.contains(name) || node.phiFuncDef.containsKey(name)) {
                     phiList = successor.phiMap.get(name).getSecond();
                     phiList.getFirst()[idx] = node.block.label;
                     phiList.getSecond()[idx] = renameStack.get(name).peek();
@@ -218,9 +235,9 @@ public class Mem2Reg {
         defInBlock.forEach(
                 def -> renameStack.get(def).pop()
         );
-        node.phiFuncDef.forEach(//phi为一种def
-                def -> renameStack.get(def).pop()
-        );
+        for (Map.Entry<String, Entity> phiVar : node.phiFuncDef.entrySet()) {
+            renameStack.get(phiVar.getKey()).pop();
+        }
     }
 
     /**
@@ -271,61 +288,61 @@ public class Mem2Reg {
         }
     }
 
-    /**
-     * 所有的basic block消除phi
-     * 向前驱加入规划次序的mv指令
-     *
-     * @param function CFG
-     */
-    void eliminatePhi(Function function) {
-        for (Map.Entry<String, BasicBlock> entry : function.blockMap.entrySet()) {
-            BasicBlock block = entry.getValue();
-            if (block.phiMap.size() > 0) {
-                for (int i = 0; i < block.predecessorList.size(); i++) {
-                    block.predecessorList.get(i).mvInst = reorderPhi(i, block.phiMap);
-                }
-            }
-        }
-    }
-
-    /**
-     * 规划顺序，模拟”并行“
-     *
-     * @param phiMap mem2reg生成的phi
-     * @return mvInst
-     */
-    ArrayList<Pair<String, String>> reorderPhi(int index,
-                                               HashMap<String, Pair<String, Pair<String[], String[]>>> phiMap) {
-        ArrayList<Pair<String, String>> mvInst = new ArrayList<>();
-        //<des , <cnt（用到des的） , src>>
-        LinkedHashMap<String, Pair<Counter, String>> phi = new LinkedHashMap<>();
-        for (Map.Entry<String, Pair<String, Pair<String[], String[]>>> entry : phiMap.entrySet()) {
-            Pair<String, Pair<String[], String[]>> pair = entry.getValue();
-            Pair<Counter, String> cntSrc = new Pair<>(new Counter(0), pair.getSecond().getSecond()[index]);
-            phi.put(pair.getSecond().getFirst()[index], cntSrc);
-        }
-        for (Map.Entry<String, Pair<Counter, String>> entry : phi.entrySet()) {
-            String src = entry.getValue().getSecond();
-            if (phi.containsKey(src)) {
-                ++phi.get(src).getFirst().cnt;
-            }
-        }
-        //循环至所有phi都被转化
-        while (!phi.isEmpty()) {
-            ArrayList<String> added = new ArrayList<>();
-            for (Map.Entry<String, Pair<Counter, String>> entry : phi.entrySet()) {
-                String des = entry.getKey();
-                Pair<Counter, String> pair = entry.getValue();
-                if (pair.getFirst().cnt == 0) {
-                    added.add(des);
-                    mvInst.add(new Pair<>(des, pair.getSecond()));
-                    --phi.get(pair.getSecond()).getFirst().cnt;
-                }
-            }
-            for (String s : added) {
-                phi.remove(s);
-            }
-        }
-        return mvInst;
-    }
+//    /**
+//     * 所有的basic block消除phi
+//     * 向前驱加入规划次序的mv指令
+//     *
+//     * @param function CFG
+//     */
+//    void eliminatePhi(Function function) {
+//        for (Map.Entry<String, BasicBlock> entry : function.blockMap.entrySet()) {
+//            BasicBlock block = entry.getValue();
+//            if (block.phiMap.size() > 0) {
+//                for (int i = 0; i < block.predecessorList.size(); i++) {
+//                    block.predecessorList.get(i).mvInst = reorderPhi(i, block.phiMap);
+//                }
+//            }
+//        }
+//    }
+//
+//    /**
+//     * 规划顺序，模拟”并行“
+//     *
+//     * @param phiMap mem2reg生成的phi
+//     * @return mvInst
+//     */
+//    ArrayList<Pair<String, String>> reorderPhi(int index,
+//                                               HashMap<String, Pair<String, Pair<String[], Entity[]>>> phiMap) {
+//        ArrayList<Pair<String, String>> mvInst = new ArrayList<>();
+//        //<des , <cnt（用到des的） , src>>
+//        LinkedHashMap<String, Pair<Counter, String>> phi = new LinkedHashMap<>();
+//        for (Map.Entry<String, Pair<String, Pair<String[], Entity[]>>> entry : phiMap.entrySet()) {
+//            Pair<String, Pair<String[], Entity[]>> pair = entry.getValue();
+//            Pair<Counter, String> cntSrc = new Pair<>(new Counter(0), pair.getSecond().getSecond()[index]);
+//            phi.put(pair.getSecond().getFirst()[index], cntSrc);
+//        }
+//        for (Map.Entry<String, Pair<Counter, String>> entry : phi.entrySet()) {
+//            String src = entry.getValue().getSecond();
+//            if (phi.containsKey(src)) {
+//                ++phi.get(src).getFirst().cnt;
+//            }
+//        }
+//        //循环至所有phi都被转化
+//        while (!phi.isEmpty()) {
+//            ArrayList<String> added = new ArrayList<>();
+//            for (Map.Entry<String, Pair<Counter, String>> entry : phi.entrySet()) {
+//                String des = entry.getKey();
+//                Pair<Counter, String> pair = entry.getValue();
+//                if (pair.getFirst().cnt == 0) {
+//                    added.add(des);
+//                    mvInst.add(new Pair<>(des, pair.getSecond()));
+//                    --phi.get(pair.getSecond()).getFirst().cnt;
+//                }
+//            }
+//            for (String s : added) {
+//                phi.remove(s);
+//            }
+//        }
+//        return mvInst;
+//    }
 }

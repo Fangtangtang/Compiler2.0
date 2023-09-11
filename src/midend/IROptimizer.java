@@ -1,8 +1,12 @@
 package midend;
 
 import ir.IRRoot;
+import ir.function.Function;
 import midend.optimizer.CFGBuilder;
 import midend.optimizer.DomTreeBuilder;
+import midend.optimizer.Mem2Reg;
+
+import java.util.Map;
 
 /**
  * @author F
@@ -20,5 +24,9 @@ public class IROptimizer {
         cfgBuilder.build();
         DomTreeBuilder domTreeBuilder = new DomTreeBuilder(irRoot);
         domTreeBuilder.build();
+        Mem2Reg mem2Reg = new Mem2Reg();
+        for (Map.Entry<String, Function> entry : irRoot.funcDef.entrySet()) {
+            mem2Reg.execute(entry.getValue());
+        }
     }
 }

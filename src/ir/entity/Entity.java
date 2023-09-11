@@ -10,8 +10,6 @@ import ir.irType.*;
 public abstract class Entity {
     public IRType type;
 
-    public String rename = null;
-
     public Entity(IRType type) {
         this.type = type;
     }

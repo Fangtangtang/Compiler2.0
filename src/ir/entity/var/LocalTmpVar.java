@@ -23,6 +23,6 @@ public class LocalTmpVar extends Storage {
 
     @Override
     public String renamedToString() {
-        return "%" + this.rename;
+        return "%" + this.lr.rename;
     }
 }

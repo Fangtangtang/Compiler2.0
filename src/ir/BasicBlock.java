@@ -1,5 +1,6 @@
 package ir;
 
+import ir.entity.Entity;
 import ir.stmt.Stmt;
 import ir.stmt.terminal.TerminalStmt;
 import utility.Pair;
@@ -28,7 +29,10 @@ public class BasicBlock {
     public int reversePostorder;
     //所有mem2reg生成的phi
     //name -> <rename,<blockLabel,phi>List>
-    public HashMap<String, Pair<String, Pair<String[], String[]>>> phiMap;
+    public HashMap<
+            String, Pair<String, Pair<String[], Entity[]>>
+            >
+            phiMap = new HashMap<>();
     //后继的phi引入的mv
     public ArrayList<Pair<String, String>> mvInst;
 

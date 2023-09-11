@@ -2,6 +2,7 @@ package tool;
 
 import ast.type.Type;
 import ir.BasicBlock;
+import ir.entity.Entity;
 import ir.stmt.instruction.*;
 import ir.stmt.terminal.Branch;
 import ir.stmt.terminal.Jump;
@@ -26,12 +27,12 @@ public class SSAPrinter extends IRPrinter {
             return;
         }
         output.println(basicBlock.label + ":");
-        Pair<String, Pair<String[], String[]>> pair;
-        for (Map.Entry<String, Pair<String, Pair<String[], String[]>>> entry :
+        Pair<String, Pair<String[], Entity[]>> pair;
+        for (Map.Entry<String, Pair<String, Pair<String[], Entity[]>>> entry :
                 basicBlock.phiMap.entrySet()) {
             pair = entry.getValue();
-            StringBuilder str = new StringBuilder("%" + pair.getFirst() + " = phi ");
-            Pair<String[], String[]> phiDefs = pair.getSecond();
+            Pair<String[], Entity[]> phiDefs = pair.getSecond();
+            StringBuilder str = new StringBuilder("%" + pair.getFirst() + " = phi " + phiDefs.getSecond()[0].type);
             for (int i = 0; i < phiDefs.getFirst().length; i++) {
                 str.append("[").append(phiDefs.getFirst()[i]).append(", ").append(phiDefs.getSecond()[i]).append("] ");
             }
