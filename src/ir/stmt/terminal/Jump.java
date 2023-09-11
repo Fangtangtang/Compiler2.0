@@ -2,6 +2,7 @@ package ir.stmt.terminal;
 
 import ir.*;
 import ir.entity.Entity;
+import ir.entity.SSAEntity;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -58,5 +59,15 @@ public class Jump extends TerminalStmt {
     @Override
     public Entity getDef() {
         return null;
+    }
+
+    @Override
+    public void setUse(ArrayList<SSAEntity> list) {
+        return;
+    }
+
+    @Override
+    public void setDef(SSAEntity entity) {
+        return;
     }
 }

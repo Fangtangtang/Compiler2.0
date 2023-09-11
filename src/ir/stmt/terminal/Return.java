@@ -2,6 +2,7 @@ package ir.stmt.terminal;
 
 import ir.IRVisitor;
 import ir.entity.Entity;
+import ir.entity.SSAEntity;
 import ir.entity.Storage;
 import ir.irType.VoidType;
 
@@ -17,6 +18,8 @@ import java.util.ArrayList;
 public class Return extends TerminalStmt {
 
     public Entity value;
+
+    public SSAEntity ssaEntity;
 
     public Return() {
         super();
@@ -45,7 +48,7 @@ public class Return extends TerminalStmt {
         if (value.type instanceof VoidType) {
             str.append(" void");
         } else {
-            str.append(" ").append(value.type.toString()).append(" ").append(value.renamedToString());
+            str.append(" ").append(value.type.toString()).append(" ").append(ssaEntity.toString());
         }
         out.println(str.toString());
     }
@@ -65,5 +68,15 @@ public class Return extends TerminalStmt {
     @Override
     public Entity getDef() {
         return null;
+    }
+
+    @Override
+    public void setUse(ArrayList<SSAEntity> list) {
+        ssaEntity = list.get(0);
+    }
+
+    @Override
+    public void setDef(SSAEntity entity) {
+        return;
     }
 }

@@ -19,12 +19,13 @@ public class CFGBuilder {
     public CFGBuilder(IRRoot root) {
         this.irRoot = root;
         ArrayList<String> rmList = new ArrayList<>();
-        //将内建函数除名
+        //将内建函数提出
         for (Map.Entry<String, Function> entry : root.funcDef.entrySet()) {
             String funcName = entry.getKey();
             Function function = entry.getValue();
             if (function.entry == null) {
                 rmList.add(funcName);
+                root.builtinFuncDef.put(funcName, function);
             }
         }
         rmList.forEach(

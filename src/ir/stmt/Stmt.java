@@ -2,6 +2,7 @@ package ir.stmt;
 
 import ir.IRVisitor;
 import ir.entity.Entity;
+import ir.entity.SSAEntity;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -21,4 +22,8 @@ public abstract class Stmt {
     public abstract ArrayList<Entity> getUse();
 
     public abstract Entity getDef();
+
+    public abstract void setUse(ArrayList<SSAEntity> list);
+
+    public abstract void setDef(SSAEntity entity);
 }

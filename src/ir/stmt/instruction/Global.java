@@ -2,6 +2,7 @@ package ir.stmt.instruction;
 
 import ir.IRVisitor;
 import ir.entity.Entity;
+import ir.entity.SSAEntity;
 import ir.entity.Storage;
 import ir.entity.constant.Constant;
 import ir.entity.var.GlobalVar;
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 public class Global extends Instruction {
 
     public GlobalVar result;
+    public SSAEntity ssaResult;
 
     //若用字面量初始化，直接初始化
     //否则，用0或null
@@ -49,11 +51,12 @@ public class Global extends Instruction {
         }
         out.println("\t" + result.toString() + " = global " + str);
     }
+
     @Override
     public void printSSA(PrintStream out) {
         String str;
         if (result.storage instanceof Constant) {
-            str = result.storage.renamedToString();
+            str =result.storage.toString();
         } else if (result.storage.type instanceof PtrType) {
             str = "ptr null";
         } else if (result.storage.type instanceof StructType
@@ -62,8 +65,9 @@ public class Global extends Instruction {
         } else {
             str = result.storage.type + " 0";
         }
-        out.println("\t" + result.renamedToString() + " = global " + str);
+        out.println("\t" + ssaResult.toString() + " = global " + str);
     }
+
     @Override
     public void accept(IRVisitor irVisitor) {
         irVisitor.visit(this);
@@ -77,5 +81,15 @@ public class Global extends Instruction {
     @Override
     public Entity getDef() {
         return result;
+    }
+
+    @Override
+    public void setUse(ArrayList<SSAEntity> list) {
+        return;
+    }
+
+    @Override
+    public void setDef(SSAEntity entity) {
+        ssaResult = entity;
     }
 }

@@ -8,7 +8,6 @@ import ir.entity.var.Ptr;
 import ir.function.Function;
 import ir.irType.VoidType;
 import ir.stmt.Stmt;
-import ir.stmt.instruction.*;
 import ir.stmt.terminal.*;
 import utility.Counter;
 import utility.GlobalLiveRange;
@@ -36,7 +35,7 @@ public class Mem2Reg {
         findGlobalNames(function.blockMap);
         insertPhiFunction(function.domTree);
         rename(function.domTree);
-//        TODO：处理关键边
+//        TODO：处理关键边?
 //        breakCriticalEdge(function);
     }
 
@@ -82,11 +81,6 @@ public class Mem2Reg {
             //for each stmt
             for (int i = 0; i < block.statements.size(); ++i) {
                 stmt = block.statements.get(i);
-                if (stmt instanceof Global ||
-//                        stmt instanceof Alloca ||
-                        stmt instanceof Return) {
-                    continue;
-                }
                 varDef = stmt.getDef();
                 varUse = stmt.getUse();
                 //def
@@ -132,6 +126,11 @@ public class Mem2Reg {
                     dfNode = node.domFrontier.get(i);
                     if (!dfNode.phiFuncDef.containsKey(name)) {
                         dfNode.phiFuncDef.put(name, var.getValue());
+                        int predecessorSize = dfNode.block.predecessorList.size();
+                        dfNode.block.phiMap.put(name,
+                                new Pair<>(null,
+                                        new Pair<>(new String[predecessorSize], new SSAEntity[predecessorSize])
+                                ));
                         if (!defInBlock.contains(name)) {
                             workList.add(label);
                         }
@@ -145,17 +144,23 @@ public class Mem2Reg {
     HashMap<String, Counter> counterMap = new HashMap<>();
 
     //记录不同变量名的当前重命名
-    HashMap<String, Stack<Entity>> renameStack = new HashMap<>();
+    HashMap<String, Stack<SSAEntity>> renameStack = new HashMap<>();
 
-    String newName(Entity var) {
+    Pair<String, SSAEntity> toSsaEntity(Entity var) {
         String varName = getVarName(var);
+        if (!counterMap.containsKey(varName)) {
+            return new Pair<>(varName, new SSAEntity(var));
+        }
         Counter counter = counterMap.get(varName);
-        Stack<Entity> stack = renameStack.get(varName);
+        Stack<SSAEntity> stack = renameStack.get(varName);
         ++counter.cnt;
         String rename = varName + "." + counter.cnt;
-        var.lr = new GlobalLiveRange(varName);
-        stack.push(var);
-        return rename;
+        SSAEntity ssaEntity = new SSAEntity(
+                var,
+                new GlobalLiveRange(rename)
+        );
+        stack.push(ssaEntity);
+        return new Pair<>(varName, ssaEntity);
     }
 
     HashMap<String, DomTreeNode> label2node;
@@ -172,59 +177,70 @@ public class Mem2Reg {
         recursiveRename(domTree.reorderedBlock.get(0));
     }
 
+    void renameOnStmt(Stmt stmt, HashMap<String, SSAEntity> defInBlock) {
+        Entity varDef;
+        ArrayList<Entity> varUse;
+        varDef = stmt.getDef();
+        varUse = stmt.getUse();
+        //def
+        if (varDef != null) {
+            Pair<String, SSAEntity> pair = toSsaEntity(varDef);
+            defInBlock.put(pair.getFirst(), pair.getSecond());
+            stmt.setDef(pair.getSecond());
+        }
+        //use: top(stack[var])
+        if (varUse != null) {
+            ArrayList<SSAEntity> ssaEntityList = new ArrayList<>();
+            for (Entity entity : varUse) {
+                String name = getVarName(entity);
+                if (name != null && renameStack.containsKey(name)) {
+                    ssaEntityList.add(renameStack.get(name).peek());
+                } else {
+                    ssaEntityList.add(new SSAEntity(entity));
+                }
+            }
+            stmt.setUse(ssaEntityList);
+        }
+    }
+
+    void addParamToPhi(String name, SSAEntity ssaVar,
+                       DomTreeNode node,
+                       BasicBlock successor,
+                       int idx) {
+        if (successor.phiMap.containsKey(name)) {
+            Pair<String[], SSAEntity[]> phiList = successor.phiMap.get(name).getSecond();
+            phiList.getFirst()[idx] = node.block.label;
+            phiList.getSecond()[idx] = ssaVar;
+        }
+    }
+
     void recursiveRename(DomTreeNode node) {
-        HashSet<String> defInBlock = defInBlockSets.get(node.block.label);
+        //origen name -> ssaEntity
+        HashMap<String, SSAEntity> defInBlock = new HashMap<>();
         //rename variable in phi
         int predecessorSize = node.block.predecessorList.size();
         for (Map.Entry<String, Entity> phiVar : node.phiFuncDef.entrySet()) {
-            node.block.phiMap.put(phiVar.getKey(),
-                    new Pair<>(newName(phiVar.getValue()),
-                            new Pair<>(new String[predecessorSize], new Entity[predecessorSize])
-                    )
-            );
+            Pair<String, SSAEntity> pair = toSsaEntity(phiVar.getValue());
+            defInBlock.put(pair.getFirst(), pair.getSecond());
+            node.block.phiMap.get(phiVar.getKey()).setFirst(pair.getSecond());
         }
         //rename entity in stmt
-        Stmt stmt;
-        Entity varDef;
-        ArrayList<Entity> varUse;
         for (int i = 0; i < node.block.statements.size(); ++i) {
-            stmt = node.block.statements.get(i);
-            if (stmt instanceof Global ||
-                    stmt instanceof Alloca ||
-                    stmt instanceof Return) {
-                continue;
-            }
-            varDef = stmt.getDef();
-            varUse = stmt.getUse();
-            //def
-            if (varDef != null) {
-                newName(varDef);
-            }
-            //use: top(stack[var])
-            for (Entity entity : varUse) {
-                String name = getVarName(entity);
-                if (name != null) {
-                    entity.lr = new GlobalLiveRange(
-                            renameStack.get(name).peek().lr.rename
-                    );
-                }
-            }
+            renameOnStmt(node.block.statements.get(i), defInBlock);
         }
+        renameOnStmt(node.block.tailStmt, defInBlock);
         //rename param in successors
         BasicBlock successor;
-        DomTreeNode successorNode;
-        Pair<String[], Entity[]> phiList;
+        Pair<String[], SSAEntity[]> phiList;
         for (int i = 0; i < node.block.successorList.size(); i++) {
             successor = node.block.successorList.get(i);
-            successorNode = label2node.get(successor.label);
-            int idx = successor.predecessorList.indexOf(node.block);
-            for (Map.Entry<String, Entity> phiVar : node.phiFuncDef.entrySet()) {
-                String name = phiVar.getKey();
-                if (defInBlock.contains(name) || node.phiFuncDef.containsKey(name)) {
-                    phiList = successor.phiMap.get(name).getSecond();
-                    phiList.getFirst()[idx] = node.block.label;
-                    phiList.getSecond()[idx] = renameStack.get(name).peek();
-                }
+            //def&phi in block
+            for (Map.Entry<String, SSAEntity> defVar : defInBlock.entrySet()) {
+                addParamToPhi(defVar.getKey(), defVar.getValue(),
+                        node,
+                        successor,
+                        successor.predecessorList.indexOf(node.block)
+                );
             }
         }
         //recurse on dom tree
@@ -232,9 +248,11 @@ public class Mem2Reg {
                 this::recursiveRename
         );
         //maintain def rename
-        defInBlock.forEach(
-                def -> renameStack.get(def).pop()
-        );
+        for (Map.Entry<String, SSAEntity> defVar : defInBlock.entrySet()) {
+            if (renameStack.containsKey(defVar.getKey())) {
+                renameStack.get(defVar.getKey()).pop();
+            }
+        }
         for (Map.Entry<String, Entity> phiVar : node.phiFuncDef.entrySet()) {
             renameStack.get(phiVar.getKey()).pop();
         }

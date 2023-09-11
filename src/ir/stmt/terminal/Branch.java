@@ -3,6 +3,7 @@ package ir.stmt.terminal;
 import ir.BasicBlock;
 import ir.IRVisitor;
 import ir.entity.Entity;
+import ir.entity.SSAEntity;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -14,6 +15,7 @@ import java.util.ArrayList;
 public class Branch extends TerminalStmt {
     //判断条件
     public Entity condition;
+    public SSAEntity ssaCondition;
     //两个分支
     public BasicBlock trueBranch, falseBranch;
 
@@ -53,7 +55,7 @@ public class Branch extends TerminalStmt {
 
     @Override
     public void printSSA(PrintStream out) {
-        String str = "\tbr " + condition.type.toString() + " " + condition.renamedToString() +
+        String str = "\tbr " + condition.type.toString() + " " + ssaCondition.toString() +
                 ", label %" + trueBranch.label +
                 ", label %" + falseBranch.label;
         out.println(str);
@@ -74,5 +76,15 @@ public class Branch extends TerminalStmt {
     @Override
     public Entity getDef() {
         return null;
+    }
+
+    @Override
+    public void setUse(ArrayList<SSAEntity> list) {
+        ssaCondition = list.get(0);
+    }
+
+    @Override
+    public void setDef(SSAEntity entity) {
+        return;
     }
 }

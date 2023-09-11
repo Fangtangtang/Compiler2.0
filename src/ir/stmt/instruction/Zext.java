@@ -3,6 +3,7 @@ package ir.stmt.instruction;
 
 import ir.IRVisitor;
 import ir.entity.Entity;
+import ir.entity.SSAEntity;
 import ir.entity.Storage;
 import ir.entity.var.LocalTmpVar;
 
@@ -24,7 +25,9 @@ import java.util.ArrayList;
 public class Zext extends Instruction {
 
     public LocalTmpVar result;
+    public SSAEntity ssaResult;
     public Storage value;
+    public SSAEntity ssaValue;
 
     public Zext(LocalTmpVar result,
                 Storage value) {
@@ -44,8 +47,8 @@ public class Zext extends Instruction {
     @Override
     public void printSSA(PrintStream out) {
         out.println(
-                "\t" + result.renamedToString() + " = zext "
-                        + value.type + " " + value.renamedToString()
+                "\t" + ssaResult.toString() + " = zext "
+                        + value.type + " " + ssaValue.toString()
                         + " to " + result.type
         );
     }
@@ -65,5 +68,15 @@ public class Zext extends Instruction {
     @Override
     public Entity getDef() {
         return result;
+    }
+
+    @Override
+    public void setUse(ArrayList<SSAEntity> list) {
+        ssaValue = list.get(0);
+    }
+
+    @Override
+    public void setDef(SSAEntity entity) {
+        ssaResult = entity;
     }
 }

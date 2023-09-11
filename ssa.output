@@ -1,0 +1,83 @@
+
+define void @global_var_init()
+{
+global_var_init:
+	ret void
+}
+
+
+
+define i32 @main()
+{
+_start:
+	%retVal.0 = alloca i32
+	store i32 0, ptr %retVal.1
+	call void @global_var_init()
+	%a.1.0 = alloca i32
+	%c.1 = alloca i32
+	store i32 1, ptr %a.1.1
+	%0 = load i32, ptr %a.1.1
+	%1 = icmp sgt i32 %0, 0
+	br i1 %1, label %if.then0, label %if.else0
+if.then0:
+	%2 = load i32, ptr %a.1.1
+	%3 = add i32 %2, 1
+	store i32 %3, ptr %a.1.3
+	br label %if.end0
+if.else0:
+	store i32 3, ptr %a.1.2
+	br label %if.end0
+if.end0:
+	%a.1.4 = phi ptr[if.then0, %a.1.3] [if.else0, %a.1.2] 
+	%4 = load i32, ptr %a.1.4
+	%5 = add i32 %4, 1
+	store i32 %5, ptr %c.1
+	%6 = load i32, ptr %c.1
+	call void @printInt(i32 %6)
+	br label %main_return
+main_return:
+	%7 = load i32, ptr %retVal.1
+	ret i32 %7
+}
+
+declare i32 @_string_parseInt(ptr %this)
+
+declare i1 @_string_lessOrEqual(ptr %str, ptr %str1)
+
+declare i1 @_string_less(ptr %str, ptr %str1)
+
+declare i32 @_string_length(ptr %this)
+
+declare ptr @getString()
+
+declare ptr @_string_add(ptr %str, ptr %str1)
+
+declare i1 @_string_greater(ptr %str, ptr %str1)
+
+declare i32 @getInt()
+
+declare i32 @_string_ord(ptr %this, i32 %pos)
+
+declare void @print(ptr %str)
+
+declare void @println(ptr %str)
+
+declare i1 @_string_equal(ptr %str, ptr %str1)
+
+declare ptr @_string_substring(ptr %this, i32 %left, i32 %right)
+
+declare i1 @_string_notEqual(ptr %str, ptr %str1)
+
+declare i1 @_string_greaterOrEqual(ptr %str, ptr %str1)
+
+declare void @printInt(i32 %n)
+
+declare ptr @_malloc_array(i32 %n, i32 %n1)
+
+declare void @printlnInt(i32 %n)
+
+declare ptr @toString(i32 %n)
+
+declare ptr @_malloc(i32 %n)
+
+declare i32 @_array_size(ptr %this)

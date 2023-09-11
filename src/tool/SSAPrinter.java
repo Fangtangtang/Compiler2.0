@@ -2,7 +2,9 @@ package tool;
 
 import ast.type.Type;
 import ir.BasicBlock;
-import ir.entity.Entity;
+import ir.IRRoot;
+import ir.entity.SSAEntity;
+import ir.function.Function;
 import ir.stmt.instruction.*;
 import ir.stmt.terminal.Branch;
 import ir.stmt.terminal.Jump;
@@ -22,17 +24,33 @@ public class SSAPrinter extends IRPrinter {
     }
 
     @Override
+    public void visit(IRRoot root) {
+        root.printStruct(output);
+        root.globalVarDefBlock.statements.forEach(stmt -> stmt.accept(this));
+        visit(root.globalVarInitFunction);
+        output.println("\n");
+        for (Map.Entry<String, Function> entry : root.funcDef.entrySet()) {
+            Function func = entry.getValue();
+            visit(func);
+        }
+        for (Map.Entry<String, Function> entry : root.builtinFuncDef.entrySet()) {
+            Function func = entry.getValue();
+            visit(func);
+        }
+    }
+
+    @Override
     public void visit(BasicBlock basicBlock) {
         if (basicBlock.statements.size() == 0 && basicBlock.tailStmt == null) {
             return;
         }
         output.println(basicBlock.label + ":");
-        Pair<String, Pair<String[], Entity[]>> pair;
-        for (Map.Entry<String, Pair<String, Pair<String[], Entity[]>>> entry :
+        Pair<SSAEntity, Pair<String[], SSAEntity[]>> pair;
+        for (Map.Entry<String, Pair<SSAEntity, Pair<String[], SSAEntity[]>>> entry :
                 basicBlock.phiMap.entrySet()) {
             pair = entry.getValue();
-            Pair<String[], Entity[]> phiDefs = pair.getSecond();
-            StringBuilder str = new StringBuilder("%" + pair.getFirst() + " = phi " + phiDefs.getSecond()[0].type);
+            Pair<String[], SSAEntity[]> phiDefs = pair.getSecond();
+            StringBuilder str = new StringBuilder("\t" + pair.getFirst() + " = phi " + phiDefs.getSecond()[0].origin.type);
             for (int i = 0; i < phiDefs.getFirst().length; i++) {
                 str.append("[").append(phiDefs.getFirst()[i]).append(", ").append(phiDefs.getSecond()[i]).append("] ");
             }

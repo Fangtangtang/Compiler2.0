@@ -2,6 +2,7 @@ package ir.stmt.instruction;
 
 import ir.IRVisitor;
 import ir.entity.Entity;
+import ir.entity.SSAEntity;
 import ir.entity.Storage;
 import ir.entity.var.LocalTmpVar;
 
@@ -22,8 +23,10 @@ import java.util.ArrayList;
  */
 public class Phi extends Instruction {
     public LocalTmpVar result;
+    public SSAEntity ssaResult;
     public int phiLabel;
     public Storage ans1, ans2;
+    public SSAEntity ssaAns1, ssaAns2;
     public ArrayList<String> label1 = new ArrayList<>(), label2 = new ArrayList<>();
 
     public Phi(LocalTmpVar result,
@@ -56,31 +59,25 @@ public class Phi extends Instruction {
 
     @Override
     public void print(PrintStream out) {
-        StringBuilder l1 = new StringBuilder(" [ " + ans1.toString() + ", %" + label1.get(0) + " ]");
-        StringBuilder l2 = new StringBuilder(" [ " + ans2.toString() + ", %" + label2.get(0) + " ]");
-        for (int i = 1; i < label1.size(); ++i) {
-            l1.append(", [ ").append(ans1.toString()).append(", %").append(label1.get(i)).append(" ]");
-        }
-        for (int i = 1; i < label2.size(); ++i) {
-            l2.append(", [ ").append(ans2.toString()).append(", %").append(label2.get(i)).append(" ]");
-        }
-        out.println(
-                "\t" + result.toString() + " = phi " + ans1.type + l1 + "," + l2
-        );
+        printFormat(out, ans1.toString(), ans2.toString(), result.toString());
     }
 
     @Override
     public void printSSA(PrintStream out) {
-        StringBuilder l1 = new StringBuilder(" [ " + ans1.renamedToString() + ", %" + label1.get(0) + " ]");
-        StringBuilder l2 = new StringBuilder(" [ " + ans2.renamedToString() + ", %" + label2.get(0) + " ]");
+        printFormat(out, ssaAns1.toString(), ssaAns2.toString(), ssaResult.toString());
+    }
+
+    private void printFormat(PrintStream out, String string, String string2, String string3) {
+        StringBuilder l1 = new StringBuilder(" [ " + string + ", %" + label1.get(0) + " ]");
+        StringBuilder l2 = new StringBuilder(" [ " + string2 + ", %" + label2.get(0) + " ]");
         for (int i = 1; i < label1.size(); ++i) {
-            l1.append(", [ ").append(ans1.renamedToString()).append(", %").append(label1.get(i)).append(" ]");
+            l1.append(", [ ").append(string).append(", %").append(label1.get(i)).append(" ]");
         }
         for (int i = 1; i < label2.size(); ++i) {
-            l2.append(", [ ").append(ans2.renamedToString()).append(", %").append(label2.get(i)).append(" ]");
+            l2.append(", [ ").append(string2).append(", %").append(label2.get(i)).append(" ]");
         }
         out.println(
-                "\t" + result.renamedToString() + " = phi " + ans1.type + l1 + "," + l2
+                "\t" + string3 + " = phi " + ans1.type + l1 + "," + l2
         );
     }
 
@@ -100,5 +97,16 @@ public class Phi extends Instruction {
     @Override
     public Entity getDef() {
         return result;
+    }
+
+    @Override
+    public void setUse(ArrayList<SSAEntity> list) {
+        ssaAns1 = list.get(0);
+        ssaAns2 = list.get(1);
+    }
+
+    @Override
+    public void setDef(SSAEntity entity) {
+        ssaResult = entity;
     }
 }

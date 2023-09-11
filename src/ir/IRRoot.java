@@ -32,6 +32,7 @@ public class IRRoot {
     //转为函数名（避免重名后）到函数的映射
     public HashMap<String, Function> funcDef = new HashMap<>();
 
+    public HashMap<String, Function> builtinFuncDef = new HashMap<>();
     //global指令
     public BasicBlock globalVarDefBlock;
 

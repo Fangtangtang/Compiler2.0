@@ -2,6 +2,7 @@ package ir.stmt.instruction;
 
 import ir.IRVisitor;
 import ir.entity.Entity;
+import ir.entity.SSAEntity;
 import ir.entity.var.*;
 
 import java.io.PrintStream;
@@ -29,7 +30,9 @@ import java.util.ArrayList;
  */
 public class Load extends Instruction {
     public Entity result;
+    public SSAEntity ssaResult;
     public Entity pointer;
+    public SSAEntity ssaPtr;
 
     public Load(Entity result,
                 Entity pointer) {
@@ -39,14 +42,16 @@ public class Load extends Instruction {
 
     @Override
     public void print(PrintStream out) {
-        out.println("\t"+ result.toString() + " = load "
+        out.println("\t" + result.toString() + " = load "
                 + result.type.toString() + ", ptr " + pointer.toString());
     }
+
     @Override
     public void printSSA(PrintStream out) {
-        out.println("\t"+ result.renamedToString() + " = load "
-                + result.type.toString() + ", ptr " + pointer.renamedToString());
+        out.println("\t" + ssaResult.toString() + " = load "
+                + result.type.toString() + ", ptr " + ssaPtr.toString());
     }
+
     @Override
     public void accept(IRVisitor irVisitor) {
         irVisitor.visit(this);
@@ -62,5 +67,15 @@ public class Load extends Instruction {
     @Override
     public Entity getDef() {
         return result;
+    }
+
+    @Override
+    public void setUse(ArrayList<SSAEntity> list) {
+        ssaPtr = list.get(0);
+    }
+
+    @Override
+    public void setDef(SSAEntity entity) {
+        ssaResult = entity;
     }
 }

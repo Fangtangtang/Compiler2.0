@@ -25,7 +25,7 @@ public abstract class Ptr extends Storage {
     }
 
     @Override
-    public String renamedToString() {
+    public String renamed(String rename) {
         return null;
     }
 }

@@ -20,7 +20,7 @@ public class LocalVar extends Ptr {
     }
 
     @Override
-    public String renamedToString() {
-        return "%" + this.lr.rename;
+    public String renamed(String rename) {
+        return "%" + rename;
     }
 }

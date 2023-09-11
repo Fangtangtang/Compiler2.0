@@ -1,6 +1,7 @@
 package ir;
 
 import ir.entity.Entity;
+import ir.entity.SSAEntity;
 import ir.stmt.Stmt;
 import ir.stmt.terminal.TerminalStmt;
 import utility.Pair;
@@ -30,7 +31,7 @@ public class BasicBlock {
     //所有mem2reg生成的phi
     //name -> <rename,<blockLabel,phi>List>
     public HashMap<
-            String, Pair<String, Pair<String[], Entity[]>>
+            String, Pair<SSAEntity, Pair<String[], SSAEntity[]>>
             >
             phiMap = new HashMap<>();
     //后继的phi引入的mv

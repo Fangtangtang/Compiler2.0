@@ -69,7 +69,7 @@ public class ConstString extends Constant {
     }
 
     @Override
-    public String renamedToString() {
+    public String renamed(String rename) {
         if (this.converted.length() > 0) {
             return ("[" + (strLength + 1) + " x i8] c" +
                     "\"" + this.converted + "\""

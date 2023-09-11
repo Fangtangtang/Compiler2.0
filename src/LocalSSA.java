@@ -70,7 +70,7 @@ public class LocalSSA {
         optimizer.execute();
 
 //        PrintStream outputStream = new PrintStream(new FileOutputStream("C:/Users/21672/Desktop/buildin/main.ll"));
-        PrintStream outputStream = new PrintStream(new FileOutputStream("ir.output"));
+        PrintStream outputStream = new PrintStream(new FileOutputStream("ssa.output"));
         SSAPrinter printer=new SSAPrinter(outputStream);
         printer.visit(irBuilder.irRoot);
 

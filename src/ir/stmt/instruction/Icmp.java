@@ -31,7 +31,9 @@ public class Icmp extends Instruction {
     }
 
     public LocalTmpVar result;
+    public SSAEntity ssaResult;
     public Entity op1, op2;
+    public SSAEntity ssaOp1, ssaOp2;
     public Cond cond;
 
     public Icmp(CmpExprNode.CmpOperator operator,
@@ -75,6 +77,7 @@ public class Icmp extends Instruction {
                 + s1 + ", " + s2
         );
     }
+
     @Override
     public void printSSA(PrintStream out) {
         String s1, s2;
@@ -83,21 +86,22 @@ public class Icmp extends Instruction {
         } else if (op1 instanceof Null) {
             s1 = "null";
         } else {
-            s1 = op1.renamedToString();
+            s1 = ssaOp1.toString();
         }
         if (op2 instanceof ConstInt constant) {
             s2 = constant.printValue();
         } else if (op2 instanceof Null) {
             s2 = "null";
         } else {
-            s2 = op2.renamedToString();
+            s2 = ssaOp2.toString();
         }
-        out.println("\t" + result.renamedToString()
+        out.println("\t" + ssaResult.toString()
                 + " = icmp " + cond.name()
                 + " " + op1.type + " "
                 + s1 + ", " + s2
         );
     }
+
     @Override
     public void accept(IRVisitor irVisitor) {
         irVisitor.visit(this);
@@ -114,5 +118,16 @@ public class Icmp extends Instruction {
     @Override
     public Entity getDef() {
         return result;
+    }
+
+    @Override
+    public void setUse(ArrayList<SSAEntity> list) {
+        ssaOp1 = list.get(0);
+        ssaOp2 = list.get(1);
+    }
+
+    @Override
+    public void setDef(SSAEntity entity) {
+        ssaResult = entity;
     }
 }

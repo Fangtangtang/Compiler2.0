@@ -25,7 +25,7 @@ public class ConstInt extends Constant {
     }
 
     @Override
-    public String renamedToString() {
+    public String renamed(String remae) {
         return this.type.toString() + " " + value;
     }
 

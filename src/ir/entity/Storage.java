@@ -26,7 +26,7 @@ public class Storage extends Entity {
     }
 
     @Override
-    public String renamedToString() {
+    public String renamed(String rename) {
         return type.toString();
     }
 }

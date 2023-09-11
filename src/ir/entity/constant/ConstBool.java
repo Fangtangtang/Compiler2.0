@@ -22,7 +22,7 @@ public class ConstBool extends Constant {
     }
 
     @Override
-    public String renamedToString() {
+    public String renamed(String rename) {
         return value ? "1" : "0";
     }
 }

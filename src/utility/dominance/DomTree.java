@@ -21,14 +21,17 @@ public class DomTree {
     public DomTree(Function function) {
         //计算RPO
         setReorderedBlock(function.entry);
-        //计算iDomArray，构建Dom Tree
+        //计算iDomArray(iDom RPO order)，构建Dom Tree
         iDomArray = new int[reorderedBlock.size()];
         buildDomTree();
         for (int i = 0; i < reorderedBlock.size(); ++i) {
             DomTreeNode father = reorderedBlock.get(iDomArray[i]);
             DomTreeNode son = reorderedBlock.get(i);
             son.iDom = father;
-            father.successors.add(son);
+            //iDomArray[i] == i，iDom是自身
+            if (iDomArray[i] != i) {
+                father.successors.add(son);
+            }
         }
         //计算df
         calDomFrontier();

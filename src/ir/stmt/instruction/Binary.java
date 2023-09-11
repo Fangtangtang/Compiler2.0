@@ -30,7 +30,9 @@ public class Binary extends Instruction {
     }
 
     public LocalTmpVar result;
+    public SSAEntity ssaResult;
     public Entity op1, op2;
+    public SSAEntity ssaOp1, ssaOp2;
     public Operator operator;
 
     public Binary(BinaryExprNode.BinaryOperator operator,
@@ -81,14 +83,14 @@ public class Binary extends Instruction {
         if (op1 instanceof ConstInt constant) {
             s1 = constant.printValue();
         } else {
-            s1 = op1.renamedToString();
+            s1 = ssaOp1.toString();
         }
         if (op2 instanceof ConstInt constant) {
             s2 = constant.printValue();
         } else {
-            s2 = op2.renamedToString();
+            s2 = ssaOp2.toString();
         }
-        out.println("\t" + result.renamedToString()
+        out.println("\t" + ssaResult.toString()
                 + " = " + operator.name()
                 + " " + result.type.toString() + ' '
                 + s1 + ", " + s2
@@ -111,5 +113,16 @@ public class Binary extends Instruction {
     @Override
     public Entity getDef() {
         return result;
+    }
+
+    @Override
+    public void setUse(ArrayList<SSAEntity> list) {
+        ssaOp1 = list.get(0);
+        ssaOp2 = list.get(1);
+    }
+
+    @Override
+    public void setDef(SSAEntity entity) {
+        ssaResult = entity;
     }
 }

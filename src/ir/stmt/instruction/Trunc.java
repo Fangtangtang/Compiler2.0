@@ -2,6 +2,7 @@ package ir.stmt.instruction;
 
 import ir.IRVisitor;
 import ir.entity.Entity;
+import ir.entity.SSAEntity;
 import ir.entity.Storage;
 import ir.entity.var.LocalTmpVar;
 
@@ -23,7 +24,9 @@ import java.util.ArrayList;
 public class Trunc extends Instruction {
 
     public LocalTmpVar result;
+    public SSAEntity ssaResult;
     public Storage value;
+    public SSAEntity ssaValue;
 
     public Trunc(LocalTmpVar result,
                  Storage value) {
@@ -43,8 +46,8 @@ public class Trunc extends Instruction {
     @Override
     public void printSSA(PrintStream out) {
         out.println(
-                "\t" + result.renamedToString() + " = trunc "
-                        + value.type + " " + value.renamedToString()
+                "\t" + ssaResult.toString() + " = trunc "
+                        + value.type + " " + ssaValue.toString()
                         + " to " + result.type
         );
     }
@@ -64,5 +67,15 @@ public class Trunc extends Instruction {
     @Override
     public Entity getDef() {
         return result;
+    }
+
+    @Override
+    public void setUse(ArrayList<SSAEntity> list) {
+        ssaValue = list.get(0);
+    }
+
+    @Override
+    public void setDef(SSAEntity entity) {
+        ssaResult = entity;
     }
 }

@@ -24,6 +24,7 @@ import java.util.ArrayList;
  */
 public class Alloca extends Instruction {
     public LocalVar result;
+    public SSAEntity ssaResult;
 
     public Alloca(IRType irType,
                   String identifier) {
@@ -37,7 +38,7 @@ public class Alloca extends Instruction {
 
     @Override
     public void printSSA(PrintStream out) {
-        out.println("\t" + result.renamedToString() + " = alloca " + result.storage.renamedToString());
+        out.println("\t" + ssaResult.toString() + " = alloca " + result.storage.toString());
     }
 
     @Override
@@ -53,5 +54,15 @@ public class Alloca extends Instruction {
     @Override
     public Entity getDef() {
         return result;
+    }
+
+    @Override
+    public void setUse(ArrayList<SSAEntity> list) {
+        return;
+    }
+
+    @Override
+    public void setDef(SSAEntity entity) {
+        ssaResult = entity;
     }
 }

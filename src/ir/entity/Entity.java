@@ -17,5 +17,5 @@ public abstract class Entity {
     @Override
     public abstract String toString();
 
-    public abstract String renamedToString();
+    public abstract String renamed(String rename);
 }

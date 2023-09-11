@@ -2,6 +2,7 @@ package ir.stmt.instruction;
 
 import ir.IRVisitor;
 import ir.entity.Entity;
+import ir.entity.SSAEntity;
 import ir.entity.constant.*;
 import ir.entity.var.*;
 import ir.irType.PtrType;
@@ -26,7 +27,9 @@ import java.util.ArrayList;
  */
 public class Store extends Instruction {
     public Entity value;
+    public SSAEntity ssaValue;
     public Entity pointer;
+    public SSAEntity ssaPtr;
 
     public Store(Entity value,
                  Entity pointer) {
@@ -41,8 +44,7 @@ public class Store extends Instruction {
             str = value.type.toString() + " " + value.toString();
         } else if (value instanceof Ptr ptr) {
             str = ptr.storage.type + " " + ptr;
-        }
-        else {
+        } else {
             str = value.toString();
         }
         out.println("\tstore " + str
@@ -53,15 +55,14 @@ public class Store extends Instruction {
     public void printSSA(PrintStream out) {
         String str;
         if (value instanceof LocalTmpVar) {
-            str = value.type.toString() + " " + value.renamedToString();
+            str = value.type.toString() + " " + ssaValue.toString();
         } else if (value instanceof Ptr ptr) {
             str = ptr.storage.type + " " + ptr;
-        }
-        else {
-            str = value.renamedToString();
+        } else {
+            str = ssaValue.toString();
         }
         out.println("\tstore " + str
-                + ", ptr " + pointer.renamedToString());
+                + ", ptr " + ssaPtr.toString());
     }
 
     @Override
@@ -73,12 +74,21 @@ public class Store extends Instruction {
     public ArrayList<Entity> getUse() {
         ArrayList<Entity> ret = new ArrayList<>();
         ret.add(value);
-        ret.add(pointer);
         return ret;
     }
 
     @Override
     public Entity getDef() {
-        return null;
+        return pointer;
+    }
+
+    @Override
+    public void setUse(ArrayList<SSAEntity> list) {
+        ssaValue = list.get(0);
+    }
+
+    @Override
+    public void setDef(SSAEntity entity) {
+        ssaPtr = entity;
     }
 }

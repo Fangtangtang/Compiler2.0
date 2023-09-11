@@ -30,8 +30,11 @@ import java.util.ArrayList;
 public class GetElementPtr extends Instruction {
 
     public Storage result;
+    public SSAEntity ssaResult;
     public Storage ptrVal;//指针类型
+    public SSAEntity ssaPtrVal;
     public Entity idx;
+    public SSAEntity ssaIdx;
 
     public GetElementPtr(Storage result,
                          Storage ptrVal,
@@ -69,6 +72,7 @@ public class GetElementPtr extends Instruction {
                 ", " + str
         );
     }
+
     @Override
     public void printSSA(PrintStream out) {
         String ptrType;
@@ -87,16 +91,17 @@ public class GetElementPtr extends Instruction {
         }
         String str;
         if (idx instanceof Constant) {
-            str = idx.renamedToString();
+            str = ssaIdx.toString();
         } else {
             str = idx.type + " " + idx;
         }
-        out.println("\t" + result.renamedToString() + " = getelementptr " +
+        out.println("\t" + ssaResult.toString() + " = getelementptr " +
                 ptrType + ", ptr " +
-                ptrVal.renamedToString() +
+                ssaPtrVal.toString() +
                 ", " + str
         );
     }
+
     @Override
     public void accept(IRVisitor irVisitor) {
         irVisitor.visit(this);
@@ -113,5 +118,16 @@ public class GetElementPtr extends Instruction {
     @Override
     public Entity getDef() {
         return result;
+    }
+
+    @Override
+    public void setUse(ArrayList<SSAEntity> list) {
+        ssaIdx = list.get(0);
+        ssaPtrVal = list.get(1);
+    }
+
+    @Override
+    public void setDef(SSAEntity entity) {
+        ssaResult = entity;
     }
 }

@@ -21,7 +21,7 @@ public class Null extends Constant {
     }
 
     @Override
-    public String renamedToString() {
+    public String renamed(String rename) {
         return this.type.toString()+ " null";
     }
 }
