@@ -91,4 +91,16 @@ public class Store extends Instruction {
     public void setDef(SSAEntity entity) {
         ssaPtr = entity;
     }
+
+    @Override
+    public ArrayList<SSAEntity> getSSAUse() {
+        ArrayList<SSAEntity> ret = new ArrayList<>();
+        ret.add(ssaValue);
+        return ret;
+    }
+
+    @Override
+    public SSAEntity getSSADef() {
+        return ssaPtr;
+    }
 }

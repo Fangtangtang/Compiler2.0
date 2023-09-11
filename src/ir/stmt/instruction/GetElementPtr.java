@@ -130,4 +130,17 @@ public class GetElementPtr extends Instruction {
     public void setDef(SSAEntity entity) {
         ssaResult = entity;
     }
+
+    @Override
+    public ArrayList<SSAEntity> getSSAUse() {
+        ArrayList<SSAEntity> ret = new ArrayList<>();
+        ret.add(ssaIdx);
+        ret.add(ssaPtrVal);
+        return ret;
+    }
+
+    @Override
+    public SSAEntity getSSADef() {
+        return ssaResult;
+    }
 }

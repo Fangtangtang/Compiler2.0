@@ -78,4 +78,16 @@ public class Trunc extends Instruction {
     public void setDef(SSAEntity entity) {
         ssaResult = entity;
     }
+
+    @Override
+    public ArrayList<SSAEntity> getSSAUse() {
+        ArrayList<SSAEntity> ret = new ArrayList<>();
+        ret.add(ssaValue);
+        return ret;
+    }
+
+    @Override
+    public SSAEntity getSSADef() {
+        return ssaResult;
+    }
 }

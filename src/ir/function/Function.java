@@ -8,6 +8,7 @@ import ir.irType.*;
 import ir.stmt.instruction.Load;
 import ir.stmt.terminal.Return;
 import utility.dominance.DomTree;
+import utility.dominance.DomTreeNode;
 
 import java.io.PrintStream;
 import java.util.*;
@@ -29,8 +30,11 @@ public class Function {
     //每个函数以自己的return块结尾
     public BasicBlock ret;
     public LinkedHashMap<String, BasicBlock> blockMap = new LinkedHashMap<>();
+    //按照RPO序排列的basic block
+    public ArrayList<DomTreeNode> reorderedBlock = new ArrayList<>();
     public DomTree domTree;
     public HashMap<String, Storage> phiMap = new HashMap<>();
+    public HashMap<Integer,Storage> phiResult = new HashMap<>();
 
     public Function(IRType retType,
                     String funcName) {

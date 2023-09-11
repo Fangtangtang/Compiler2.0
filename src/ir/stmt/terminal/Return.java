@@ -79,4 +79,16 @@ public class Return extends TerminalStmt {
     public void setDef(SSAEntity entity) {
         return;
     }
+
+    @Override
+    public ArrayList<SSAEntity> getSSAUse() {
+        ArrayList<SSAEntity> ret = new ArrayList<>();
+        ret.add(ssaEntity);
+        return ret;
+    }
+
+    @Override
+    public SSAEntity getSSADef() {
+        return null;
+    }
 }

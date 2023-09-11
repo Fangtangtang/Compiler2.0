@@ -109,4 +109,17 @@ public class Phi extends Instruction {
     public void setDef(SSAEntity entity) {
         ssaResult = entity;
     }
+
+    @Override
+    public ArrayList<SSAEntity> getSSAUse() {
+        ArrayList<SSAEntity> ret = new ArrayList<>();
+        ret.add(ssaAns1);
+        ret.add(ssaAns2);
+        return ret;
+    }
+
+    @Override
+    public SSAEntity getSSADef() {
+        return ssaResult;
+    }
 }

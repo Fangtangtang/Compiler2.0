@@ -484,7 +484,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         //函数作用域
         enterScope(node);
         changeBlock(new BasicBlock("_start"));
-        currentFunction.entry=currentBlock;
+        currentFunction.entry = currentBlock;
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         node.functionBody.accept(this);
         if (currentBlock.tailStmt == null) {
@@ -523,8 +523,8 @@ public class IRBuilder implements ASTVisitor<Entity> {
      */
     private void getCurrentFunc(String funcName) {
         currentFunction = irRoot.getFunc(funcName);
-        currentInitStmts=new LinkedList<>();
-         //如果有返回值，先给retVal分配空间
+        currentInitStmts = new LinkedList<>();
+        //如果有返回值，先给retVal分配空间
         if (!(currentFunction.retType instanceof VoidType)) {
             Alloca stmt = new Alloca(currentFunction.retType, "retVal");
             currentInitStmts.add(stmt);
@@ -1096,6 +1096,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                                 new ConstBool(false), rightToBool,
                                 logicLabelList, str, phiCounter.cnt)
                 );
+                currentFunction.phiResult.put(phiCounter.cnt, result);
                 currentFunction.phiMap.put(phiCounter.cnt.toString() + ".single", rightToBool);
                 currentFunction.phiMap.put(phiCounter.cnt.toString() + ".multi", new ConstBool(false));
             } else {
@@ -1104,6 +1105,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                                 new ConstBool(true), rightToBool,
                                 logicLabelList, str, phiCounter.cnt)
                 );
+                currentFunction.phiResult.put(phiCounter.cnt, result);
                 currentFunction.phiMap.put(phiCounter.cnt.toString() + ".single", rightToBool);
                 currentFunction.phiMap.put(phiCounter.cnt.toString() + ".multi", new ConstBool(true));
             }
@@ -1533,6 +1535,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                             trueBlock.label, falseBlock.label,
                             phiLabel)
             );
+            currentFunction.phiResult.put(phiLabel, result);
             currentFunction.phiMap.put(phiLabel.toString() + ".true", trueAns);
             currentFunction.phiMap.put(phiLabel.toString() + ".false", falseAns);
         } else {

@@ -142,4 +142,14 @@ public class Call extends Instruction {
     public void setDef(SSAEntity entity) {
         ssaResult = entity;
     }
+
+    @Override
+    public ArrayList<SSAEntity> getSSAUse() {
+        return ssaParameterList;
+    }
+
+    @Override
+    public SSAEntity getSSADef() {
+        return ssaResult;
+    }
 }

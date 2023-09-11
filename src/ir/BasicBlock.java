@@ -6,10 +6,9 @@ import ir.stmt.Stmt;
 import ir.stmt.terminal.TerminalStmt;
 import utility.Pair;
 import utility.error.InternalException;
+import utility.live.GlobalLiveRange;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.*;
 
 /**
  * @author F
@@ -34,8 +33,9 @@ public class BasicBlock {
             String, Pair<SSAEntity, Pair<String[], SSAEntity[]>>
             >
             phiMap = new HashMap<>();
-    //后继的phi引入的mv
-    public ArrayList<Pair<String, String>> mvInst;
+    public HashMap<String, GlobalLiveRange> use = new HashMap<>();
+    public HashMap<String, GlobalLiveRange> def = new HashMap<>();
+    public HashMap<String, GlobalLiveRange> liveOut = new HashMap<>();
 
     public BasicBlock(String label) {
         this.label = label;

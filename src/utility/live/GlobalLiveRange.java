@@ -1,4 +1,4 @@
-package utility;
+package utility.live;
 
 /**
  * @author F
@@ -15,16 +15,15 @@ public class GlobalLiveRange {
         this.rename = rename;
     }
 
-    public GlobalLiveRange find(GlobalLiveRange lr) {
+    public GlobalLiveRange find() {
         if (father == null) {
-            return lr;
+            return this;
         }
-        return lr.father = find(lr.father);
+        return father = father.find();
     }
 
-    public void union(GlobalLiveRange lr1,
-                      GlobalLiveRange lr2) {
-        GlobalLiveRange root1 = find(lr1), root2 = find(lr2);
+    public void union(GlobalLiveRange lr) {
+        GlobalLiveRange root1 = this.find(), root2 = lr.find();
         if (root1 == root2) {
             return;
         }

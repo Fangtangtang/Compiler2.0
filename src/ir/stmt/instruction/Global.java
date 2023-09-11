@@ -92,4 +92,14 @@ public class Global extends Instruction {
     public void setDef(SSAEntity entity) {
         ssaResult = entity;
     }
+
+    @Override
+    public ArrayList<SSAEntity> getSSAUse() {
+        return null;
+    }
+
+    @Override
+    public SSAEntity getSSADef() {
+        return ssaResult;
+    }
 }

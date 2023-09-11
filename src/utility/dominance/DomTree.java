@@ -13,12 +13,12 @@ import java.util.*;
  * 对basic block信息的补充
  */
 public class DomTree {
-    //按照RPO序排列的basic block
-    public ArrayList<DomTreeNode> reorderedBlock = new ArrayList<>();
+    public ArrayList<DomTreeNode> reorderedBlock;
     public int[] iDomArray;
     public HashMap<String, DomTreeNode> label2node = new HashMap<>();
 
     public DomTree(Function function) {
+        reorderedBlock = function.reorderedBlock;
         //计算RPO
         setReorderedBlock(function.entry);
         //计算iDomArray(iDom RPO order)，构建Dom Tree

@@ -2,11 +2,14 @@ testcases/
 test.sh
 .idea
 out/
-src/LocalJudge.java
 antlr-4.12.0-complete.jar
 output
 code
 ravel
 *.out
-src/LocalIR.java
 ir.output
+ssa.output
+src/LocalMain.java
+src/LocalSSA.java
+src/LocalJudge.java
+src/LocalIR.java

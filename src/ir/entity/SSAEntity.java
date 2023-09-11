@@ -1,6 +1,6 @@
 package ir.entity;
 
-import utility.GlobalLiveRange;
+import utility.live.GlobalLiveRange;
 
 /**
  * @author F

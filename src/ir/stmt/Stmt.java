@@ -26,4 +26,8 @@ public abstract class Stmt {
     public abstract void setUse(ArrayList<SSAEntity> list);
 
     public abstract void setDef(SSAEntity entity);
+
+    public abstract ArrayList<SSAEntity> getSSAUse();
+
+    public abstract SSAEntity getSSADef();
 }

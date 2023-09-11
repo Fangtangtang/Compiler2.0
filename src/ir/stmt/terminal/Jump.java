@@ -70,4 +70,14 @@ public class Jump extends TerminalStmt {
     public void setDef(SSAEntity entity) {
         return;
     }
+
+    @Override
+    public ArrayList<SSAEntity> getSSAUse() {
+        return null;
+    }
+
+    @Override
+    public SSAEntity getSSADef() {
+        return null;
+    }
 }

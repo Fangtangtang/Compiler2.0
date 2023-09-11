@@ -859,19 +859,19 @@ public class InstSelector implements IRVisitor {
         if (stmt.phiLabel != null) {
             Entity ans = currentIRFunc.phiMap.get(stmt.index + stmt.phiLabel);
             setPhysicalRegSize(a0, ans);
-            VirtualRegister des;
-            if (!toReg.containsKey(String.valueOf(stmt.index))) {
-                if (isBool(ans.type)) {
-                    des = newVirtualReg(true);
-                } else {
-                    des = newVirtualReg();
-                }
-                toReg.put(String.valueOf(stmt.index), des);
-            } else {
-                des = toReg.get(String.valueOf(stmt.index));
-            }
+//            VirtualRegister des;
+//            if (!toReg.containsKey(String.valueOf(stmt.index))) {
+//                if (isBool(ans.type)) {
+//                    des = newVirtualReg(true);
+//                } else {
+//                    des = newVirtualReg();
+//                }
+//                toReg.put(String.valueOf(stmt.index), des);
+//            } else {
+//                des = toReg.get(String.valueOf(stmt.index));
+//            }
             loadRegister(a0, ans);
-            storeVirtualRegister(a0, des);
+            storeRegister(a0, currentIRFunc.phiResult.get(stmt.index));
         }
         a0.valueSize = 1;
         loadRegister(a0, stmt.condition);
@@ -900,19 +900,19 @@ public class InstSelector implements IRVisitor {
             PhysicalRegister a0 = registerMap.getReg("a0");
             Entity ans = currentIRFunc.phiMap.get(stmt.index + stmt.phiLabel);
             setPhysicalRegSize(a0, ans);
-            VirtualRegister des;
-            if (!toReg.containsKey(String.valueOf(stmt.index))) {
-                if (isBool(ans.type)) {
-                    des = newVirtualReg(true);
-                } else {
-                    des = newVirtualReg();
-                }
-                toReg.put(String.valueOf(stmt.index), des);
-            } else {
-                des = toReg.get(String.valueOf(stmt.index));
-            }
+//            VirtualRegister des;
+//            if (!toReg.containsKey(String.valueOf(stmt.index))) {
+//                if (isBool(ans.type)) {
+//                    des = newVirtualReg(true);
+//                } else {
+//                    des = newVirtualReg();
+//                }
+//                toReg.put(String.valueOf(stmt.index), des);
+//            } else {
+//                des = toReg.get(String.valueOf(stmt.index));
+//            }
             loadRegister(a0, ans);
-            storeVirtualRegister(a0, des);
+            storeRegister(a0, currentIRFunc.phiResult.get(stmt.index));
         }
         currentBlock.pushBack(
                 new JumpInst(renameBlock(stmt.targetName))
@@ -976,10 +976,10 @@ public class InstSelector implements IRVisitor {
      */
     @Override
     public void visit(Phi stmt) {
-        PhysicalRegister a0 = registerMap.getReg("a0");
-        setPhysicalRegSize(a0, stmt.result);
-        loadVirtualRegister(a0, toReg.get(String.valueOf(stmt.phiLabel)));
-        storeRegister(a0, stmt.result);
+//        PhysicalRegister a0 = registerMap.getReg("a0");
+//        setPhysicalRegSize(a0, stmt.result);
+//        loadVirtualRegister(a0, toReg.get(String.valueOf(stmt.phiLabel)));
+//        storeRegister(a0, stmt.result);
     }
 
 }

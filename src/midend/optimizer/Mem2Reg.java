@@ -10,7 +10,7 @@ import ir.irType.VoidType;
 import ir.stmt.Stmt;
 import ir.stmt.terminal.*;
 import utility.Counter;
-import utility.GlobalLiveRange;
+import utility.live.GlobalLiveRange;
 import utility.Pair;
 import utility.dominance.DomTree;
 import utility.dominance.DomTreeNode;
@@ -178,10 +178,8 @@ public class Mem2Reg {
     }
 
     void renameOnStmt(Stmt stmt, HashMap<String, SSAEntity> defInBlock) {
-        Entity varDef;
-        ArrayList<Entity> varUse;
-        varDef = stmt.getDef();
-        varUse = stmt.getUse();
+        Entity varDef = stmt.getDef();
+        ArrayList<Entity> varUse = stmt.getUse();
         //def
         if (varDef != null) {
             Pair<String, SSAEntity> pair = toSsaEntity(varDef);
