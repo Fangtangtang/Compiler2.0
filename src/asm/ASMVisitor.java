@@ -10,9 +10,9 @@ import asm.operand.*;
 public interface ASMVisitor {
     void visit(Program program);
 
-    void visit(Block block);
-
     void visit(Func func);
+
+    void visit(Block block);
 
     //instruction
     void visit(BinaryInst inst);

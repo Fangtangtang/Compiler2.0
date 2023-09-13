@@ -84,7 +84,7 @@ public class IRRoot {
         );
         funcDef.put("_malloc_array", function);
         //添加字符串二元运算函数
-        IntType bool = new IntType(IntType.TypeName.TMP_BOOL);
+        IntType bool = new IntType(IntType.TypeName.BOOL);
         //==
         function = new Function(bool, "_string_equal");
         funcDef.put("_string_equal", function);

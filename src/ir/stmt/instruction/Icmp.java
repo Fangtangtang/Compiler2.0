@@ -59,6 +59,8 @@ public class Icmp extends Instruction {
         String s1, s2;
         if (op1 instanceof ConstInt constant) {
             s1 = constant.printValue();
+        } else if (op1 instanceof ConstBool bool) {
+            s1 = bool.printValue();
         } else if (op1 instanceof Null) {
             s1 = "null";
         } else {
@@ -66,6 +68,8 @@ public class Icmp extends Instruction {
         }
         if (op2 instanceof ConstInt constant) {
             s2 = constant.printValue();
+        } else if (op2 instanceof ConstBool bool) {
+            s2 = bool.printValue();
         } else if (op2 instanceof Null) {
             s2 = "null";
         } else {

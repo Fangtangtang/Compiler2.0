@@ -12,12 +12,16 @@ public class ConstBool extends Constant {
     public boolean value;
 
     public ConstBool(boolean value) {
-        super(new IntType(IntType.TypeName.TMP_BOOL));
+        super(new IntType(IntType.TypeName.BOOL));
         this.value = value;
     }
 
     @Override
     public String toString() {
+        return this.type.toString() + " " + (value ? "1" : "0");
+    }
+
+    public String printValue() {
         return value ? "1" : "0";
     }
 

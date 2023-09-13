@@ -23,7 +23,7 @@ public class IntType extends IRType {
     public IntType(TypeName typeName) {
         this.typeName = typeName;
         if (typeName.equals(TypeName.BOOL)) {
-            size = 8;
+            size = 1;
             name = "bool";
         } else if (typeName.equals(TypeName.CHAR)) {
             size = 8;
@@ -31,10 +31,12 @@ public class IntType extends IRType {
         } else if (typeName.equals(TypeName.INT)) {
             size = 32;
             name = "int";
-        } else if (typeName.equals(TypeName.TMP_BOOL)) {
-            size = 1;
-            name = "bool";
-        } else {
+        }
+//        else if (typeName.equals(TypeName.TMP_BOOL)) {
+//            size = 1;
+//            name = "bool";
+//        }
+        else {
             throw new InternalException("unexpected IR int");
         }
     }

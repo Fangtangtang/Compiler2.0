@@ -4,6 +4,9 @@ import ir.IRVisitor;
 import ir.entity.Entity;
 import ir.entity.SSAEntity;
 import ir.entity.Storage;
+import ir.entity.constant.ConstBool;
+import ir.entity.constant.ConstInt;
+import ir.entity.constant.Null;
 import ir.entity.var.LocalTmpVar;
 
 import java.io.PrintStream;
@@ -59,9 +62,29 @@ public class Phi extends Instruction {
 
     @Override
     public void print(PrintStream out) {
-        printFormat(out, ans1.toString(), ans2.toString(), result.toString());
+        String s1, s2;
+        if (ans1 instanceof ConstInt constant) {
+            s1 = constant.printValue();
+        } else if (ans1 instanceof ConstBool bool) {
+            s1 = bool.printValue();
+        } else if (ans1 instanceof Null) {
+            s1 = "null";
+        } else {
+            s1 = ans1.toString();
+        }
+        if (ans2 instanceof ConstInt constant) {
+            s2 = constant.printValue();
+        } else if (ans2 instanceof ConstBool bool) {
+            s2 = bool.printValue();
+        } else if (ans2 instanceof Null) {
+            s2 = "null";
+        } else {
+            s2 = ans2.toString();
+        }
+        printFormat(out, s1, s2, result.toString());
     }
 
+    //TODO:ssaAns.toString constBool
     @Override
     public void printSSA(PrintStream out) {
         printFormat(out, ssaAns1.toString(), ssaAns2.toString(), ssaResult.toString());

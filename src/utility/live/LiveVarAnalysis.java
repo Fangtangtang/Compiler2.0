@@ -5,6 +5,8 @@ import ir.entity.SSAEntity;
 import ir.function.Function;
 import ir.stmt.Stmt;
 import ir.stmt.instruction.Phi;
+import ir.stmt.instruction.Trunc;
+import ir.stmt.instruction.Zext;
 import utility.Pair;
 
 import java.util.ArrayList;
@@ -38,9 +40,14 @@ public class LiveVarAnalysis {
             }
         }
         for (int i = 0; i < block.statements.size(); ++i) {
-            if (block.statements.get(i) instanceof Phi phiStmt) {
+            Stmt stmt = block.statements.get(i);
+            if (stmt instanceof Phi phiStmt) {
                 phiStmt.ssaResult.lr.union(phiStmt.ssaAns1.lr);
                 phiStmt.ssaResult.lr.union(phiStmt.ssaAns2.lr);
+            } else if (stmt instanceof Zext zextStmt) {
+                zextStmt.ssaValue.lr.union(zextStmt.ssaValue.lr);
+            } else if (stmt instanceof Trunc truncStmt) {
+                truncStmt.ssaValue.lr.union(truncStmt.ssaValue.lr);
             }
         }
     }

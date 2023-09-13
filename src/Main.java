@@ -9,6 +9,7 @@ import midend.IRBuilder;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 import parser.*;
+import tool.IRPrinter;
 import utility.error.MxErrorListener;
 import utility.SymbolTable;
 import utility.error.MxException;
@@ -71,16 +72,16 @@ public class Main {
         irBuilder.visit(astRoot);
 
         PrintStream outputStream = System.out;
-//        IRPrinter printer = new IRPrinter(outputStream);
-//        printer.visit(irBuilder.irRoot);
+        IRPrinter printer = new IRPrinter(outputStream);
+        printer.visit(irBuilder.irRoot);
 
 //        IROptimizer optimizer = new IROptimizer(irBuilder.irRoot);
 //        optimizer.execute();
 
-        Program program = new Program();
-        InstSelector instSelector = new InstSelector(program);
-        instSelector.visit(irBuilder.irRoot);
-        program.print(outputStream);
+//        Program program = new Program();
+//        InstSelector instSelector = new InstSelector(program);
+//        instSelector.visit(irBuilder.irRoot);
+//        program.print(outputStream);
     }
 }
 

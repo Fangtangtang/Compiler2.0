@@ -2,19 +2,14 @@ package asm.operand;
 
 /**
  * @author F
- * 虚拟寄存器
- * 未被实际分配
+ * 分配到栈上的virtual register的映射
  */
-public class VirtualRegister extends Register {
+public class StackRegister extends Register {
     //相对fp的偏移量
     public int offset;
     public int size;//bool:1 other:4
 
-    public VirtualRegister(int size) {
-        this.size = size;
-    }
-
-    public VirtualRegister(int offset, int size) {
+    public StackRegister(int offset, int size) {
         this.offset = offset;
         this.size = size;
     }
