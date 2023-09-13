@@ -17,17 +17,17 @@ import java.io.PrintStream;
  */
 public class LoadInst extends ASMInstruction {
     public Register rs1;
-    public PhysicalRegister rd;
+    public Register rd;
     public Imm imm;
     int size;
 
     public LoadInst(Register rs1,
-                    PhysicalRegister rd,
+                    Register rd,
                     Imm imm) {
         this.rs1 = rs1;
         this.rd = rd;
         this.imm = imm;
-        this.size = rd.valueSize;
+        this.size = rd.size;
     }
 
     @Override

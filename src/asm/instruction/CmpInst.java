@@ -1,6 +1,7 @@
 package asm.instruction;
 
 import asm.ASMVisitor;
+import asm.operand.Operand;
 import asm.operand.Register;
 import ir.stmt.instruction.Icmp;
 import utility.error.InternalException;
@@ -18,11 +19,11 @@ public class CmpInst extends ASMInstruction {
         slt, sgt
     }
 
-    public Register rs1, rs2;
+    public Operand rs1, rs2;
     public Register rd;
     public Opcode op;
 
-    public CmpInst(Register rs1, Register rs2,
+    public CmpInst(Operand rs1, Operand rs2,
                    Register rd,
                    Icmp.Cond operator) {
         this.rs1 = rs1;

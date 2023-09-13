@@ -13,16 +13,18 @@ import java.io.PrintStream;
  * TODO:判断sb\sw
  */
 public class StoreInst extends ASMInstruction {
-    public PhysicalRegister rs1;
+    public Operand rs1;
     public Register rs2;
     public Imm imm;
     int size;
-    public StoreInst(PhysicalRegister rs1, Register rs2,
+
+    public StoreInst(Operand rs1, Register rs2,
                      Imm imm) {
         this.rs1 = rs1;
         this.rs2 = rs2;
         this.imm = imm;
-        this.size=rs1.valueSize;
+        this.size = rs1.size;
+
     }
 
     @Override

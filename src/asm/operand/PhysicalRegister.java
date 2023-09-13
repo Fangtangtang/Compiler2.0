@@ -6,10 +6,10 @@ package asm.operand;
  */
 public class PhysicalRegister extends Register {
     public String name;
-    public int valueSize = 4;
 
     public PhysicalRegister(String name) {
         this.name = name;
+        size = 4;
     }
 
     @Override

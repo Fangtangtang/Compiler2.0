@@ -11,10 +11,10 @@ import java.io.PrintStream;
  * 逻辑取反
  */
 public class NotInst extends ASMInstruction {
-    public PhysicalRegister rd;
+    public Register rd;
     public Register rs1;
 
-    public NotInst(PhysicalRegister rd, Register rs1) {
+    public NotInst(Register rd, Register rs1) {
         this.rd = rd;
         this.rs1 = rs1;
     }

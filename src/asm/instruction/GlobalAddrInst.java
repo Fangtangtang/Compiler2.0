@@ -2,6 +2,7 @@ package asm.instruction;
 
 import asm.ASMVisitor;
 import asm.operand.PhysicalRegister;
+import asm.operand.Register;
 
 import java.io.PrintStream;
 
@@ -12,10 +13,10 @@ import java.io.PrintStream;
  * 地址存到物理寄存器
  */
 public class GlobalAddrInst extends ASMInstruction {
-    public PhysicalRegister rd;
+    public Register rd;
     public String name;
 
-    public GlobalAddrInst(PhysicalRegister rd, String name) {
+    public GlobalAddrInst(Register rd, String name) {
         this.rd = rd;
         this.name = name;
     }

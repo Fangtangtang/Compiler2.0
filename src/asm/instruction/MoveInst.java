@@ -18,6 +18,7 @@ public class MoveInst extends ASMInstruction {
     public MoveInst(Register rd, Register rs1) {
         this.rd = rd;
         this.rs1 = rs1;
+        rd.size = rs1.size;
     }
 
     @Override

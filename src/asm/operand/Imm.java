@@ -9,6 +9,7 @@ public class Imm extends Operand {
 
     public Imm(int value) {
         this.value = value;
+        size = 4;
     }
 
     public Imm(boolean bool) {
@@ -17,6 +18,7 @@ public class Imm extends Operand {
         } else {
             this.value = 0;
         }
+        size = 1;
     }
 
     @Override

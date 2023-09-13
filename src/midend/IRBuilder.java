@@ -37,7 +37,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
     Scope currentScope = null;
     IRType intType = new IntType(IntType.TypeName.INT);
     IRType boolType = new IntType(IntType.TypeName.BOOL);
-//    IRType tmpBoolType = new IntType(IntType.TypeName.TMP_BOOL);
+    IRType tmpBoolType = new IntType(IntType.TypeName.TMP_BOOL);
     Constant zero = new ConstInt("0");
     Function currentFunction = null;
     Function malloc;
@@ -634,7 +634,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 val.type = currentFunction.retType;
             }
             pushBack(
-                    new Store(val, currentFunction.retVal)
+                    new Store(fromBool(val), currentFunction.retVal)
             );
         }
         pushBack(
@@ -803,7 +803,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             right.type = leftType;
         }
         pushBack(
-                new Store(right, left)
+                new Store(fromBool(right), left)
         );
         return null;
     }
@@ -869,7 +869,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         Entity right = node.rhs.accept(this);
         Storage lhs = getValue(left), rhs = getValue(right);
         //IR比较语句
-        LocalTmpVar result = new LocalTmpVar(boolType, ++tmpCounter.cnt);
+        LocalTmpVar result = new LocalTmpVar(tmpBoolType, ++tmpCounter.cnt);
         if (isString(lhs)) {
             String functionName;
             switch (node.operator) {
@@ -1089,7 +1089,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             String str = currentBlock.label;
             changeBlock(endBlock);
             currentFunction.blockMap.put(currentBlock.label, currentBlock);
-            LocalTmpVar result = new LocalTmpVar(boolType, ++tmpCounter.cnt);
+            LocalTmpVar result = new LocalTmpVar(tmpBoolType, ++tmpCounter.cnt);
             if (node.operator.equals(LogicExprNode.LogicOperator.AndAnd)) {
                 pushBack(
                         new Phi(result,
@@ -1143,22 +1143,30 @@ public class IRBuilder implements ASTVisitor<Entity> {
         } else {
             tmp = (LocalTmpVar) entity;
         }
-        return tmp;
+        if (tmp.type instanceof IntType type && type.typeName.equals(IntType.TypeName.BOOL)) {
+            toBool = new LocalTmpVar(tmpBoolType, ++tmpCounter.cnt);
+            pushBack(
+                    new Trunc(toBool, tmp)
+            );
+        } else {
+            toBool = tmp;
+        }
+        return toBool;
     }
-//
-//    //将i1局部临时变量转化为i8
-//    private Entity fromBool(Entity entity) {
-//        LocalTmpVar fromBool;
-//        if (entity.type instanceof IntType type && type.typeName.equals(IntType.TypeName.TMP_BOOL)) {
-//            fromBool = new LocalTmpVar(boolType, ++tmpCounter.cnt);
-//            pushBack(
-//                    new Zext(fromBool, (Storage) entity)
-//            );
-//            return fromBool;
-//        } else {
-//            return entity;
-//        }
-//    }
+
+    //将i1局部临时变量转化为i8
+    private Entity fromBool(Entity entity) {
+        LocalTmpVar fromBool;
+        if (entity.type instanceof IntType type && type.typeName.equals(IntType.TypeName.TMP_BOOL)) {
+            fromBool = new LocalTmpVar(boolType, ++tmpCounter.cnt);
+            pushBack(
+                    new Zext(fromBool, (Storage) entity)
+            );
+            return fromBool;
+        } else {
+            return entity;
+        }
+    }
 
     /**
      * LogicPrefixExprNode
@@ -1176,7 +1184,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
     public Entity visit(LogicPrefixExprNode node) {
         operator = null;
         Storage entity = toBool(getValue(node.expression.accept(this)));
-        LocalTmpVar result = new LocalTmpVar(boolType, ++tmpCounter.cnt);
+        LocalTmpVar result = new LocalTmpVar(tmpBoolType, ++tmpCounter.cnt);
         pushBack(
                 new Binary(
                         BinaryExprNode.BinaryOperator.Xor,
@@ -1314,7 +1322,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         changeBlock(condBlock);
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         Entity op1 = getValue(i), op2 = getValue(indexList.get(layer - 1));
-        LocalTmpVar cmpResult = new LocalTmpVar(boolType, ++tmpCounter.cnt);
+        LocalTmpVar cmpResult = new LocalTmpVar(tmpBoolType, ++tmpCounter.cnt);
         pushBack(
                 new Icmp(CmpExprNode.CmpOperator.Less,
                         cmpResult,
@@ -1802,7 +1810,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             //在全局的初始化函数中加入赋值语句
             if (entity != null && !(entity instanceof Constant)) {
                 pushBack(
-                        new Store(entity, stmt.result)
+                        new Store(fromBool(entity), stmt.result)
                 );
             }
         }
@@ -1822,7 +1830,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                     entity.type = irType;
                 }
                 pushBack(
-                        new Store(entity, stmt.result)
+                        new Store(fromBool(entity), stmt.result)
                 );
             }
         }
