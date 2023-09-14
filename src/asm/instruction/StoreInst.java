@@ -2,6 +2,8 @@ package asm.instruction;
 
 import asm.ASMVisitor;
 import asm.operand.*;
+import ir.entity.Entity;
+import ir.entity.Storage;
 
 import java.io.PrintStream;
 
@@ -16,15 +18,31 @@ public class StoreInst extends ASMInstruction {
     public Operand rs1;
     public Register rs2;
     public Imm imm;
+    public boolean needPointerAddr;
+    public boolean complete = false;//非完备的load
+
     int size;
 
-    public StoreInst(Operand rs1, Register rs2,
+    public StoreInst(Operand rs1,
+                     Register rs2,
                      Imm imm) {
         this.rs1 = rs1;
         this.rs2 = rs2;
         this.imm = imm;
         this.size = rs1.size;
+        complete = true;
+    }
 
+    public StoreInst(Operand rs1,
+                     Register pointer,
+                     Imm imm,
+                     boolean complete,
+                     boolean needPointerAddr) {
+        this.rs1 = rs1;
+        this.size = rs1.size;
+        this.rs2 = pointer;
+        this.complete = complete;
+        this.needPointerAddr = needPointerAddr;
     }
 
     @Override

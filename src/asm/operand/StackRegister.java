@@ -7,7 +7,6 @@ package asm.operand;
 public class StackRegister extends Register {
     //相对fp的偏移量
     public int offset;
-    public int size;//bool:1 other:4
 
     public StackRegister(int offset, int size) {
         this.offset = offset;

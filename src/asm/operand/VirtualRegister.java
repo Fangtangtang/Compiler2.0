@@ -6,10 +6,12 @@ package asm.operand;
  * 未被实际分配
  */
 public class VirtualRegister extends Register {
+    public String name;
     //相对fp的偏移量
     public int offset;
 
-    public VirtualRegister(int size) {
+    public VirtualRegister(String name, int size) {
+        this.name = name;
         this.size = size;
     }
 

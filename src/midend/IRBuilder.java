@@ -393,7 +393,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         }
         currentInitStmts.addAll(currentFunction.entry.statements);
         currentFunction.entry.statements = currentInitStmts;
-        currentFunction.blockMap.put(node.name + "_return", currentFunction.ret);
+//        currentFunction.blockMap.put(node.name + "_return", currentFunction.ret);
         currentFunction.ret.pushBack(
                 new Return()
         );
@@ -492,7 +492,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                     new Jump(currentFunction.ret)
             );
         }
-        currentFunction.blockMap.put("return", currentFunction.ret);
+//        currentFunction.blockMap.put("return", currentFunction.ret);
         if (currentFunction.retType instanceof VoidType) {
             currentFunction.ret.pushBack(
                     new Return()

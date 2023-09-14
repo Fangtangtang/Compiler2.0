@@ -24,7 +24,7 @@ import java.util.*;
  */
 public class InstructionSelector implements IRVisitor {
     //使用的所用物理寄存器
-    PhysicalRegMap registerMap = new PhysicalRegMap();
+    public PhysicalRegMap registerMap = new PhysicalRegMap();
     Program program;
 
     //所有的virtual register
@@ -45,18 +45,20 @@ public class InstructionSelector implements IRVisitor {
 
     private Operand toOperand(Entity entity) {
         if (entity instanceof GlobalVar globalVar) {
+            //全局变量在虚拟寄存器的副本（string的地址，其余的值）
+            //localTmpVar
             VirtualRegister globalVarReg;
             if (toReg.containsKey(entity.toString())) {
                 globalVarReg = toReg.get(entity.toString());
             } else {
-                globalVarReg = newVirtualReg(false);
+                globalVarReg = newVirtualReg(entity.toString(), false);
                 toReg.put(entity.toString(), globalVarReg);
             }
             if (globalVar.storage instanceof ConstString) {//地址
                 currentBlock.pushBack(
                         new GlobalAddrInst(globalVarReg, globalVar.identity)
                 );
-            } else { //全局变量地址载入
+            } else {
                 PhysicalRegister t0 = registerMap.getReg("t0");
                 t0.size = 4;
                 currentBlock.pushBack(
@@ -69,7 +71,7 @@ public class InstructionSelector implements IRVisitor {
                 }
                 //全局变量的值
                 currentBlock.pushBack(
-                        new LoadInst(t0, globalVarReg, zero)
+                        new LoadInst(t0, globalVarReg, zero, false, false, false)
                 );
             }
             return globalVarReg;
@@ -101,16 +103,16 @@ public class InstructionSelector implements IRVisitor {
         if (toReg.containsKey(name)) {
             return toReg.get(name);
         }
-        VirtualRegister register = newVirtualReg(flag);
+        VirtualRegister register = newVirtualReg(name, flag);
         toReg.put(name, register);
         return register;
     }
 
-    private VirtualRegister newVirtualReg(boolean isBool) {
+    private VirtualRegister newVirtualReg(String name, boolean isBool) {
         if (isBool) {
-            return new VirtualRegister(1);
+            return new VirtualRegister(name, 1);
         } else {
-            return new VirtualRegister(4);
+            return new VirtualRegister(name, 4);
         }
     }
 
@@ -118,19 +120,6 @@ public class InstructionSelector implements IRVisitor {
         return type instanceof IntType intType &&
                 (intType.typeName.equals(IntType.TypeName.BOOL)
                         || intType.typeName.equals(IntType.TypeName.TMP_BOOL));
-    }
-
-    private void const2value(Constant constant, PhysicalRegister reg) {
-        Operand operand = const2operand(constant);
-        if (operand instanceof Imm) {
-            currentBlock.pushBack(
-                    new LiInst(reg, (Imm) operand)
-            );
-        } else {
-            currentBlock.pushBack(
-                    new MoveInst(reg, (PhysicalRegister) operand)
-            );
-        }
     }
 
     //TODO:超过int的str(value:long long?)
@@ -143,11 +132,7 @@ public class InstructionSelector implements IRVisitor {
         if (constant instanceof ConstInt constInt) {
             return number2operand(Integer.parseInt(constInt.value));
         } else if (constant instanceof ConstBool constBool) {
-            if (constBool.value) {
-                return new Imm(1);
-            } else {
-                return new Imm(0);
-            }
+            return new Imm(constBool.value);
         } else if (constant instanceof Null) {
             return registerMap.getReg("zero");
         } else {
@@ -187,6 +172,30 @@ public class InstructionSelector implements IRVisitor {
             return t0;
         }
     }
+
+    /**
+     * 指针对象
+     * - 全局变量：直接找到地址
+     * - 局部变量：为指向空间的指针，目标获得空间地址，此时未知
+     * - 局部临时变量：值为地址，只需取值
+     *
+     * @param reg    存地址的reg
+     * @param entity 指针对象
+     * @return pair：true 要地址，false已知或要值
+     */
+    private Pair<Register, Boolean> getPointedAddr(PhysicalRegister reg, Entity entity) {
+        if (entity instanceof GlobalVar globalVar) {
+            currentBlock.pushBack(
+                    new GlobalAddrInst(reg, globalVar.identity)
+            );
+            return new Pair<>(reg, false);
+        } else if (entity instanceof LocalVar localVar) {
+            return new Pair<>(getVirtualRegister(entity), true);
+        }
+        //包含值的virtual reg
+        return new Pair<>(getVirtualRegister(entity), false);
+    }
+
 
     public InstructionSelector(Program program) {
         this.program = program;
@@ -257,19 +266,23 @@ public class InstructionSelector implements IRVisitor {
             }
             reg = registerMap.getReg("a" + i);
             paramReg = getVirtualRegister(function.parameterList.get(i));
-            currentBlock.pushBack(
+            currentFunc.getParams.add(
                     new MoveInst(paramReg, reg)
             );
         }
-        PhysicalRegister t2 = registerMap.getReg("t2");
         for (; i < function.parameterList.size(); ++i) {
             paramReg = getVirtualRegister(function.parameterList.get(i));
-            currentBlock.pushBack(
+            currentFunc.getParams.add(
                     new LoadInst(fp, paramReg, new Imm((i - 8) << 2))
             );
         }
         //最后一个块
-        currentBlock = currentFunc.funcBlocks.get(currentFunc.funcBlocks.size() - 1);
+        if (function.ret != null) {
+            currentBlock = new Block(renameBlock(function.ret.label));
+            currentFunc.funcBlocks.add(currentBlock);
+        } else {
+            currentBlock = currentFunc.funcBlocks.get(currentFunc.funcBlocks.size() - 1);
+        }
         //有返回值，返回值放在a0
         if (!(function.retType instanceof VoidType)) {
             PhysicalRegister a0 = registerMap.getReg("a0");
@@ -372,6 +385,7 @@ public class InstructionSelector implements IRVisitor {
                 currentBlock.pushBack(
                         new ImmBinaryInst((Register) operand1, imm, resultReg, ImmBinaryInst.Opcode.addi)
                 );
+                return;
             }
             if (stmt.operator.equals(Binary.Operator.mul) ||
                     stmt.operator.equals(Binary.Operator.sdiv) ||
@@ -624,13 +638,13 @@ public class InstructionSelector implements IRVisitor {
                 );
             }
         } else {
-            if (op1 instanceof Imm) {
+            if (op1 instanceof Imm imm) {
                 currentBlock.pushBack(
-                        new ImmBinaryInst((Register) op2, (Imm) op1, resultReg, Binary.Operator.sub)
+                        new ImmBinaryInst((Register) op2, new Imm(-imm.value), resultReg, ImmBinaryInst.Opcode.addi)
                 );
-            } else if (op2 instanceof Imm) {
+            } else if (op2 instanceof Imm imm) {
                 currentBlock.pushBack(
-                        new ImmBinaryInst((Register) op1, (Imm) op2, resultReg, Binary.Operator.sub)
+                        new ImmBinaryInst((Register) op1, new Imm(-imm.value), resultReg, ImmBinaryInst.Opcode.addi)
                 );
             } else {
                 currentBlock.pushBack(
@@ -647,15 +661,26 @@ public class InstructionSelector implements IRVisitor {
     /**
      * Load
      * %3 = load i32, ptr %1
+     * result is localVar\ptr(localTmpPtr)
+     * ptr -> ptr
      *
      * @param stmt load
      */
     @Override
     public void visit(Load stmt) {
+        PhysicalRegister t1 = registerMap.getReg("t1");
+        PhysicalRegister t2 = registerMap.getReg("t2");
+        Pair<Register, Boolean> pointerPair = getPointedAddr(t1, stmt.pointer);
+        Pair<Register, Boolean> resultPair = getPointedAddr(t2, stmt.result);
         currentBlock.pushBack(
-                new LoadInst((Register) toOperand(stmt.result),
-                        (Register) toOperand(stmt.pointer),
-                        zero)
+                new LoadInst(
+                        pointerPair.getFirst(),
+                        resultPair.getFirst(),
+                        zero,
+                        false,
+                        pointerPair.getSecond(),
+                        resultPair.getSecond()
+                )
         );
     }
 
@@ -675,10 +700,14 @@ public class InstructionSelector implements IRVisitor {
      */
     @Override
     public void visit(Store stmt) {
+        PhysicalRegister t1 = registerMap.getReg("t1");
+        Pair<Register, Boolean> pair = getPointedAddr(t1, stmt.pointer);
         currentBlock.pushBack(
                 new StoreInst(toOperand(stmt.value),
-                        (Register) toOperand(stmt.pointer),
-                        zero)
+                        pair.getFirst(),
+                        zero,
+                        false,
+                        pair.getSecond())
         );
     }
 
@@ -729,7 +758,7 @@ public class InstructionSelector implements IRVisitor {
 
         } else if (condReg instanceof Register register) {
             currentBlock.pushBack(
-                    new ImmBinaryInst(register, new Imm(1), register, ImmBinaryInst.Opcode.andi)
+                    new ImmBinaryInst(register, new Imm(true), register, ImmBinaryInst.Opcode.andi)
             );
             //neqz branch
             currentBlock.pushBack(
@@ -801,15 +830,9 @@ public class InstructionSelector implements IRVisitor {
     public void visit(Zext stmt) {
         VirtualRegister resultReg = getVirtualRegister(stmt.result);
         if (stmt.value instanceof ConstBool bool) {
-            if (bool.value) {
-                currentBlock.pushBack(
-                        new LiInst(resultReg, new Imm(1))
-                );
-            } else {
-                currentBlock.pushBack(
-                        new LiInst(resultReg, zero)
-                );
-            }
+            currentBlock.pushBack(
+                    new LiInst(resultReg, new Imm(bool.value))
+            );
         } else {
             currentBlock.pushBack(
                     new MoveInst(resultReg, getVirtualRegister(stmt.value))

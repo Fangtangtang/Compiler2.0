@@ -9,7 +9,9 @@ ravel
 *.out
 ir.output
 ssa.output
+asm.output
 src/LocalMain.java
 src/LocalSSA.java
 src/LocalJudge.java
 src/LocalIR.java
+src/LocalASM.java

@@ -29,6 +29,7 @@ public class CmpInst extends ASMInstruction {
         this.rs1 = rs1;
         this.rs2 = rs2;
         this.rd = rd;
+        this.rd.size = 1;
         switch (operator) {
             case slt -> this.op = Opcode.slt;
             case sgt -> this.op = Opcode.sgt;
@@ -44,6 +45,16 @@ public class CmpInst extends ASMInstruction {
             }
             default -> throw new InternalException("unexpected operator in ir icmp");
         }
+    }
+
+    public CmpInst(Operand rs1, Operand rs2,
+                   Register rd,
+                   Opcode opcode) {
+        this.rs1 = rs1;
+        this.rs2 = rs2;
+        this.rd = rd;
+        this.rd.size = 1;
+        this.op = opcode;
     }
 
     @Override

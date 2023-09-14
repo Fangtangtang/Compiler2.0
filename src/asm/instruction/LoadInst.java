@@ -19,8 +19,14 @@ public class LoadInst extends ASMInstruction {
     public Register rs1;
     public Register rd;
     public Imm imm;
+    //true:get addr
+    //false:get value
+    public boolean needResultAddr, needPointerAddr;
+    public boolean complete = false;//非完备的load
     int size;
 
+    //pointer为基地址
+    //rd为physical reg
     public LoadInst(Register rs1,
                     Register rd,
                     Imm imm) {
@@ -28,7 +34,28 @@ public class LoadInst extends ASMInstruction {
         this.rd = rd;
         this.imm = imm;
         this.size = rd.size;
+        complete = true;
     }
+
+    //pointer为基地址
+    //result地址已知，向地址load
+    public LoadInst(Register rs1,
+                    Register rd,
+                    Imm imm,
+                    boolean complete,
+                    boolean needPointerAddr,
+                    boolean needResultAddr) {
+        this.rs1 = rs1;
+        this.rd = rd;
+        this.imm = imm;
+        if (complete) {
+            this.size = rd.size;
+        }
+        this.needResultAddr = needResultAddr;
+        this.needPointerAddr = needPointerAddr;
+        this.complete = complete;
+    }
+
 
     @Override
     public void print(PrintStream out) {

@@ -32,9 +32,17 @@ public class EqualZeroInst extends ASMInstruction {
         }
     }
 
+    public EqualZeroInst(Register rs1,
+                         Register rd,
+                         Opcode operator) {
+        this.rs1 = rs1;
+        this.rd = rd;
+        op = operator;
+    }
+
     @Override
     public void print(PrintStream out) {
-        out.println("\t" + op + "\t" + rd + ", " + rs1 );
+        out.println("\t" + op + "\t" + rd + ", " + rs1);
     }
 
     @Override

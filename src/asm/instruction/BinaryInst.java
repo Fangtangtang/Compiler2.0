@@ -1,6 +1,7 @@
 package asm.instruction;
 
 import asm.ASMVisitor;
+import asm.operand.Operand;
 import asm.operand.Register;
 import ir.stmt.instruction.Binary;
 import utility.error.InternalException;
@@ -18,13 +19,13 @@ public class BinaryInst extends ASMInstruction {
         sll, xor, srl, or, and
     }
 
-    public Register rs1, rs2;
+    public Operand rs1, rs2;
     public Register rd;
 
     public Opcode op;
 
     //根据IR的Binary构建
-    public BinaryInst(Register rs1, Register rs2,
+    public BinaryInst(Operand rs1, Operand rs2,
                       Register rd,
                       Binary.Operator operator) {
         this.rs1 = rs1;
@@ -45,7 +46,7 @@ public class BinaryInst extends ASMInstruction {
         }
     }
 
-    public BinaryInst(Register rs1, Register rs2,
+    public BinaryInst(Operand rs1, Operand rs2,
                       Register rd,
                       Opcode op) {
         this.rs1 = rs1;

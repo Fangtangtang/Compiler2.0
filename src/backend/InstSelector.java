@@ -300,7 +300,13 @@ public class InstSelector implements IRVisitor {
             storeRegister(t2, param);
         }
         //最后一个块
+//        currentBlock = currentFunc.funcBlocks.get(currentFunc.funcBlocks.size() - 1);
+        if(function.ret!=null) {
+            currentBlock = new Block(renameBlock(function.ret.label));
+            currentFunc.funcBlocks.add(currentBlock);
+        }else {
         currentBlock = currentFunc.funcBlocks.get(currentFunc.funcBlocks.size() - 1);
+        }
         //有返回值，返回值放在a0
         if (!(function.retType instanceof VoidType)) {
             PhysicalRegister a0 = registerMap.getReg("a0");
@@ -799,6 +805,7 @@ public class InstSelector implements IRVisitor {
         currentBlock.pushBack(
                 new LoadInst(pair.getFirst(), a1, pair.getSecond())
         );
+        //存值
         storeRegister(a1, stmt.result);
     }
 

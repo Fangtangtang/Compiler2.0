@@ -61,6 +61,9 @@ public class IRPrinter implements IRVisitor {
             BasicBlock block = entry.getValue();
             visit(block);
         }
+        if (function.ret != null) {
+            visit(function.ret);
+        }
         output.println("}");
     }
 

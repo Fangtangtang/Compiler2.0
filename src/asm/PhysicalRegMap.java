@@ -21,7 +21,6 @@ public class PhysicalRegMap {
         //frame pointer
         registerMap.put("fp", new PhysicalRegister("fp"));
         //临时量
-        //TODO：useful？
         registerMap.put("t0", new PhysicalRegister("t0"));
         registerMap.put("t1", new PhysicalRegister("t1"));
         registerMap.put("t2", new PhysicalRegister("t2"));

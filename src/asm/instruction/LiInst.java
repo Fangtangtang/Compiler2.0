@@ -24,6 +24,7 @@ public class LiInst extends ASMInstruction {
     public LiInst(Register rd, Imm imm) {
         this.rd = rd;
         this.imm = imm;
+        this.rd.size = this.imm.size;
     }
 
     @Override

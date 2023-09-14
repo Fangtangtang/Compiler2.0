@@ -10,6 +10,7 @@ import java.io.PrintStream;
  * 寄存器赋值
  * mv	a0, sp
  * 用于call传参
+ * 注意避免使用a_，与参数传递用到的reg冲突
  */
 public class MoveInst extends ASMInstruction {
     public Register rd;
@@ -23,6 +24,9 @@ public class MoveInst extends ASMInstruction {
 
     @Override
     public void print(PrintStream out) {
+        if (rd.equals(rs1)) {
+            return;
+        }
         out.println("\tmv\t" + rd + ", " + rs1);
     }
 

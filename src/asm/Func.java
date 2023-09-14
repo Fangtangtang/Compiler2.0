@@ -1,5 +1,7 @@
 package asm;
 
+import asm.instruction.ASMInstruction;
+
 import java.io.PrintStream;
 import java.util.ArrayList;
 
@@ -35,6 +37,7 @@ public class Func {
     //不需要名字标签的块
     public Block entry;
     public ArrayList<Block> funcBlocks = new ArrayList<>();
+    public ArrayList<ASMInstruction> getParams = new ArrayList<>();
 
     //virtual register（栈上，局部变量+临时量）占用
     //默认含ra，fp
