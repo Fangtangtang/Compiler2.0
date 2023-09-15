@@ -48,7 +48,6 @@ public class Func {
     public Func(String name) {
         this.name = name;
     }
-
     public void print(PrintStream out) {
         String end = ".L" + name + "_end";
         out.println("\t.globl\t" + name);

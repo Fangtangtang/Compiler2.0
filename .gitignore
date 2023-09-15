@@ -15,3 +15,5 @@ src/LocalSSA.java
 src/LocalJudge.java
 src/LocalIR.java
 src/LocalASM.java
+sample
+my.out

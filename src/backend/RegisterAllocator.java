@@ -130,7 +130,9 @@ public class RegisterAllocator implements ASMVisitor {
 
     @Override
     public void visit(Func func) {
+        //重写函数
         currentFunc = new Func(func.name);
+        currentFunc.extraParamCnt = func.extraParamCnt;//照搬
         text.functions.add(currentFunc);
         stackRegisterSpace = 8;
         stackRegMap = new HashMap<>();
@@ -412,6 +414,10 @@ public class RegisterAllocator implements ASMVisitor {
         if (inst.rs1 instanceof VirtualRegister rs1) {
             inst.rs1 = virtual2Stack(rs1);
             loadStackReg(a0, (StackRegister) inst.rs1);
+        } else if (inst.rs1 instanceof PhysicalRegister physicalReg) {
+            currentBlock.pushBack(
+                    new MoveInst(a0, physicalReg)
+            );
         } else {
             currentBlock.pushBack(
                     new LiInst(a0, (Imm) inst.rs1)
@@ -442,16 +448,22 @@ public class RegisterAllocator implements ASMVisitor {
 
     @Override
     public void visit(EqualZeroInst inst) {
+        PhysicalRegister rs1Reg;
         if (inst.rs1 instanceof VirtualRegister rs1) {
             inst.rs1 = virtual2Stack(rs1);
             loadStackReg(a0, (StackRegister) inst.rs1);
+            rs1Reg = a0;
+        } else if (inst.rs1 instanceof PhysicalRegister physicalReg) {
+            rs1Reg = physicalReg;
+        } else {
+            throw new InternalException("unexpected rs1 type in EqualZeroInst");
         }
         currentBlock.pushBack(
-                new EqualZeroInst(a0, a0, inst.op)
+                new EqualZeroInst(rs1Reg, a1, inst.op)
         );
         if (inst.rd instanceof VirtualRegister rd) {
             inst.rd = virtual2Stack(rd);
-            storeStackReg(a0, (StackRegister) inst.rd);
+            storeStackReg(a1, (StackRegister) inst.rd);
         }
     }
 
@@ -485,12 +497,18 @@ public class RegisterAllocator implements ASMVisitor {
 
     @Override
     public void visit(NotInst inst) {
+        PhysicalRegister rs1Reg;
         if (inst.rs1 instanceof VirtualRegister rs1) {
             inst.rs1 = virtual2Stack(rs1);
             loadStackReg(a0, (StackRegister) inst.rs1);
+            rs1Reg = a0;
+        } else if (inst.rs1 instanceof PhysicalRegister physicalReg) {
+            rs1Reg = physicalReg;
+        } else {
+            throw new InternalException("unexpected rs1 type in NotInst");
         }
         currentBlock.pushBack(
-                new NotInst(a0, a0)
+                new NotInst(a0, rs1Reg)
         );
         if (inst.rd instanceof VirtualRegister rd) {
             inst.rd = virtual2Stack(rd);

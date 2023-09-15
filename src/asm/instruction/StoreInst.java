@@ -12,7 +12,7 @@ import java.io.PrintStream;
  * 存入内存
  * rs1待存
  * imm(rs2)存入位置
- * TODO:判断sb\sw
+ *
  */
 public class StoreInst extends ASMInstruction {
     public Operand rs1;

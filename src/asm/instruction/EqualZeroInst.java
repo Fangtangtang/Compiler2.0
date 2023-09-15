@@ -25,6 +25,7 @@ public class EqualZeroInst extends ASMInstruction {
                          Icmp.Cond operator) {
         this.rs1 = rs1;
         this.rd = rd;
+        this.rd.size = 1;
         if (operator.equals(Icmp.Cond.eq)) {
             op = Opcode.seqz;
         } else {
@@ -37,6 +38,7 @@ public class EqualZeroInst extends ASMInstruction {
                          Opcode operator) {
         this.rs1 = rs1;
         this.rd = rd;
+        this.rd.size = 1;
         op = operator;
     }
 
