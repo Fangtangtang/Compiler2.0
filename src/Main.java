@@ -74,22 +74,23 @@ public class Main {
         irBuilder.visit(astRoot);
 
         PrintStream outputStream = System.out;
-//        IRPrinter printer = new IRPrinter(outputStream);
-//        printer.visit(irBuilder.irRoot);
+        IRPrinter printer = new IRPrinter(outputStream);
+        printer.visit(irBuilder.irRoot);
 
 //        IROptimizer optimizer = new IROptimizer(irBuilder.irRoot);
 //        optimizer.execute();
 
-        Program program = new Program();
-        InstructionSelector selector = new InstructionSelector(program);
-        selector.visit(irBuilder.irRoot);
-        RegisterAllocator allocator = new RegisterAllocator(selector.registerMap);
-        allocator.visit(program);
+//        Program program = new Program();
+//        InstructionSelector selector = new InstructionSelector(program);
+//        selector.visit(irBuilder.irRoot);
+//        RegisterAllocator allocator = new RegisterAllocator(selector.registerMap);
+//        allocator.visit(program);
 
 //        Program program = new Program();
 //        InstSelector instSelector = new InstSelector(program);
 //        instSelector.visit(irBuilder.irRoot);
-        program.print(outputStream);
+
+//        program.print(outputStream);
     }
 }
 

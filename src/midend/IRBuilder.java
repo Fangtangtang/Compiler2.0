@@ -39,6 +39,8 @@ public class IRBuilder implements ASTVisitor<Entity> {
     IRType boolType = new IntType(IntType.TypeName.BOOL);
     IRType tmpBoolType = new IntType(IntType.TypeName.TMP_BOOL);
     Constant zero = new ConstInt("0");
+    ConstBool boolTrue = new ConstBool(true);
+    ConstBool boolFalse = new ConstBool(false);
     Function currentFunction = null;
     Function malloc;
     Function malloc_array;
@@ -142,7 +144,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             String key = entry.getKey();
             Pair<Integer, Stack<Integer>> pair = varMap.get(key);
             pair.getSecond().pop();
-            pair.setFirst(pair.getFirst() - 1);
+//            pair.setFirst(pair.getFirst() - 1);
             varMap.put(key, pair);
         }
         //就终结符来看，函数作用域同函数体作用域
@@ -699,6 +701,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
      * ArrayVisExprNode
      * 数组下标访问，层层嵌套
      * 对每一层[]调用getelementptr
+     * TODO:返回值是指针，注意是否需要取值
      *
      * @param node ArrayVisExprNode
      * @return result
@@ -1018,106 +1021,58 @@ public class IRBuilder implements ASTVisitor<Entity> {
 
     /**
      * LogicExprNode
-     * 逻辑运算语句
-     * 需要支持短路求值（跳转语句）
-     * 使用phi指令，提前退出，都退到end
-     * - 只有根有end、返回result
-     * （应该正确 但不是最优解法）
      *
-     * @param node LogicExprNode
-     * @return result\null
+     * @param node && ||逻辑运算
+     * @return result
      */
     @Override
     public Entity visit(LogicExprNode node) {
         ++phiCounter.cnt;//会出现phi
-        //换符号，换根
-        if (!node.operator.equals(operator)) {
-            ++logicExprCounter;
-            operator = node.operator;
-        }
-        int label = logicExprCounter;
-        int exprLabel = funcBlockCounter++;//子跳转
-        //用到的块
-        BasicBlock endBlock;
-        boolean rootFlag = false;//表示为连续逻辑计算的根结点
-        if (logicBlockMap.containsKey(label)) {
-            endBlock = logicBlockMap.get(label);
+        int label = logicExprCounter;//函数中出现的第几个逻辑表达式
+        ++logicExprCounter;
+        BasicBlock nextBlock = new BasicBlock("logic.next" + label);//右子树
+        BasicBlock endBlock = new BasicBlock("logic.end" + label);//phi和后续（父亲）
+        //根据自身的运算符放trueBlock，falseBlock
+        ConstBool resultFromLeft;
+        BasicBlock trueBlock, falseBlock;
+        if (node.operator.equals(LogicExprNode.LogicOperator.AndAnd)) {
+            trueBlock = nextBlock;
+            falseBlock = endBlock;
+            resultFromLeft = boolFalse;
         } else {
-            endBlock = new BasicBlock("logic.end" + label);
-            logicBlockMap.put(label, endBlock);
-            rootFlag = true;
+            trueBlock = endBlock;
+            falseBlock = nextBlock;
+            resultFromLeft = boolTrue;
         }
-        BasicBlock nextBlock = new BasicBlock("logic.next" + exprLabel);
-        //可能左边为计算了一半的逻辑表达式串，返回值为null
-        Entity entity = node.lhs.accept(this);
-        if (entity != null) {
-            Storage leftToBool = toBool(entity);
-            //结束当前块，跳转
-            logicLabelList.add(currentBlock.label);
-            if (node.operator.equals(LogicExprNode.LogicOperator.AndAnd)) {
-                pushBack(
-                        new Branch(leftToBool, nextBlock, endBlock, phiCounter.cnt, ".multi")
-                );
-            } else {
-                pushBack(
-                        new Branch(leftToBool, endBlock, nextBlock, phiCounter.cnt, ".multi")
-                );
-            }
-            changeBlock(nextBlock);
-            currentFunction.blockMap.put(currentBlock.label, currentBlock);
-        }
-        //右儿子
-        //如果是LogicExprNode（用括号改优先级），计数
-        if (node.rhs instanceof LogicExprNode) {
-            ++logicExprCounter;
-        }
-        Storage rightToBool = toBool(getValue(node.rhs.accept(this)));
-        if (rootFlag) {//当前为根
-            pushBack(
-                    new Jump(endBlock, phiCounter.cnt, ".single")
-            );
-            String str = currentBlock.label;
-            changeBlock(endBlock);
-            currentFunction.blockMap.put(currentBlock.label, currentBlock);
-            LocalTmpVar result = new LocalTmpVar(tmpBoolType, ++tmpCounter.cnt);
-            if (node.operator.equals(LogicExprNode.LogicOperator.AndAnd)) {
-                pushBack(
-                        new Phi(result,
-                                new ConstBool(false), rightToBool,
-                                logicLabelList, str, phiCounter.cnt)
-                );
-                currentFunction.phiResult.put(phiCounter.cnt, result);
-                currentFunction.phiMap.put(phiCounter.cnt.toString() + ".single", rightToBool);
-                currentFunction.phiMap.put(phiCounter.cnt.toString() + ".multi", new ConstBool(false));
-            } else {
-                pushBack(
-                        new Phi(result,
-                                new ConstBool(true), rightToBool,
-                                logicLabelList, str, phiCounter.cnt)
-                );
-                currentFunction.phiResult.put(phiCounter.cnt, result);
-                currentFunction.phiMap.put(phiCounter.cnt.toString() + ".single", rightToBool);
-                currentFunction.phiMap.put(phiCounter.cnt.toString() + ".multi", new ConstBool(true));
-            }
-            logicLabelList = new ArrayList<>();
-            return result;
-        } else {//当前非根
-            logicLabelList.add(currentBlock.label);
-            exprLabel = funcBlockCounter++;
-            nextBlock = new BasicBlock("logic.next" + exprLabel);
-            if (node.operator.equals(LogicExprNode.LogicOperator.AndAnd)) {
-                pushBack(
-                        new Branch(rightToBool, nextBlock, endBlock, phiCounter.cnt, ".multi")
-                );
-            } else {
-                pushBack(
-                        new Branch(rightToBool, endBlock, nextBlock, phiCounter.cnt, ".multi")
-                );
-            }
-            changeBlock(nextBlock);
-            currentFunction.blockMap.put(currentBlock.label, currentBlock);
-            return null;
-        }
+        //左子树
+        Storage leftResult = toBool(getValue(node.lhs.accept(this)));
+        currentFunction.phiMap.put(phiCounter.cnt.toString() + ".left", resultFromLeft);
+        pushBack(
+                new Branch(leftResult, trueBlock, falseBlock,
+                        phiCounter.cnt, ".left")
+        );
+        String labelFromLeft = currentBlock.label;
+        //右子树都返回end
+        changeBlock(nextBlock);
+        currentFunction.blockMap.put(currentBlock.label, currentBlock);
+        Storage resultFromRight = toBool(getValue(node.rhs.accept(this)));
+        currentFunction.phiMap.put(phiCounter.cnt.toString() + ".right", resultFromRight);
+        pushBack(
+                new Jump(endBlock, phiCounter.cnt, ".right")
+        );
+        String labelFromRight = currentBlock.label;
+        changeBlock(endBlock);
+        currentFunction.blockMap.put(currentBlock.label, currentBlock);
+        //取值
+        LocalTmpVar result = new LocalTmpVar(tmpBoolType, ++tmpCounter.cnt);
+        pushBack(
+                new Phi(result,
+                        resultFromLeft, resultFromRight,
+                        labelFromLeft, labelFromRight,
+                        phiCounter.cnt)
+        );
+        currentFunction.phiResult.put(phiCounter.cnt, result);
+        return result;
     }
 
     private Storage toBool(Entity entity) {
@@ -1600,7 +1555,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         if (varMap.containsKey(node.name)) {
             //该变量在当前的重命名
             Pair<Integer, Stack<Integer>> pair = varMap.get(node.name);
-            if (pair.getFirst() > 0) {
+            if (!pair.getSecond().empty()) {
                 String rename = node.name + "." + pair.getSecond().peek();
                 return rename2mem.get(rename);
             }
