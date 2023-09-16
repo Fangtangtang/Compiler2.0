@@ -1028,6 +1028,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
     @Override
     public Entity visit(LogicExprNode node) {
         ++phiCounter.cnt;//会出现phi
+        int phiLabel = phiCounter.cnt;
         int label = logicExprCounter;//函数中出现的第几个逻辑表达式
         ++logicExprCounter;
         BasicBlock nextBlock = new BasicBlock("logic.next" + label);//右子树
@@ -1046,19 +1047,19 @@ public class IRBuilder implements ASTVisitor<Entity> {
         }
         //左子树
         Storage leftResult = toBool(getValue(node.lhs.accept(this)));
-        currentFunction.phiMap.put(phiCounter.cnt.toString() + ".left", resultFromLeft);
+        currentFunction.phiMap.put(phiLabel + ".left", resultFromLeft);
         pushBack(
                 new Branch(leftResult, trueBlock, falseBlock,
-                        phiCounter.cnt, ".left")
+                        phiLabel, ".left")
         );
         String labelFromLeft = currentBlock.label;
         //右子树都返回end
         changeBlock(nextBlock);
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         Storage resultFromRight = toBool(getValue(node.rhs.accept(this)));
-        currentFunction.phiMap.put(phiCounter.cnt.toString() + ".right", resultFromRight);
+        currentFunction.phiMap.put(phiLabel + ".right", resultFromRight);
         pushBack(
-                new Jump(endBlock, phiCounter.cnt, ".right")
+                new Jump(endBlock, phiLabel, ".right")
         );
         String labelFromRight = currentBlock.label;
         changeBlock(endBlock);
@@ -1069,9 +1070,9 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 new Phi(result,
                         resultFromLeft, resultFromRight,
                         labelFromLeft, labelFromRight,
-                        phiCounter.cnt)
+                        phiLabel)
         );
-        currentFunction.phiResult.put(phiCounter.cnt, result);
+        currentFunction.phiResult.put(phiLabel, result);
         return result;
     }
 
