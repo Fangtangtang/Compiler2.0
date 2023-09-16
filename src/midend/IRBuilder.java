@@ -112,12 +112,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
         return name + "." + num;
     }
 
-    private Ptr name2var(String name) {
-        Pair<Integer, Stack<Integer>> pair = varMap.get(name);
-        String rename = name + "." + pair.getSecond().peek();
-        return rename2mem.get(rename);
-    }
-
     private void changeBlock(BasicBlock block) {
         currentBlock = block;
         if (currentScope instanceof GlobalScope) {
@@ -148,6 +142,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             String key = entry.getKey();
             Pair<Integer, Stack<Integer>> pair = varMap.get(key);
             pair.getSecond().pop();
+            pair.setFirst(pair.getFirst() - 1);
             varMap.put(key, pair);
         }
         //就终结符来看，函数作用域同函数体作用域
@@ -492,7 +487,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
                     new Jump(currentFunction.ret)
             );
         }
-//        currentFunction.blockMap.put("return", currentFunction.ret);
         if (currentFunction.retType instanceof VoidType) {
             currentFunction.ret.pushBack(
                     new Return()
@@ -972,9 +966,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 Storage this1 = getValue(rename2mem.get("this1"));
                 params.add(0, this1);
                 addThis = false;
-                nullList.forEach(
-                        index -> index += 1
-                );
+                nullList.replaceAll(integer -> integer + 1);
             }
             //普通函数
             function = irRoot.getFunc(callFuncName);
@@ -996,9 +988,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                     new GetElementPtr(thisVar, current, zero)
             );
             params.add(0, thisVar);
-            nullList.forEach(
-                    index -> index += 1
-            );
+            nullList.replaceAll(integer -> integer + 1);
             //自定义类
             if (current.type instanceof StructPtrType structPtrType) {
                 StructType classType = (StructType) structPtrType.type;
@@ -1132,7 +1122,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
 
     private Storage toBool(Entity entity) {
         LocalTmpVar tmp, toBool;
-        if (entity instanceof ConstBool bool) {
+        if (entity instanceof ConstBool) {
             return (Storage) entity;
         }
         if (entity instanceof Ptr) {
@@ -1609,7 +1599,11 @@ public class IRBuilder implements ASTVisitor<Entity> {
         //变量名
         if (varMap.containsKey(node.name)) {
             //该变量在当前的重命名
-            return name2var(node.name);
+            Pair<Integer, Stack<Integer>> pair = varMap.get(node.name);
+            if (pair.getFirst() > 0) {
+                String rename = node.name + "." + pair.getSecond().peek();
+                return rename2mem.get(rename);
+            }
         }
         //类的成员变量直接访问
         //仅可能出现在类的成员函数中
