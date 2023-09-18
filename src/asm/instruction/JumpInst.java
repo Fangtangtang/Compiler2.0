@@ -22,6 +22,11 @@ public class JumpInst extends ASMInstruction {
     }
 
     @Override
+    public void printRegColoring(PrintStream out) {
+        out.println("\tj\t" + desName);
+    }
+
+    @Override
     public void accept(ASMVisitor visitor) {
 visitor.visit(this);
     }

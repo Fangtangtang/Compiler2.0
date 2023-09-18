@@ -86,10 +86,6 @@ public class Main {
         RegisterAllocator allocator = new RegisterAllocator(selector.registerMap);
         allocator.visit(program);
 
-//        Program program = new Program();
-//        InstSelector instSelector = new InstSelector(program);
-//        instSelector.visit(irBuilder.irRoot);
-
         program.print(outputStream);
     }
 }

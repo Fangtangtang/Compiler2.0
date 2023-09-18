@@ -62,6 +62,12 @@ public class BinaryInst extends ASMInstruction {
     }
 
     @Override
+    public void printRegColoring(PrintStream out) {
+        out.println("\t" + op.name() + "\t" + rd.toRegColoringString()
+                + ", " + rs1.toRegColoringString() + ", " + rs2.toRegColoringString());
+    }
+
+    @Override
     public void accept(ASMVisitor visitor) {
         visitor.visit(this);
     }

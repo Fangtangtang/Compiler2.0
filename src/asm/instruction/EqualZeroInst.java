@@ -49,6 +49,11 @@ public class EqualZeroInst extends ASMInstruction {
     }
 
     @Override
+    public void printRegColoring(PrintStream out) {
+        out.println("\t" + op + "\t" + rd.toRegColoringString() + ", " + rs1.toRegColoringString());
+    }
+
+    @Override
     public void accept(ASMVisitor visitor) {
         visitor.visit(this);
     }

@@ -25,6 +25,11 @@ public class NotInst extends ASMInstruction {
     }
 
     @Override
+    public void printRegColoring(PrintStream out) {
+        out.println("\tnot\t" + rd.toRegColoringString() + ", " + rs1.toRegColoringString());
+    }
+
+    @Override
     public void accept(ASMVisitor visitor) {
         visitor.visit(this);
     }

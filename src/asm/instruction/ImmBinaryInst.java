@@ -57,6 +57,12 @@ public class ImmBinaryInst extends ASMInstruction {
     }
 
     @Override
+    public void printRegColoring(PrintStream out) {
+        out.println("\t" + op.name() + "\t" + rd.toRegColoringString()
+                + ", " + rs1.toRegColoringString() + ", " + imm);
+    }
+
+    @Override
     public void accept(ASMVisitor visitor) {
         visitor.visit(this);
     }

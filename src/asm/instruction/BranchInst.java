@@ -27,6 +27,11 @@ public class BranchInst extends ASMInstruction {
     }
 
     @Override
+    public void printRegColoring(PrintStream out) {
+        out.println("\tbnez\t" + rs1.toRegColoringString() + ", " + desName);
+    }
+
+    @Override
     public void accept(ASMVisitor visitor) {
         visitor.visit(this);
     }

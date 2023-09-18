@@ -14,6 +14,8 @@ public abstract class ASMInstruction {
 
     public abstract void print(PrintStream out);
 
+    public abstract void printRegColoring(PrintStream out);
+
     public abstract void accept(ASMVisitor visitor);
 
     public abstract ArrayList<Register> getUse();

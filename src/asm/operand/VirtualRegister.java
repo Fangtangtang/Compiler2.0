@@ -24,4 +24,9 @@ public class VirtualRegister extends Register {
     public String toString() {
         return String.valueOf(offset) + "(fp)";
     }
+
+    @Override
+    public String toRegColoringString() {
+        return color.name();
+    }
 }

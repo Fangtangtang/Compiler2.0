@@ -25,12 +25,13 @@ public class GraphColoring {
     HashMap<Register, Node> reg2node;
     int K = 26;
     PhysicalRegMap registerMap;
-    PhysicalRegister fp, t0;
+    PhysicalRegister fp, sp, t0;
 
     public GraphColoring(Func func, PhysicalRegMap registerMap) {
         this.func = func;
         this.registerMap = registerMap;
         fp = registerMap.getReg("fp");
+        sp = registerMap.getReg("sp");
         t0 = registerMap.getReg("t0");
     }
 
@@ -61,6 +62,8 @@ public class GraphColoring {
             }
             rewriteFunction();
         }
+        assignColorToReg();
+        addExtraInstToFunc();
     }
 
     /**
@@ -517,5 +520,52 @@ public class GraphColoring {
         }
     }
 
+    /**
+     * 将结点染色情况赋给reg
+     */
+    void assignColorToReg() {
+        for (Map.Entry<Register, Node> entry : reg2node.entrySet()) {
+            entry.getKey().color = entry.getValue().color;
+        }
+    }
+
+    /**
+     * 添加进出函数时的额外指令
+     * - 开栈
+     * - 回收
+     */
+    void addExtraInstToFunc() {
+        int stackSize = func.basicSpace + (func.extraParamCnt << 2);
+        stackSize = (stackSize + 15) >> 4;
+        stackSize <<= 4;
+        //进入函数时的额外指令(不加入funcBlocks)
+        func.entry = new Block(func.name);
+        func.entry.pushBack(
+                new ImmBinaryInst(sp, new Imm(-stackSize), sp, ImmBinaryInst.Opcode.addi)
+        );
+        func.entry.pushBack(
+                new StoreInst(registerMap.getReg("ra"), sp, new Imm(stackSize - 4))
+        );
+        func.entry.pushBack(
+                new StoreInst(fp, sp, new Imm(stackSize - 8))
+        );
+        func.entry.pushBack(
+                new ImmBinaryInst(sp, new Imm(stackSize), fp, ImmBinaryInst.Opcode.addi)
+        );
+        //出函数的指令
+        Block endBlock = func.funcBlocks.get(func.funcBlocks.size() - 1);
+        endBlock.pushBack(
+                new LoadInst(sp, registerMap.getReg("ra"), new Imm(stackSize - 4))
+        );
+        endBlock.pushBack(
+                new LoadInst(sp, fp, new Imm(stackSize - 8))
+        );
+        endBlock.pushBack(
+                new ImmBinaryInst(sp, new Imm(stackSize), sp, ImmBinaryInst.Opcode.addi)
+        );
+        endBlock.pushBack(
+                new RetInst()
+        );
+    }
 
 }

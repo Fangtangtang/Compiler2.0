@@ -20,7 +20,7 @@ public class Block {
 
     public HashSet<Register> use = new HashSet<>();
     public HashSet<Register> def = new HashSet<>();
-    public HashSet<Register> liveOut ;
+    public HashSet<Register> liveOut;
 
     public Block(String name) {
         this.name = name;
@@ -33,6 +33,12 @@ public class Block {
     public void print(PrintStream out) {
         instructions.forEach(
                 instruction -> instruction.print(out)
+        );
+    }
+
+    public void printRegColoring(PrintStream out) {
+        instructions.forEach(
+                instruction -> instruction.printRegColoring(out)
         );
     }
 }

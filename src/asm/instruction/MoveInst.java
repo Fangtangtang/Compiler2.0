@@ -32,6 +32,14 @@ public class MoveInst extends ASMInstruction {
     }
 
     @Override
+    public void printRegColoring(PrintStream out) {
+        if (rd.equals(rs1)) {
+            return;
+        }
+        out.println("\tmv\t" + rd.toRegColoringString() + ", " + rs1.toRegColoringString());
+    }
+
+    @Override
     public void accept(ASMVisitor visitor) {
         visitor.visit(this);
     }

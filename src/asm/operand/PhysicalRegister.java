@@ -16,4 +16,9 @@ public class PhysicalRegister extends Register {
     public String toString() {
         return name;
     }
+
+    @Override
+    public String toRegColoringString() {
+        return name;
+    }
 }

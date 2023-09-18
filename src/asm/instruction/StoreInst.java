@@ -55,6 +55,17 @@ public class StoreInst extends ASMInstruction {
     }
 
     @Override
+    public void printRegColoring(PrintStream out) {
+        if (size == 4) {
+            out.println("\tsw\t" + rs1.toRegColoringString()
+                    + ", " + imm + "(" + rs2.toRegColoringString() + ")");
+        } else {
+            out.println("\tsb\t" + rs1.toRegColoringString()
+                    + ", " + imm + "(" + rs2.toRegColoringString() + ")");
+        }
+    }
+
+    @Override
     public void accept(ASMVisitor visitor) {
         visitor.visit(this);
     }

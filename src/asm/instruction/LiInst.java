@@ -34,6 +34,11 @@ public class LiInst extends ASMInstruction {
     }
 
     @Override
+    public void printRegColoring(PrintStream out) {
+        out.println("\tli\t" + rd.toRegColoringString() + ", " + imm);
+    }
+
+    @Override
     public void accept(ASMVisitor visitor) {
         visitor.visit(this);
     }

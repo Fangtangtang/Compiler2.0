@@ -28,4 +28,15 @@ public class Program {
                 }
         );
     }
+
+    public void printRegColoring(PrintStream out) {
+        text.printRegColoring(out);
+        out.println();
+        globalDefs.forEach(
+                def -> {
+                    def.print(out);
+                    out.println();
+                }
+        );
+    }
 }

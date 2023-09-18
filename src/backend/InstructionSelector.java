@@ -335,6 +335,7 @@ public class InstructionSelector implements IRVisitor {
         //访问函数alloca开好了virtual reg，将值传入（store）
         int i;
         Register paramReg;
+        ArrayList<ASMInstruction> getParams = new ArrayList<>();
         Storage param;
         PhysicalRegister reg;
         for (i = 0; i < 8; ++i) {
@@ -345,20 +346,21 @@ public class InstructionSelector implements IRVisitor {
             param = function.parameterList.get(i);
             setPhysicalRegSize(reg, param);
             paramReg = getVirtualRegister(param);
-            currentFunc.getParams.add(
+            getParams.add(
                     new MoveInst(paramReg, reg)
             );
         }
         for (; i < function.parameterList.size(); ++i) {
             paramReg = getVirtualRegister(function.parameterList.get(i));
             //载入临时寄存器
-            currentFunc.getParams.add(
+            getParams.add(
                     new LoadInst(fp, t0, new Imm((i - 8) << 2))
             );
-            currentFunc.getParams.add(
+            getParams.add(
                     new MoveInst(paramReg, t0)
             );
         }
+        currentFunc.funcBlocks.get(0).instructions.addAll(0, getParams);
         //最后一个块
         if (function.ret != null) {
             currentBlock = new Block(renameBlock(function.ret.label));

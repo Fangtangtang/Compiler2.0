@@ -23,4 +23,14 @@ public class Text extends Section {
                 }
         );
     }
+
+    public void printRegColoring(PrintStream out) {
+        out.println("\t.section\t.text");
+        functions.forEach(
+                func -> {
+                    func.printRegColoring(out);
+                    out.println();
+                }
+        );
+    }
 }

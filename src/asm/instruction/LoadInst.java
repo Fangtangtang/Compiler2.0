@@ -68,6 +68,17 @@ public class LoadInst extends ASMInstruction {
     }
 
     @Override
+    public void printRegColoring(PrintStream out) {
+        if (size == 4) {
+            out.println("\tlw\t" + rd.toRegColoringString()
+                    + ", " + imm + "(" + rs1.toRegColoringString() + ")");
+        } else {
+            out.println("\tlbu\t" + rd.toRegColoringString()
+                    + ", " + imm + "(" + rs1.toRegColoringString() + ")");
+        }
+    }
+
+    @Override
     public void accept(ASMVisitor visitor) {
         visitor.visit(this);
     }

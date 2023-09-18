@@ -37,7 +37,6 @@ public class Func {
     //不需要名字标签的块
     public Block entry;
     public ArrayList<Block> funcBlocks = new ArrayList<>();
-    public ArrayList<ASMInstruction> getParams = new ArrayList<>();
     //RPO排列的Block
     public ArrayList<Block> reorderedBlock = new ArrayList<>();
     //virtual register（栈上，局部变量+临时量）占用
@@ -60,6 +59,22 @@ public class Func {
                 block -> {
                     out.println(block.name + ":");
                     block.print(out);
+                }
+        );
+        out.println(end);
+        out.println("\t.size\t" + name + ", " + end + "-" + name);
+    }
+
+    public void printRegColoring(PrintStream out) {
+        String end = ".L" + name + "_end";
+        out.println("\t.globl\t" + name);
+        out.println("\t.type\t" + name + ",@function");
+        out.println(name + ":");
+        entry.printRegColoring(out);
+        funcBlocks.forEach(
+                block -> {
+                    out.println(block.name + ":");
+                    block.printRegColoring(out);
                 }
         );
         out.println(end);

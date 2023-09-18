@@ -25,4 +25,9 @@ public class Imm extends Operand {
     public String toString() {
         return String.valueOf(value);
     }
+
+    @Override
+    public String toRegColoringString() {
+        return String.valueOf(value);
+    }
 }

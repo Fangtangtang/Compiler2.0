@@ -17,4 +17,9 @@ public class StackRegister extends Register {
     public String toString() {
         return String.valueOf(offset) + "(fp)";
     }
+
+    @Override
+    public String toRegColoringString() {
+        return String.valueOf(offset) + "(fp)";
+    }
 }

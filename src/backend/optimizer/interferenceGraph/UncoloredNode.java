@@ -1,8 +1,6 @@
 package backend.optimizer.interferenceGraph;
 
-import asm.operand.Register;
-import asm.operand.StackRegister;
-import asm.operand.VirtualRegister;
+import asm.operand.*;
 
 /**
  * @author F

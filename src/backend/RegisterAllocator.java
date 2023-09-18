@@ -166,9 +166,9 @@ public class RegisterAllocator implements ASMVisitor {
         currentBlock.pushBack(
                 new ImmBinaryInst(sp, new Imm(stackSize), fp, ImmBinaryInst.Opcode.addi)
         );
-        func.getParams.forEach(
-                instruction -> instruction.accept(this)
-        );
+//        func.getParams.forEach(
+//                instruction -> instruction.accept(this)
+//        );
         //出函数的指令
         currentBlock = currentFunc.funcBlocks.get(currentFunc.funcBlocks.size() - 1);
         currentBlock.pushBack(

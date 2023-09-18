@@ -29,6 +29,13 @@ public class GlobalAddrInst extends ASMInstruction {
     }
 
     @Override
+    public void printRegColoring(PrintStream out) {
+        out.println("\tlui\t" + rd.toRegColoringString() + ", %hi(" + name + ")");
+        out.println("\taddi\t" + rd.toRegColoringString()
+                + ", " + rd.toRegColoringString() + ", %lo(" + name + ")");
+    }
+
+    @Override
     public void accept(ASMVisitor visitor) {
         visitor.visit(this);
     }
