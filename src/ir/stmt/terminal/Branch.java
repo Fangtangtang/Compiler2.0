@@ -23,6 +23,7 @@ public class Branch extends TerminalStmt {
     public String phiLabel = null;
     public int index = 0;
     public Storage result;
+    public SSAEntity ssaResult;
 
     public Branch(Entity condition,
                   BasicBlock trueBranch,

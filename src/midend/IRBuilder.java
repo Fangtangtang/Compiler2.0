@@ -494,10 +494,10 @@ public class IRBuilder implements ASTVisitor<Entity> {
                     new Return()
             );
         } else {
-            //TODO:labeled as useless?
+            //labeled as useless
             LocalTmpVar tmp = new LocalTmpVar(currentFunction.retType, ++tmpCounter.cnt);
             currentFunction.ret.pushBack(
-                    new Load(tmp, currentFunction.retVal)
+                    new Load(tmp, currentFunction.retVal, true)
             );
             currentFunction.ret.pushBack(
                     new Return(tmp)

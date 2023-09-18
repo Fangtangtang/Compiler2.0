@@ -18,6 +18,7 @@ public class Jump extends TerminalStmt {
     public String phiLabel = null;
     public int index = 0;
     public Storage result;
+    public SSAEntity ssaResult;
 
     public Jump(String targetName) {
         super();

@@ -10,6 +10,8 @@ import ir.function.Function;
 import ir.irType.VoidType;
 import ir.stmt.Stmt;
 import ir.stmt.instruction.Alloca;
+import ir.stmt.instruction.Load;
+import ir.stmt.instruction.Phi;
 import ir.stmt.terminal.*;
 import utility.Counter;
 import utility.live.GlobalLiveRange;
@@ -32,6 +34,7 @@ import java.util.*;
  * TODO:更多操作
  */
 public class Mem2Reg {
+    Function function;
     //在多于一个BB中被use的变量名 -> 变量
     HashMap<String, Entity> globalName;
     //变量名 -> 所有def该变量的BB
@@ -42,11 +45,12 @@ public class Mem2Reg {
     HashSet<String> unusedAlloca;
 
     public void execute(Function function) {
+        this.function = function;
         setUnusedAlloca(function.entry);
-        findGlobalNames(function);
+        findGlobalNames();
         removeUnusedAlloca(function.entry);
         insertPhiFunction(function.domTree);
-        rename(function);
+        rename();
 //        TODO：处理关键边?
 //        breakCriticalEdge(function);
     }
@@ -101,8 +105,8 @@ public class Mem2Reg {
         blocksSets.put(varName, set);
     }
 
-    void findGlobalNames(Function function) {
-        LinkedHashMap<String, BasicBlock> blockMap=function.blockMap;
+    void findGlobalNames() {
+        LinkedHashMap<String, BasicBlock> blockMap = function.blockMap;
         globalName = new HashMap<>();
         blocksSets = new HashMap<>();
         defInBlockSets = new HashMap<>();
@@ -219,7 +223,7 @@ public class Mem2Reg {
 
     HashMap<String, DomTreeNode> label2node;
 
-    void rename(Function function) {
+    void rename() {
         DomTree domTree = function.domTree;
         //initialize
         for (Map.Entry<String, Entity> var : globalName.entrySet()) {
@@ -264,6 +268,25 @@ public class Mem2Reg {
                 }
             }
             stmt.setUse(ssaEntityList);
+        }
+        if (stmt instanceof Branch branch && branch.result != null) {
+            String name = getVarName(branch.result);
+            if (name != null && renameStack.containsKey(name)) {
+                ((Branch) stmt).ssaResult = renameStack.get(name).peek();
+            } else {
+                ((Branch) stmt).ssaResult = new SSAEntity(branch.result);
+            }
+        } else if (stmt instanceof Jump jump && jump.result != null) {
+            String name = getVarName(jump.result);
+            if (name != null && renameStack.containsKey(name)) {
+                ((Jump) stmt).ssaResult = renameStack.get(name).peek();
+            } else {
+                ((Jump) stmt).ssaResult = new SSAEntity(jump.result);
+            }
+        } else if (stmt instanceof Phi phi) {
+            function.ssaPhiResult.put(phi.phiLabel, phi.ssaResult);
+        } else if (stmt instanceof Load load && load.loadRet) {
+            function.ssaRetVal = load.ssaPtr;
         }
     }
 

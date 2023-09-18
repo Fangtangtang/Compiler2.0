@@ -36,6 +36,7 @@ public class Function {
     public ArrayList<DomTreeNode> reorderedBlock = new ArrayList<>();
     public DomTree domTree;
     public HashMap<Integer, Storage> phiResult = new HashMap<>();
+    public HashMap<Integer, SSAEntity> ssaPhiResult = new HashMap<>();
 
     public Function(IRType retType,
                     String funcName) {

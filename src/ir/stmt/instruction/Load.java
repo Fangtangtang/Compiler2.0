@@ -33,9 +33,17 @@ public class Load extends Instruction {
     public SSAEntity ssaResult;
     public Entity pointer;
     public SSAEntity ssaPtr;
+    public boolean loadRet = false;
 
     public Load(Entity result,
                 Entity pointer) {
+        this.result = result;
+        this.pointer = pointer;
+    }
+
+    public Load(Entity result,
+                Entity pointer,
+                boolean loadRet) {
         this.result = result;
         this.pointer = pointer;
     }
