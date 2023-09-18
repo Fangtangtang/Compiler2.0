@@ -25,7 +25,9 @@ public class Function {
     //参数表，无法在函数中直接使用的量
     //var_def块中alloca新局部变量，将这些store
     public ArrayList<LocalVar> parameterList = new ArrayList<>();
+    public ArrayList<SSAEntity> ssaParameterList;
     public LocalVar retVal;
+    public SSAEntity ssaRetVal;
     public BasicBlock entry = null;
     //每个函数以自己的return块结尾
     public BasicBlock ret;
@@ -33,8 +35,7 @@ public class Function {
     //按照RPO序排列的basic block
     public ArrayList<DomTreeNode> reorderedBlock = new ArrayList<>();
     public DomTree domTree;
-    public HashMap<String, Storage> phiMap = new HashMap<>();
-    public HashMap<Integer,Storage> phiResult = new HashMap<>();
+    public HashMap<Integer, Storage> phiResult = new HashMap<>();
 
     public Function(IRType retType,
                     String funcName) {

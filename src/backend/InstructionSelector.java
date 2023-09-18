@@ -831,7 +831,8 @@ public class InstructionSelector implements IRVisitor {
     public void visit(Branch stmt) {
         //phi
         if (stmt.phiLabel != null) {
-            Entity ans = currentIRFunc.phiMap.get(stmt.index + stmt.phiLabel);
+            Entity ans = stmt.result;
+//                    currentIRFunc.phiMap.get(stmt.index + stmt.phiLabel);
             Operand ansOperand = toOperand(ans);
             if (ansOperand instanceof Imm imm) {
                 currentBlock.pushBack(
@@ -882,8 +883,9 @@ public class InstructionSelector implements IRVisitor {
     @Override
     public void visit(Jump stmt) {
         if (stmt.phiLabel != null
-                && currentIRFunc.phiMap.containsKey(stmt.index + stmt.phiLabel)) {
-            Entity ans = currentIRFunc.phiMap.get(stmt.index + stmt.phiLabel);
+                && currentIRFunc.phiResult.containsKey(stmt.index)) {
+            Entity ans = stmt.result;
+//                    currentIRFunc.phiMap.get(stmt.index + stmt.phiLabel);
             Operand ansOperand = toOperand(ans);
             if (ansOperand instanceof Imm imm) {
                 currentBlock.pushBack(

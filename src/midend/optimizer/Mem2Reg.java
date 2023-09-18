@@ -43,10 +43,10 @@ public class Mem2Reg {
 
     public void execute(Function function) {
         setUnusedAlloca(function.entry);
-        findGlobalNames(function.blockMap);
+        findGlobalNames(function);
         removeUnusedAlloca(function.entry);
         insertPhiFunction(function.domTree);
-        rename(function.domTree);
+        rename(function);
 //        TODO：处理关键边?
 //        breakCriticalEdge(function);
     }
@@ -101,15 +101,29 @@ public class Mem2Reg {
         blocksSets.put(varName, set);
     }
 
-    void findGlobalNames(LinkedHashMap<String, BasicBlock> blockMap) {
+    void findGlobalNames(Function function) {
+        LinkedHashMap<String, BasicBlock> blockMap=function.blockMap;
         globalName = new HashMap<>();
         blocksSets = new HashMap<>();
         defInBlockSets = new HashMap<>();
-        //for each block
-        for (Map.Entry<String, BasicBlock> pair : blockMap.entrySet()) {
+        Iterator<Map.Entry<String, BasicBlock>> iter = blockMap.entrySet().iterator();
+        Map.Entry<String, BasicBlock> pair;
+        boolean flag = true;
+        while (iter.hasNext()) {
+            pair = iter.next();
             HashSet<String> defInBlock = new HashSet<>();//在BB中被定义的
             BasicBlock block = pair.getValue();
             defInBlockSets.put(block.label, defInBlock);
+            //入参作为在第一个BB中的def
+            if (flag) {
+                flag = false;
+                for (Entity entity : function.parameterList) {
+                    String name = getVarName(entity);
+//                    unusedAlloca.remove(name);
+                    defInBlock.add(name);
+                    addVarDefInBlock(name, block.label);
+                }
+            }
             Stmt stmt;
             Entity varDef;
             ArrayList<Entity> varUse;
@@ -205,7 +219,8 @@ public class Mem2Reg {
 
     HashMap<String, DomTreeNode> label2node;
 
-    void rename(DomTree domTree) {
+    void rename(Function function) {
+        DomTree domTree = function.domTree;
         //initialize
         for (Map.Entry<String, Entity> var : globalName.entrySet()) {
             String name = var.getKey();
@@ -213,8 +228,17 @@ public class Mem2Reg {
             renameStack.put(name, new Stack<>());
         }
         label2node = domTree.label2node;
+        //入参rename
+        ArrayList<SSAEntity> ssaEntityList = new ArrayList<>();
+        for (Entity entity : function.parameterList) {
+            Pair<String, SSAEntity> pair = toSsaEntity(entity);
+            ssaEntityList.add(pair.getSecond());
+        }
+        function.ssaParameterList = ssaEntityList;
         //recursive
         recursiveRename(domTree.reorderedBlock.get(0));
+        //phi
+
     }
 
     void renameOnStmt(Stmt stmt, HashMap<String, SSAEntity> defInBlock) {

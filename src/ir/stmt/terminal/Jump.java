@@ -3,6 +3,7 @@ package ir.stmt.terminal;
 import ir.*;
 import ir.entity.Entity;
 import ir.entity.SSAEntity;
+import ir.entity.Storage;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -16,6 +17,7 @@ public class Jump extends TerminalStmt {
     public BasicBlock target = null;
     public String phiLabel = null;
     public int index = 0;
+    public Storage result;
 
     public Jump(String targetName) {
         super();
@@ -28,12 +30,14 @@ public class Jump extends TerminalStmt {
         this.target = target;
     }
 
-    public Jump(BasicBlock target, int index, String phiLabel) {
+    public Jump(BasicBlock target, int index,
+                String phiLabel, Storage result) {
         super();
         this.targetName = target.label;
         this.target = target;
         this.index = index;
         this.phiLabel = phiLabel;
+        this.result = result;
     }
 
     @Override

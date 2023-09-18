@@ -494,6 +494,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                     new Return()
             );
         } else {
+            //TODO:labeled as useless?
             LocalTmpVar tmp = new LocalTmpVar(currentFunction.retType, ++tmpCounter.cnt);
             currentFunction.ret.pushBack(
                     new Load(tmp, currentFunction.retVal)
@@ -1047,19 +1048,17 @@ public class IRBuilder implements ASTVisitor<Entity> {
         }
         //左子树
         Storage leftResult = toBool(getValue(node.lhs.accept(this)));
-        currentFunction.phiMap.put(phiLabel + ".left", resultFromLeft);
         pushBack(
                 new Branch(leftResult, trueBlock, falseBlock,
-                        phiLabel, ".left")
+                        phiLabel, ".left", resultFromLeft)
         );
         String labelFromLeft = currentBlock.label;
         //右子树都返回end
         changeBlock(nextBlock);
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         Storage resultFromRight = toBool(getValue(node.rhs.accept(this)));
-        currentFunction.phiMap.put(phiLabel + ".right", resultFromRight);
         pushBack(
-                new Jump(endBlock, phiLabel, ".right")
+                new Jump(endBlock, phiLabel, ".right", resultFromRight)
         );
         String labelFromRight = currentBlock.label;
         changeBlock(endBlock);
@@ -1459,7 +1458,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         operator = null;
         Storage trueAns = getValue(node.trueExpr.accept(this));
         pushBack(
-                new Jump(endBlock, phiLabel, ".true")
+                new Jump(endBlock, phiLabel, ".true", trueAns)
         );
         BasicBlock trueBlock = currentBlock;
         changeBlock(falseStmtBlock);
@@ -1467,7 +1466,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         operator = null;
         Storage falseAns = getValue(node.falseExpr.accept(this));
         pushBack(
-                new Jump(endBlock, phiLabel, ".false")
+                new Jump(endBlock, phiLabel, ".false", falseAns)
         );
         BasicBlock falseBlock = currentBlock;
         changeBlock(endBlock);
@@ -1481,8 +1480,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
                             phiLabel)
             );
             currentFunction.phiResult.put(phiLabel, result);
-            currentFunction.phiMap.put(phiLabel.toString() + ".true", trueAns);
-            currentFunction.phiMap.put(phiLabel.toString() + ".false", falseAns);
         } else {
             //仅用于表示类型
             result = new LocalTmpVar(trueAns.type, tmpCounter.cnt);

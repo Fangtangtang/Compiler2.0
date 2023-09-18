@@ -4,6 +4,7 @@ import ir.BasicBlock;
 import ir.IRVisitor;
 import ir.entity.Entity;
 import ir.entity.SSAEntity;
+import ir.entity.Storage;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -21,6 +22,7 @@ public class Branch extends TerminalStmt {
 
     public String phiLabel = null;
     public int index = 0;
+    public Storage result;
 
     public Branch(Entity condition,
                   BasicBlock trueBranch,
@@ -35,13 +37,15 @@ public class Branch extends TerminalStmt {
                   BasicBlock trueBranch,
                   BasicBlock falseBranch,
                   int index,
-                  String phiLabel) {
+                  String phiLabel,
+                  Storage result) {
         super();
         this.condition = condition;
         this.trueBranch = trueBranch;
         this.falseBranch = falseBranch;
         this.index = index;
         this.phiLabel = phiLabel;
+        this.result = result;
     }
 
     //br i1 %cmp, label %return, label %if.end

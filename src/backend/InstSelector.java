@@ -301,11 +301,11 @@ public class InstSelector implements IRVisitor {
         }
         //最后一个块
 //        currentBlock = currentFunc.funcBlocks.get(currentFunc.funcBlocks.size() - 1);
-        if(function.ret!=null) {
+        if (function.ret != null) {
             currentBlock = new Block(renameBlock(function.ret.label));
             currentFunc.funcBlocks.add(currentBlock);
-        }else {
-        currentBlock = currentFunc.funcBlocks.get(currentFunc.funcBlocks.size() - 1);
+        } else {
+            currentBlock = currentFunc.funcBlocks.get(currentFunc.funcBlocks.size() - 1);
         }
         //有返回值，返回值放在a0
         if (!(function.retType instanceof VoidType)) {
@@ -856,7 +856,8 @@ public class InstSelector implements IRVisitor {
         PhysicalRegister a0 = registerMap.getReg("a0");
         //phi
         if (stmt.phiLabel != null) {
-            Entity ans = currentIRFunc.phiMap.get(stmt.index + stmt.phiLabel);
+            Entity ans = stmt.result;
+//                    currentIRFunc.phiMap.get(stmt.index + stmt.phiLabel);
             setPhysicalRegSize(a0, ans);
             loadRegister(a0, ans);
             storeRegister(a0, currentIRFunc.phiResult.get(stmt.index));
@@ -884,9 +885,10 @@ public class InstSelector implements IRVisitor {
     @Override
     public void visit(Jump stmt) {
         if (stmt.phiLabel != null
-                && currentIRFunc.phiMap.containsKey(stmt.index + stmt.phiLabel)) {
+                && currentIRFunc.phiResult.containsKey(stmt.index)) {
             PhysicalRegister a0 = registerMap.getReg("a0");
-            Entity ans = currentIRFunc.phiMap.get(stmt.index + stmt.phiLabel);
+            Entity ans = stmt.result;
+//                    currentIRFunc.phiMap.get(stmt.index + stmt.phiLabel);
             setPhysicalRegSize(a0, ans);
             loadRegister(a0, ans);
             storeRegister(a0, currentIRFunc.phiResult.get(stmt.index));
