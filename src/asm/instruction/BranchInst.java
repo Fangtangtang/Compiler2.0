@@ -4,6 +4,7 @@ import asm.ASMVisitor;
 import asm.operand.Register;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 
 /**
  * @author F
@@ -28,5 +29,27 @@ public class BranchInst extends ASMInstruction {
     @Override
     public void accept(ASMVisitor visitor) {
         visitor.visit(this);
+    }
+
+    @Override
+    public ArrayList<Register> getUse() {
+        ArrayList<Register> ret = new ArrayList<>();
+        ret.add(rs1);
+        return ret;
+    }
+
+    @Override
+    public Register getDef() {
+        return null;
+    }
+
+    @Override
+    public void setUse(ArrayList<Register> use) {
+        rs1 = use.get(0);
+    }
+
+    @Override
+    public void setDef(Register def) {
+
     }
 }

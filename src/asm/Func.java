@@ -38,7 +38,8 @@ public class Func {
     public Block entry;
     public ArrayList<Block> funcBlocks = new ArrayList<>();
     public ArrayList<ASMInstruction> getParams = new ArrayList<>();
-
+    //RPO排列的Block
+    public ArrayList<Block> reorderedBlock = new ArrayList<>();
     //virtual register（栈上，局部变量+临时量）占用
     //默认含ra，fp
     public int basicSpace = 8;
@@ -48,6 +49,7 @@ public class Func {
     public Func(String name) {
         this.name = name;
     }
+
     public void print(PrintStream out) {
         String end = ".L" + name + "_end";
         out.println("\t.globl\t" + name);

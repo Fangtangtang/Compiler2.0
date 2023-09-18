@@ -3,11 +3,13 @@ package midend.optimizer;
 import ir.BasicBlock;
 import ir.entity.*;
 import ir.entity.constant.*;
+import ir.entity.var.GlobalVar;
 import ir.entity.var.LocalTmpVar;
 import ir.entity.var.Ptr;
 import ir.function.Function;
 import ir.irType.VoidType;
 import ir.stmt.Stmt;
+import ir.stmt.instruction.Alloca;
 import ir.stmt.terminal.*;
 import utility.Counter;
 import utility.live.GlobalLiveRange;
@@ -21,6 +23,12 @@ import java.util.*;
 /**
  * @author F
  * promote memory to register
+ * 1. 没有被使用的 alloca 可以直接去掉；
+ * 2. TODO:如果只被定义了一次，那么所有的使用都可以用定义的值代替；
+ * 3. TODO:如果一个 alloca 的定义使用只出现在一个块中，那么每个 use 可以被最近的 def 替换；
+ * 4. 如果一个 alloca 只被 load 和 store，那么可以通过在支配边界插入 phi 指令，并将所有的 use 替换为对
+ * 应的 phi 指令的结果。
+ * <p>
  * TODO:更多操作
  */
 public class Mem2Reg {
@@ -30,9 +38,13 @@ public class Mem2Reg {
     HashMap<String, HashSet<String>> blocksSets;
     //blockLabel -> 所有def在block的变量名
     HashMap<String, HashSet<String>> defInBlockSets;
+    //未被使用的alloca
+    HashSet<String> unusedAlloca;
 
     public void execute(Function function) {
+        setUnusedAlloca(function.entry);
         findGlobalNames(function.blockMap);
+        removeUnusedAlloca(function.entry);
         insertPhiFunction(function.domTree);
         rename(function.domTree);
 //        TODO：处理关键边?
@@ -41,7 +53,7 @@ public class Mem2Reg {
 
     String getVarName(Entity entity) {
         //非变量
-        if (entity instanceof Constant) {
+        if (entity instanceof Constant || entity instanceof GlobalVar) {
             return null;
         }
         if (entity instanceof Ptr ptr) {
@@ -54,6 +66,29 @@ public class Mem2Reg {
             return String.valueOf(tmpVar.index);
         }
         throw new InternalException("invalid entity");
+    }
+
+    void setUnusedAlloca(BasicBlock entry) {
+        unusedAlloca = new HashSet<>();
+        Stmt stmt;
+        for (int i = 0; i < entry.statements.size(); ++i) {
+            stmt = entry.statements.get(i);
+            if (stmt instanceof Alloca alloca) {
+                unusedAlloca.add(getVarName(alloca.result));
+            }
+        }
+    }
+
+    void removeUnusedAlloca(BasicBlock entry) {
+        Stmt stmt;
+        for (int i = 0; i < entry.statements.size(); ++i) {
+            stmt = entry.statements.get(i);
+            if (stmt instanceof Alloca alloca) {
+                if (unusedAlloca.contains(getVarName(alloca.result))) {
+                    entry.statements.remove(stmt);
+                }
+            }
+        }
     }
 
     void addVarDefInBlock(String varName, String blockLabel) {
@@ -87,6 +122,7 @@ public class Mem2Reg {
                 if (varDef != null) {
                     String name = getVarName(varDef);
                     if (name != null) {
+                        unusedAlloca.remove(name);
                         defInBlock.add(name);
                         addVarDefInBlock(name, block.label);
                     }
@@ -96,6 +132,7 @@ public class Mem2Reg {
                     for (Entity entity : varUse) {
                         String name = getVarName(entity);
                         if (name != null) {
+                            unusedAlloca.remove(name);
                             if (!defInBlock.contains(name)) {
                                 globalName.put(name, entity);
                             }
@@ -148,8 +185,11 @@ public class Mem2Reg {
 
     Pair<String, SSAEntity> toSsaEntity(Entity var) {
         String varName = getVarName(var);
+        if (varName == null) {
+            return new Pair<>(null, new SSAEntity(var));
+        }
         if (!counterMap.containsKey(varName)) {
-            return new Pair<>(varName, new SSAEntity(var));
+            return new Pair<>(varName, new SSAEntity(var, new GlobalLiveRange(varName)));
         }
         Counter counter = counterMap.get(varName);
         Stack<SSAEntity> stack = renameStack.get(varName);
@@ -183,7 +223,9 @@ public class Mem2Reg {
         //def
         if (varDef != null) {
             Pair<String, SSAEntity> pair = toSsaEntity(varDef);
-            defInBlock.put(pair.getFirst(), pair.getSecond());
+            if (pair.getFirst() != null) {
+                defInBlock.put(pair.getFirst(), pair.getSecond());
+            }
             stmt.setDef(pair.getSecond());
         }
         //use: top(stack[var])
@@ -218,6 +260,7 @@ public class Mem2Reg {
         //rename variable in phi
         int predecessorSize = node.block.predecessorList.size();
         for (Map.Entry<String, Entity> phiVar : node.phiFuncDef.entrySet()) {
+            //TODO:确保不出现null？
             Pair<String, SSAEntity> pair = toSsaEntity(phiVar.getValue());
             defInBlock.put(pair.getFirst(), pair.getSecond());
             node.block.phiMap.get(phiVar.getKey()).setFirst(pair.getSecond());

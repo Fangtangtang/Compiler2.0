@@ -18,6 +18,7 @@ import java.util.Map;
  * 活跃度分析
  * - 收集合并global live range
  * - 收集Basic Block的useVar和defVar
+ * TODO:IR上是否需要活跃分析
  */
 public class LiveVarAnalysis {
     public LiveVarAnalysis(Function function) {
@@ -29,6 +30,7 @@ public class LiveVarAnalysis {
     }
 
     void getLiveRange(BasicBlock block) {
+        //ssa产生的phi可以合并
         for (Map.Entry<
                 String, Pair<SSAEntity, Pair<String[], SSAEntity[]>>
                 > pair : block.phiMap.entrySet()) {
@@ -41,13 +43,16 @@ public class LiveVarAnalysis {
         }
         for (int i = 0; i < block.statements.size(); ++i) {
             Stmt stmt = block.statements.get(i);
-            if (stmt instanceof Phi phiStmt) {
-                phiStmt.ssaResult.lr.union(phiStmt.ssaAns1.lr);
-                phiStmt.ssaResult.lr.union(phiStmt.ssaAns2.lr);
-            } else if (stmt instanceof Zext zextStmt) {
-                zextStmt.ssaValue.lr.union(zextStmt.ssaValue.lr);
+            //stmt中的phi这样处理会产生冲突
+//            if (stmt instanceof Phi phiStmt) {
+//                phiStmt.ssaResult.lr.union(phiStmt.ssaAns1.lr);
+//                phiStmt.ssaResult.lr.union(phiStmt.ssaAns2.lr);
+//            } else
+            //result和value为实际的同一个东西，可以合并
+            if (stmt instanceof Zext zextStmt) {
+                zextStmt.ssaResult.lr.union(zextStmt.ssaValue.lr);
             } else if (stmt instanceof Trunc truncStmt) {
-                truncStmt.ssaValue.lr.union(truncStmt.ssaValue.lr);
+                truncStmt.ssaResult.lr.union(truncStmt.ssaValue.lr);
             }
         }
     }

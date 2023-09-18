@@ -7,6 +7,7 @@ import ir.stmt.instruction.Icmp;
 import utility.error.InternalException;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 
 /**
  * @author F
@@ -65,5 +66,33 @@ public class CmpInst extends ASMInstruction {
     @Override
     public void accept(ASMVisitor visitor) {
         visitor.visit(this);
+    }
+
+    @Override
+    public ArrayList<Register> getUse() {
+        ArrayList<Register> ret = new ArrayList<>();
+        if (rs1 instanceof Register register) {
+            ret.add(register);
+        }
+        if (rs2 instanceof Register register) {
+            ret.add(register);
+        }
+        return ret;
+    }
+
+    @Override
+    public Register getDef() {
+        return rd;
+    }
+
+    @Override
+    public void setUse(ArrayList<Register> use) {
+        rs1 = use.get(0);
+        rs2 = use.get(1);
+    }
+
+    @Override
+    public void setDef(Register def) {
+        rd = def;
     }
 }

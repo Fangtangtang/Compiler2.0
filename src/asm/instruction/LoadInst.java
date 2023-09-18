@@ -4,6 +4,7 @@ import asm.ASMVisitor;
 import asm.operand.*;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 
 /**
  * @author F
@@ -22,7 +23,7 @@ public class LoadInst extends ASMInstruction {
     //true:get addr
     //false:get value
     public boolean needResultAddr, needPointerAddr;
-    public boolean complete = false;//非完备的load
+    public boolean complete;//非完备的load
     int size;
 
     //pointer为基地址
@@ -69,5 +70,27 @@ public class LoadInst extends ASMInstruction {
     @Override
     public void accept(ASMVisitor visitor) {
         visitor.visit(this);
+    }
+
+    @Override
+    public ArrayList<Register> getUse() {
+        ArrayList<Register> ret = new ArrayList<>();
+        ret.add(rs1);
+        return ret;
+    }
+
+    @Override
+    public Register getDef() {
+        return rd;
+    }
+
+    @Override
+    public void setUse(ArrayList<Register> use) {
+        rs1 = use.get(0);
+    }
+
+    @Override
+    public void setDef(Register def) {
+        rd = def;
     }
 }

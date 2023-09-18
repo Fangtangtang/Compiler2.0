@@ -6,13 +6,13 @@ import ir.entity.Entity;
 import ir.entity.Storage;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 
 /**
  * @author F
  * 存入内存
  * rs1待存
  * imm(rs2)存入位置
- *
  */
 public class StoreInst extends ASMInstruction {
     public Operand rs1;
@@ -57,5 +57,30 @@ public class StoreInst extends ASMInstruction {
     @Override
     public void accept(ASMVisitor visitor) {
         visitor.visit(this);
+    }
+
+    @Override
+    public ArrayList<Register> getUse() {
+        ArrayList<Register> ret = new ArrayList<>();
+        if (rs1 instanceof Register register) {
+            ret.add(register);
+        }
+        ret.add(rs2);
+        return ret;
+    }
+
+    @Override
+    public Register getDef() {
+        return null;
+    }
+
+    @Override
+    public void setUse(ArrayList<Register> use) {
+        rs1 = use.get(0);
+        rs2 = use.get(1);
+    }
+
+    @Override
+    public void setDef(Register def) {
     }
 }

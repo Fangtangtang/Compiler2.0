@@ -6,6 +6,7 @@ import asm.operand.*;
 import asm.section.*;
 import ir.*;
 import ir.entity.Entity;
+import ir.entity.SSAEntity;
 import ir.entity.Storage;
 import ir.entity.constant.*;
 import ir.entity.var.*;
@@ -83,6 +84,45 @@ public class InstructionSelector implements IRVisitor {
         }
     }
 
+    private Operand toOperand(SSAEntity ssaEntity) {
+        Entity entity = ssaEntity.origin;
+        if (entity instanceof GlobalVar globalVar) {
+            //全局变量在虚拟寄存器的副本（string的地址，其余的值）
+            //localTmpVar
+            VirtualRegister globalVarReg;
+            if (toReg.containsKey(entity.toString())) {
+                globalVarReg = toReg.get(entity.toString());
+            } else {
+                globalVarReg = newVirtualReg(entity.toString(), false);
+                toReg.put(entity.toString(), globalVarReg);
+            }
+            if (globalVar.storage instanceof ConstString) {//地址
+                currentBlock.pushBack(
+                        new GlobalAddrInst(globalVarReg, globalVar.identity)
+                );
+            } else {
+                t0.size = 4;
+                currentBlock.pushBack(
+                        new GlobalAddrInst(t0, globalVar.identity)
+                );
+                if (isBool(globalVar.storage.type)) {
+                    globalVarReg.size = 1;
+                } else {
+                    globalVarReg.size = 4;
+                }
+                //全局变量的值
+                currentBlock.pushBack(
+                        new LoadInst(t0, globalVarReg, zero, false, false, false)
+                );
+            }
+            return globalVarReg;
+        } else if (entity instanceof Constant constant) {
+            return const2operand(constant);
+        } else {
+            return getVirtualRegister(ssaEntity);
+        }
+    }
+
     /**
      * 找到对应的virtual register
      * IR上entity映射到asm的VirtualRegister
@@ -92,6 +132,31 @@ public class InstructionSelector implements IRVisitor {
      */
     public VirtualRegister getVirtualRegister(Entity entity) {
         String name = entity.toString();
+        IRType type;
+        if (entity instanceof LocalVar ptr) {
+            type = ptr.storage.type;
+        } else if (entity instanceof LocalTmpVar tmpVar) {
+            type = tmpVar.type;
+        } else {
+            throw new InternalException("get virtual register of unexpected entity " + entity);
+        }
+        boolean flag = isBool(type);
+        if (toReg.containsKey(name)) {
+            return toReg.get(name);
+        }
+        VirtualRegister register = newVirtualReg(name, flag);
+        toReg.put(name, register);
+        return register;
+    }
+
+    public VirtualRegister getVirtualRegister(SSAEntity ssaEntity) {
+        Entity entity = ssaEntity.origin;
+        String name;
+        if (ssaEntity.lr == null) {
+            name = entity.toString();
+        } else {
+            name = ssaEntity.lr.setName();
+        }
         IRType type;
         if (entity instanceof LocalVar ptr) {
             type = ptr.storage.type;

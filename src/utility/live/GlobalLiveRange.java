@@ -2,7 +2,7 @@ package utility.live;
 
 /**
  * @author F
- * 活跃范围
+ * 全局活跃范围
  * 类似并查集
  */
 public class GlobalLiveRange {
@@ -28,5 +28,10 @@ public class GlobalLiveRange {
             return;
         }
         root1.father = root2;
+    }
+
+    //所处的并查集的重命名
+    public String setName() {
+        return this.find().rename;
     }
 }

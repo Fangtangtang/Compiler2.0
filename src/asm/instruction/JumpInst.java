@@ -1,8 +1,10 @@
 package asm.instruction;
 
 import asm.ASMVisitor;
+import asm.operand.Register;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 
 /**
  * @author F
@@ -22,5 +24,25 @@ public class JumpInst extends ASMInstruction {
     @Override
     public void accept(ASMVisitor visitor) {
 visitor.visit(this);
+    }
+
+    @Override
+    public ArrayList<Register> getUse() {
+        return null;
+    }
+
+    @Override
+    public Register getDef() {
+        return null;
+    }
+
+    @Override
+    public void setUse(ArrayList<Register> use) {
+
+    }
+
+    @Override
+    public void setDef(Register def) {
+
     }
 }
