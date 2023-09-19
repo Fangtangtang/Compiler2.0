@@ -37,6 +37,7 @@ public class GraphColoring {
 
     public void execute() {
         while (true) {
+            clear();
             LivenessAnalysis analyzer = new LivenessAnalysis(func);
             analyzer.analysisLiveOut();
             buildInterferenceGraph();
@@ -90,6 +91,7 @@ public class GraphColoring {
         if (register instanceof VirtualRegister virtualReg) {
             UncoloredNode node = new UncoloredNode(virtualReg);
             reg2node.put(virtualReg, node);
+            interferenceGraph.adjList.put(node, new HashSet<>());
             return node;
         }
         throw new InternalException("unexpected register type");
@@ -126,13 +128,17 @@ public class GraphColoring {
                     moveInstSet.workListMoves.add(moveInst);
                 }
                 //添加实冲突边
-                live.add(def);
-                Node defNode = toNode(def);
-                for (var liveReg : live) {
-                    interferenceGraph.addEdge(toNode(liveReg), defNode);
+                if (def != null) {
+                    live.add(def);
+                    Node defNode = toNode(def);
+                    for (var liveReg : live) {
+                        interferenceGraph.addEdge(toNode(liveReg), defNode);
+                    }
+                    live.remove(def);
                 }
-                live.remove(def);
-                live.addAll(use);
+                if (use != null) {
+                    live.addAll(use);
+                }
             }
         }
     }

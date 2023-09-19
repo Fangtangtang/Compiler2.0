@@ -24,6 +24,7 @@ public class PhysicalRegMap {
         registerMap.put("t0", new PhysicalRegister("t0"));
         registerMap.put("t1", new PhysicalRegister("t1"));
         registerMap.put("t2", new PhysicalRegister("t2"));
+        registerMap.put("t3", new PhysicalRegister("t3"));
         //8个可用寄存器
         registerMap.put("a0", new PhysicalRegister("a0"));
         registerMap.put("a1", new PhysicalRegister("a1"));

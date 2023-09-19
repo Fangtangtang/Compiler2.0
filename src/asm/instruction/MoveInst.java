@@ -33,7 +33,7 @@ public class MoveInst extends ASMInstruction {
 
     @Override
     public void printRegColoring(PrintStream out) {
-        if (rd.equals(rs1)) {
+        if (rd.toRegColoringString().equals(rs1.toRegColoringString())) {
             return;
         }
         out.println("\tmv\t" + rd.toRegColoringString() + ", " + rs1.toRegColoringString());

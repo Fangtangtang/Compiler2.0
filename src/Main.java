@@ -80,10 +80,15 @@ public class Main {
 //        IROptimizer optimizer = new IROptimizer(irBuilder.irRoot);
 //        optimizer.execute();
 
+//        Program program = new Program();
+//        InstructionSelector selector = new InstructionSelector(program);
+//        selector.visit(irBuilder.irRoot);
+//        RegisterAllocator allocator = new RegisterAllocator(selector.registerMap);
+//        allocator.visit(program);
         Program program = new Program();
-        InstructionSelector selector = new InstructionSelector(program);
-        selector.visit(irBuilder.irRoot);
-        RegisterAllocator allocator = new RegisterAllocator(selector.registerMap);
+        InstSelector instSelector = new InstSelector(program);
+        instSelector.visit(irBuilder.irRoot);
+        RegisterAllocator allocator = new RegisterAllocator(instSelector.registerMap);
         allocator.visit(program);
 
         program.print(outputStream);

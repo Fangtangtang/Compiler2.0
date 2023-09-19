@@ -166,9 +166,6 @@ public class RegisterAllocator implements ASMVisitor {
         currentBlock.pushBack(
                 new ImmBinaryInst(sp, new Imm(stackSize), fp, ImmBinaryInst.Opcode.addi)
         );
-//        func.getParams.forEach(
-//                instruction -> instruction.accept(this)
-//        );
         //出函数的指令
         currentBlock = currentFunc.funcBlocks.get(currentFunc.funcBlocks.size() - 1);
         currentBlock.pushBack(
@@ -315,46 +312,26 @@ public class RegisterAllocator implements ASMVisitor {
 
     @Override
     public void visit(LoadInst inst) {
-        if (inst.complete) {
-            currentBlock.pushBack(inst);
-            return;
-        }
+        //rs1:地址
         PhysicalRegister rs1Reg;
-        Imm imm1 = zero;
-        //取到pointer地址载入rs1Reg,imm1
-        if (inst.rs1 instanceof PhysicalRegister physicalReg) {
-            rs1Reg = physicalReg;
+        if (inst.rs1 instanceof VirtualRegister rs1) {
+            inst.rs1 = virtual2Stack(rs1);
+            loadStackReg(a0, (StackRegister) inst.rs1);
+            rs1Reg = a0;
+        } else if (inst.rs1 instanceof PhysicalRegister register) {
+            rs1Reg = register;
         } else {
-            inst.rs1 = virtual2Stack((VirtualRegister) inst.rs1);
-            Pair<Register, Imm> addr = getRegAddress((StackRegister) inst.rs1);
-            if (inst.needPointerAddr) {
-                rs1Reg = (PhysicalRegister) addr.getFirst();
-                imm1 = addr.getSecond();
-            } else {
-                currentBlock.pushBack(
-                        new LoadInst((PhysicalRegister) addr.getFirst(), a0, addr.getSecond())
-                );
-                rs1Reg = a0;
-            }
+            throw new InternalException("unexpected");
         }
-        //值载入a1
-        a1.size = inst.rd.size;
-        currentBlock.pushBack(
-                new LoadInst(rs1Reg, a1, imm1)
-        );
+        //rd:载入对象
         PhysicalRegister rdReg;
-        Imm imm2 = zero;
-        //取到result地址载入rs2Reg,imm2
-        if (inst.rd instanceof PhysicalRegister physicalReg) {
-            rdReg = physicalReg;
+        if (inst.rd instanceof PhysicalRegister register) {
+            rdReg = register;
         } else {
-            inst.rd = virtual2Stack((VirtualRegister) inst.rd);
-            Pair<Register, Imm> addr = getRegAddress((StackRegister) inst.rd);
-            rdReg = (PhysicalRegister) addr.getFirst();
-            imm2 = addr.getSecond();
+            throw new InternalException("unexpected");
         }
         currentBlock.pushBack(
-                new StoreInst(a1, rdReg, imm2)
+                new LoadInst(rs1Reg, rdReg, inst.imm)
         );
     }
 
@@ -388,7 +365,6 @@ public class RegisterAllocator implements ASMVisitor {
                 throw new InternalException("unexpected type in move instruction");
             }
         }
-
     }
 
     @Override
@@ -406,43 +382,28 @@ public class RegisterAllocator implements ASMVisitor {
 
     @Override
     public void visit(StoreInst inst) {
-        if (inst.complete) {
-            currentBlock.pushBack(inst);
-            return;
-        }
-        //a0:存放待存的数
+        PhysicalRegister rs1Reg;
         if (inst.rs1 instanceof VirtualRegister rs1) {
             inst.rs1 = virtual2Stack(rs1);
             loadStackReg(a0, (StackRegister) inst.rs1);
-        } else if (inst.rs1 instanceof PhysicalRegister physicalReg) {
-            currentBlock.pushBack(
-                    new MoveInst(a0, physicalReg)
-            );
+            rs1Reg = a0;
+        } else if (inst.rs1 instanceof PhysicalRegister register) {
+            rs1Reg = register;
         } else {
-            currentBlock.pushBack(
-                    new LiInst(a0, (Imm) inst.rs1)
-            );
+            throw new InternalException("unexpected");
         }
         PhysicalRegister rs2Reg;
-        Imm imm = zero;
-        //取到pointer地址载入rs2Reg,imm
-        if (inst.rs2 instanceof PhysicalRegister physicalReg) {
-            rs2Reg = physicalReg;
+        if (inst.rs2 instanceof VirtualRegister rs2) {//rs2中的值
+            inst.rs2 = virtual2Stack(rs2);
+            loadStackReg(a1, (StackRegister) inst.rs2);
+            rs2Reg = a1;
+        } else if (inst.rs2 instanceof PhysicalRegister register) {
+            rs2Reg = register;
         } else {
-            inst.rs2 = virtual2Stack((VirtualRegister) inst.rs2);
-            Pair<Register, Imm> addr = getRegAddress((StackRegister) inst.rs2);
-            if (inst.needPointerAddr) {
-                rs2Reg = (PhysicalRegister) addr.getFirst();
-                imm = addr.getSecond();
-            } else {
-                currentBlock.pushBack(
-                        new LoadInst((PhysicalRegister) addr.getFirst(), a1, addr.getSecond())
-                );
-                rs2Reg = a1;
-            }
+            throw new InternalException("unexpected");
         }
         currentBlock.pushBack(
-                new StoreInst(a0, rs2Reg, imm)
+                new StoreInst(rs1Reg, rs2Reg, inst.imm)
         );
     }
 

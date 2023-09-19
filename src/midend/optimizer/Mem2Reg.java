@@ -285,8 +285,8 @@ public class Mem2Reg {
             }
         } else if (stmt instanceof Phi phi) {
             function.ssaPhiResult.put(phi.phiLabel, phi.ssaResult);
-        } else if (stmt instanceof Load load && load.loadRet) {
-            function.ssaRetVal = load.ssaPtr;
+        } else if (stmt instanceof Alloca alloca && "retVal".equals(alloca.result.identity)) {
+            function.ssaRetVal = alloca.ssaResult;
         }
     }
 
