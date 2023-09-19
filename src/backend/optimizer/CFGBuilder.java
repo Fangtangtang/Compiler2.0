@@ -36,19 +36,26 @@ public class CFGBuilder {
         );
         for (int i = 0; i < func.funcBlocks.size(); i++) {
             Block block = func.funcBlocks.get(i);
+            if (block.instructions.size() == 0) {
+                continue;
+            }
             ASMInstruction instruction = block.instructions.get(
                     block.instructions.size() - 1
             );
-            Block target;
+            Block target = null;
             if (instruction instanceof JumpInst jumpInst) {
                 target = blockMap.get(jumpInst.desName);
             } else if (instruction instanceof BranchInst branchInst) {
                 target = blockMap.get(branchInst.desName);
             } else {
-                target = func.funcBlocks.get(i + 1);
+                if (i + 1 < func.funcBlocks.size()) {
+                    target = func.funcBlocks.get(i + 1);
+                }
             }
-            block.successorList.add(target);
-            target.predecessorList.add(block);
+            if (target != null) {
+                block.successorList.add(target);
+                target.predecessorList.add(block);
+            }
         }
     }
 

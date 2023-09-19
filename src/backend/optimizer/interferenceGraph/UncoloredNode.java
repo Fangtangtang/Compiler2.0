@@ -14,4 +14,8 @@ public class UncoloredNode extends Node {
         this.register = register;
     }
 
+    @Override
+    public String toString() {
+        return "virtual(" + register.name + ")";
+    }
 }

@@ -724,37 +724,48 @@ public class InstructionSelector implements IRVisitor {
     public void visit(Load stmt) {
         //取数到t2
         Pair<Register, Boolean> pointerPair = getPointedAddr(t1, stmt.ssaPtr);
-        PhysicalRegister rs1Reg;
+        Pair<Register, Boolean> resultPair = getPointedAddr(t3, stmt.ssaResult);
         //global
         if (pointerPair.getFirst() instanceof PhysicalRegister register) {
-            currentBlock.pushBack(
-                    new LoadInst(register, t2, zero)
-            );
+            if (resultPair.getFirst() instanceof PhysicalRegister addr) {
+                currentBlock.pushBack(
+                        new LoadInst(register, t2, zero)
+                );
+                currentBlock.pushBack(
+                        new StoreInst(t2, addr, zero)
+                );
+            } else {
+                currentBlock.pushBack(
+                        new LoadInst(register, resultPair.getFirst(), zero)
+                );
+            }
         }
         //localVar
         else if (pointerPair.getSecond()) {
-            currentBlock.pushBack(
-                    new MoveInst(t2, pointerPair.getFirst())
-            );
+            if (resultPair.getFirst() instanceof PhysicalRegister addr) {
+                currentBlock.pushBack(
+                        new StoreInst(pointerPair.getFirst(), addr, zero)
+                );
+            } else {
+                currentBlock.pushBack(
+                        new MoveInst(resultPair.getFirst(), pointerPair.getFirst())
+                );
+            }
         }
         //localTmpVar
         else {
-            currentBlock.pushBack(
-                    new LoadInst(pointerPair.getFirst(), t2, zero)
-            );
-        }
-        //存数
-        Pair<Register, Boolean> resultPair = getPointedAddr(t1, stmt.ssaResult);
-        PhysicalRegister addr;
-        if (resultPair.getFirst() instanceof PhysicalRegister) {
-            addr = (PhysicalRegister) resultPair.getFirst();
-            currentBlock.pushBack(
-                    new StoreInst(t2, addr, zero)
-            );
-        } else {
-            currentBlock.pushBack(
-                    new MoveInst(resultPair.getFirst(), t2)
-            );
+            if (resultPair.getFirst() instanceof PhysicalRegister addr) {
+                currentBlock.pushBack(
+                        new LoadInst(pointerPair.getFirst(), t2, zero)
+                );
+                currentBlock.pushBack(
+                        new StoreInst(t2, addr, zero)
+                );
+            } else {
+                currentBlock.pushBack(
+                        new LoadInst(pointerPair.getFirst(), resultPair.getFirst(), zero)
+                );
+            }
         }
     }
 

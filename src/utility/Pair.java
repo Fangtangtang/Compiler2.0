@@ -1,5 +1,7 @@
 package utility;
 
+import java.util.Objects;
+
 /**
  * @author F
  * 数据对
@@ -27,5 +29,21 @@ public class Pair<F, S> {
 
     public void setSecond(S second) {
         this.second = second;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Pair<?, ?> pair)) {
+            return false;
+        }
+        return Objects.equals(getFirst(), pair.getFirst()) && Objects.equals(getSecond(), pair.getSecond());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getFirst(), getSecond());
     }
 }

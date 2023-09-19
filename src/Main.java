@@ -1,17 +1,16 @@
 import asm.Program;
 import ast.other.RootNode;
-import backend.InstSelector;
+import backend.ASMOptimizer;
 import backend.InstructionSelector;
+import backend.InstructionSelectorOnEntity;
 import backend.RegisterAllocator;
+import backend.optimizer.GraphColoring;
 import frontend.*;
 import midend.IROptimizer;
-import midend.optimizer.CFGBuilder;
-import midend.optimizer.DomTreeBuilder;
 import midend.IRBuilder;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 import parser.*;
-import tool.IRPrinter;
 import utility.error.MxErrorListener;
 import utility.SymbolTable;
 import utility.error.MxException;
@@ -27,13 +26,7 @@ public class Main {
     //程序的入口点
     //可能会抛出任何类型的异常
     public static void main(String[] args) throws Exception {
-//        String fileName ="C:/Users/21672/Desktop/mx_raw/sema/function-package/function-6.mx";
-
-        String fileName = "testcases/primary/function/error.mx";
-//        String fileName ="C:/Users/21672/Desktop/mx_raw/sema/symbol-package/symbol-2.mx";
-
         InputStream inputStream = System.in;
-//        InputStream inputStream = new FileInputStream(fileName);
 
         try {
             compile(inputStream);
@@ -77,21 +70,30 @@ public class Main {
 //        IRPrinter printer = new IRPrinter(outputStream);
 //        printer.visit(irBuilder.irRoot);
 
-//        IROptimizer optimizer = new IROptimizer(irBuilder.irRoot);
-//        optimizer.execute();
+        IROptimizer optimizer = new IROptimizer(irBuilder.irRoot);
+        optimizer.execute();
+        Program program = new Program();
+        InstructionSelector selector = new InstructionSelector(program);
+        selector.visit(irBuilder.irRoot);
 
-//        Program program = new Program();
-//        InstructionSelector selector = new InstructionSelector(program);
-//        selector.visit(irBuilder.irRoot);
+
 //        RegisterAllocator allocator = new RegisterAllocator(selector.registerMap);
 //        allocator.visit(program);
-        Program program = new Program();
-        InstSelector instSelector = new InstSelector(program);
-        instSelector.visit(irBuilder.irRoot);
-        RegisterAllocator allocator = new RegisterAllocator(instSelector.registerMap);
-        allocator.visit(program);
 
-        program.print(outputStream);
+        ASMOptimizer asmOptimizer = new ASMOptimizer(program.text, selector.registerMap);
+        asmOptimizer.execute();
+
+        program.printRegColoring(outputStream);
+
+        //without optimize
+//        Program program = new Program();
+//        InstructionSelectorOnEntity instSelector = new InstructionSelectorOnEntity(program);
+//        instSelector.visit(irBuilder.irRoot);
+//        RegisterAllocator allocator = new RegisterAllocator(instSelector.registerMap);
+//        allocator.visit(program);
+//        program.print(outputStream);
+
+
     }
 }
 

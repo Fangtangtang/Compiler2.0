@@ -39,4 +39,12 @@ public class InterferenceGraph {
     public HashSet<Node> getAdjList(Node node) {
         return adjList.get(node);
     }
+
+    public void print(){
+        adjSet.forEach(
+                edge->{
+                    System.out.println(edge.getFirst()+" -> "+edge.getSecond());
+                }
+        );
+    }
 }

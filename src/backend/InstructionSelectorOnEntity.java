@@ -5,9 +5,7 @@ import asm.instruction.*;
 import asm.operand.*;
 import asm.section.*;
 import ir.*;
-import ir.entity.Entity;
-import ir.entity.SSAEntity;
-import ir.entity.Storage;
+import ir.entity.*;
 import ir.entity.constant.*;
 import ir.entity.var.*;
 import ir.function.*;
@@ -23,7 +21,7 @@ import java.util.*;
  * @author F
  * 遍历IR，转化为ASM指令
  */
-public class InstSelector implements IRVisitor {
+public class InstructionSelectorOnEntity implements IRVisitor {
     //使用的所用物理寄存器
     public PhysicalRegMap registerMap = new PhysicalRegMap();
     PhysicalRegister t0, t1, t2, t3;
@@ -87,48 +85,6 @@ public class InstSelector implements IRVisitor {
         }
     }
 
-    private Operand toOperand(SSAEntity ssaEntity) {
-        Entity entity = ssaEntity.origin;
-        if (entity instanceof GlobalVar globalVar) {
-            //全局变量在虚拟寄存器的副本（string的地址，其余的值）
-            //localTmpVar
-            VirtualRegister globalVarReg;
-            if (toReg.containsKey(entity.toString())) {
-                globalVarReg = toReg.get(entity.toString());
-            } else {
-                globalVarReg = newVirtualReg(entity.toString(), false);
-                toReg.put(entity.toString(), globalVarReg);
-            }
-            if (globalVar.storage instanceof ConstString) {//地址
-                currentBlock.pushBack(
-                        new GlobalAddrInst(globalVarReg, globalVar.identity)
-                );
-            } else {
-                t0.size = 4;
-                currentBlock.pushBack(
-                        new GlobalAddrInst(t0, globalVar.identity)
-                );
-                if (isBool(globalVar.storage.type)) {
-                    globalVarReg.size = 1;
-                } else {
-                    globalVarReg.size = 4;
-                }
-                //全局变量的值
-                currentBlock.pushBack(
-                        new LoadInst(t0, t1, zero)
-                );
-                currentBlock.pushBack(
-                        new MoveInst(globalVarReg, t1)
-                );
-            }
-            return globalVarReg;
-        } else if (entity instanceof Constant constant) {
-            return const2operand(constant);
-        } else {
-            return getVirtualRegister(ssaEntity);
-        }
-    }
-
     /**
      * 找到对应的virtual register
      * IR上entity映射到asm的VirtualRegister
@@ -138,31 +94,6 @@ public class InstSelector implements IRVisitor {
      */
     public VirtualRegister getVirtualRegister(Entity entity) {
         String name = entity.toString();
-        IRType type;
-        if (entity instanceof LocalVar ptr) {
-            type = ptr.storage.type;
-        } else if (entity instanceof LocalTmpVar tmpVar) {
-            type = tmpVar.type;
-        } else {
-            throw new InternalException("get virtual register of unexpected entity " + entity);
-        }
-        boolean flag = isBool(type);
-        if (toReg.containsKey(name)) {
-            return toReg.get(name);
-        }
-        VirtualRegister register = newVirtualReg(name, flag);
-        toReg.put(name, register);
-        return register;
-    }
-
-    public VirtualRegister getVirtualRegister(SSAEntity ssaEntity) {
-        Entity entity = ssaEntity.origin;
-        String name;
-        if (ssaEntity.lr == null) {
-            name = entity.toString();
-        } else {
-            name = ssaEntity.lr.setName();
-        }
         IRType type;
         if (entity instanceof LocalVar ptr) {
             type = ptr.storage.type;
@@ -267,7 +198,7 @@ public class InstSelector implements IRVisitor {
         return new Pair<>(getVirtualRegister(entity), false);
     }
 
-    public InstSelector(Program program) {
+    public InstructionSelectorOnEntity(Program program) {
         this.program = program;
         t0 = registerMap.getReg("t0");
         t1 = registerMap.getReg("t1");
@@ -783,37 +714,51 @@ public class InstSelector implements IRVisitor {
     public void visit(Load stmt) {
         //取数到t2
         Pair<Register, Boolean> pointerPair = getPointedAddr(t1, stmt.pointer);
+        Pair<Register, Boolean> resultPair = getPointedAddr(t3, stmt.result);
         PhysicalRegister rs1Reg;
         //global
         if (pointerPair.getFirst() instanceof PhysicalRegister register) {
-            currentBlock.pushBack(
-                    new LoadInst(register, t2, zero)
-            );
+            if (resultPair.getFirst() instanceof PhysicalRegister addr) {
+                currentBlock.pushBack(
+                        new LoadInst(register, t2, zero)
+                );
+                currentBlock.pushBack(
+                        new StoreInst(t2, addr, zero)
+                );
+            } else {
+                currentBlock.pushBack(
+                        new LoadInst(register, resultPair.getFirst(), zero)
+                );
+            }
+            return;
         }
         //localVar
         else if (pointerPair.getSecond()) {
-            currentBlock.pushBack(
-                    new MoveInst(t2, pointerPair.getFirst())
-            );
+            if (resultPair.getFirst() instanceof PhysicalRegister addr) {
+                currentBlock.pushBack(
+                        new StoreInst(pointerPair.getFirst(), addr, zero)
+                );
+            } else {
+                currentBlock.pushBack(
+                        new MoveInst(resultPair.getFirst(), pointerPair.getFirst())
+                );
+            }
+            return;
         }
         //localTmpVar
         else {
-            currentBlock.pushBack(
-                    new LoadInst(pointerPair.getFirst(), t2, zero)
-            );
-        }
-        //存数
-        Pair<Register, Boolean> resultPair = getPointedAddr(t1, stmt.result);
-        PhysicalRegister addr;
-        if (resultPair.getFirst() instanceof PhysicalRegister) {
-            addr = (PhysicalRegister) resultPair.getFirst();
-            currentBlock.pushBack(
-                    new StoreInst(t2, addr, zero)
-            );
-        } else {
-            currentBlock.pushBack(
-                    new MoveInst(resultPair.getFirst(), t2)
-            );
+            if (resultPair.getFirst() instanceof PhysicalRegister addr) {
+                currentBlock.pushBack(
+                        new LoadInst(pointerPair.getFirst(), t2, zero)
+                );
+                currentBlock.pushBack(
+                        new StoreInst(t2, addr, zero)
+                );
+            } else {
+                currentBlock.pushBack(
+                        new LoadInst(pointerPair.getFirst(), resultPair.getFirst(), zero)
+                );
+            }
         }
     }
 

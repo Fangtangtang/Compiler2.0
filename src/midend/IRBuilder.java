@@ -533,7 +533,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 );
             }
         }
-        if ("main".equals(funcName)) {
+        if ("main".equals(funcName) && !irRoot.globalVarInitFunction.isEmpty()) {
             currentInitStmts.add(
                     new Call(irRoot.globalVarInitFunction, new LocalTmpVar(new VoidType(), tmpCounter.cnt))
             );

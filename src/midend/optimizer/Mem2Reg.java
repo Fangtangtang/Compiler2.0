@@ -61,13 +61,13 @@ public class Mem2Reg {
             return null;
         }
         if (entity instanceof Ptr ptr) {
-            return ptr.identity;
+            return ptr.toString();
         }
         if (entity instanceof LocalTmpVar tmpVar) {
             if (tmpVar.type instanceof VoidType) {
                 return null;
             }
-            return String.valueOf(tmpVar.index);
+            return tmpVar.toString();
         }
         throw new InternalException("invalid entity");
     }
@@ -200,14 +200,22 @@ public class Mem2Reg {
 
     //记录不同变量名的当前重命名
     HashMap<String, Stack<SSAEntity>> renameStack = new HashMap<>();
+    HashMap<String, SSAEntity> ssaMap = new HashMap<>();
 
+    //def
     Pair<String, SSAEntity> toSsaEntity(Entity var) {
         String varName = getVarName(var);
         if (varName == null) {
             return new Pair<>(null, new SSAEntity(var));
         }
         if (!counterMap.containsKey(varName)) {
-            return new Pair<>(varName, new SSAEntity(var, new GlobalLiveRange(varName)));
+            if (ssaMap.containsKey(varName)) {
+                return new Pair<>(varName, ssaMap.get(varName));
+//                throw new InternalException("multi defined");
+            }
+            SSAEntity ssa = new SSAEntity(var, new GlobalLiveRange(varName));
+            ssaMap.put(varName, ssa);
+            return new Pair<>(varName, ssa);
         }
         Counter counter = counterMap.get(varName);
         Stack<SSAEntity> stack = renameStack.get(varName);
@@ -219,6 +227,21 @@ public class Mem2Reg {
         );
         stack.push(ssaEntity);
         return new Pair<>(varName, ssaEntity);
+    }
+
+    //use
+    SSAEntity getSsaEntity(Entity var) {
+        String varName = getVarName(var);
+        if (varName == null) {
+            return new SSAEntity(var);
+        }
+        if (renameStack.containsKey(varName)) {
+            return renameStack.get(varName).peek();
+        }
+        if (ssaMap.containsKey(varName)) {
+            return ssaMap.get(varName);
+        }
+        throw new InternalException("ssa not found");
     }
 
     HashMap<String, DomTreeNode> label2node;
@@ -260,29 +283,14 @@ public class Mem2Reg {
         if (varUse != null) {
             ArrayList<SSAEntity> ssaEntityList = new ArrayList<>();
             for (Entity entity : varUse) {
-                String name = getVarName(entity);
-                if (name != null && renameStack.containsKey(name)) {
-                    ssaEntityList.add(renameStack.get(name).peek());
-                } else {
-                    ssaEntityList.add(new SSAEntity(entity));
-                }
+                ssaEntityList.add(getSsaEntity(entity));
             }
             stmt.setUse(ssaEntityList);
         }
         if (stmt instanceof Branch branch && branch.result != null) {
-            String name = getVarName(branch.result);
-            if (name != null && renameStack.containsKey(name)) {
-                ((Branch) stmt).ssaResult = renameStack.get(name).peek();
-            } else {
-                ((Branch) stmt).ssaResult = new SSAEntity(branch.result);
-            }
+            ((Branch) stmt).ssaResult = getSsaEntity(branch.result);
         } else if (stmt instanceof Jump jump && jump.result != null) {
-            String name = getVarName(jump.result);
-            if (name != null && renameStack.containsKey(name)) {
-                ((Jump) stmt).ssaResult = renameStack.get(name).peek();
-            } else {
-                ((Jump) stmt).ssaResult = new SSAEntity(jump.result);
-            }
+            ((Jump) stmt).ssaResult = getSsaEntity(jump.result);
         } else if (stmt instanceof Phi phi) {
             function.ssaPhiResult.put(phi.phiLabel, phi.ssaResult);
         } else if (stmt instanceof Alloca alloca && "retVal".equals(alloca.result.identity)) {
@@ -305,7 +313,7 @@ public class Mem2Reg {
         //origen name -> ssaEntity
         HashMap<String, SSAEntity> defInBlock = new HashMap<>();
         //rename variable in phi
-        int predecessorSize = node.block.predecessorList.size();
+//        int predecessorSize = node.block.predecessorList.size();
         for (Map.Entry<String, Entity> phiVar : node.phiFuncDef.entrySet()) {
             //TODO:确保不出现null？
             Pair<String, SSAEntity> pair = toSsaEntity(phiVar.getValue());
@@ -341,9 +349,9 @@ public class Mem2Reg {
                 renameStack.get(defVar.getKey()).pop();
             }
         }
-        for (Map.Entry<String, Entity> phiVar : node.phiFuncDef.entrySet()) {
-            renameStack.get(phiVar.getKey()).pop();
-        }
+//        for (Map.Entry<String, Entity> phiVar : node.phiFuncDef.entrySet()) {
+//            renameStack.get(phiVar.getKey()).pop();
+//        }
     }
 
     /**

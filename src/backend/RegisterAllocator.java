@@ -324,15 +324,20 @@ public class RegisterAllocator implements ASMVisitor {
             throw new InternalException("unexpected");
         }
         //rd:载入对象
-        PhysicalRegister rdReg;
-        if (inst.rd instanceof PhysicalRegister register) {
-            rdReg = register;
+        if (inst.rd instanceof VirtualRegister rd) {
+            inst.rd = virtual2Stack(rd);
+            a1.size = inst.rd.size;
+            currentBlock.pushBack(
+                    new LoadInst(rs1Reg, a1, inst.imm)
+            );
+            storeStackReg(a1, (StackRegister) inst.rd);
+        } else if (inst.rd instanceof PhysicalRegister register) {
+            currentBlock.pushBack(
+                    new LoadInst(rs1Reg, register, inst.imm)
+            );
         } else {
             throw new InternalException("unexpected");
         }
-        currentBlock.pushBack(
-                new LoadInst(rs1Reg, rdReg, inst.imm)
-        );
     }
 
     @Override

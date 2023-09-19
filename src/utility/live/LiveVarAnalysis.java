@@ -25,7 +25,7 @@ public class LiveVarAnalysis {
         for (Map.Entry<String, BasicBlock> pair : function.blockMap.entrySet()) {
             BasicBlock block = pair.getValue();
             getLiveRange(block);
-            getDefUse(block);
+//            getDefUse(block);
         }
     }
 

@@ -23,4 +23,12 @@ public class GlobalVarInitFunction extends Function {
         );
         currentBlock = this.entry;
     }
+
+    public boolean isEmpty() {
+        //至少有ret
+        if (blockMap.size() > 1) {
+            return false;
+        }
+        return currentBlock.statements.size() == 0;
+    }
 }

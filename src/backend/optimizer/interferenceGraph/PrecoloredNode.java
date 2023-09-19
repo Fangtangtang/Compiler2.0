@@ -13,4 +13,9 @@ public class PrecoloredNode extends Node {
         this.register = register;
         this.color = Colors.Color.valueOf(register.name);
     }
+
+    @Override
+    public String toString() {
+        return "physical(" + register.name + ")";
+    }
 }

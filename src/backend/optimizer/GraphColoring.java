@@ -41,6 +41,7 @@ public class GraphColoring {
             LivenessAnalysis analyzer = new LivenessAnalysis(func);
             analyzer.analysisLiveOut();
             buildInterferenceGraph();
+//            this.interferenceGraph.print();
             makeWorkList();
             //repeat until workLists are empty
             while (true) {
@@ -257,6 +258,7 @@ public class GraphColoring {
             addWorkList(u);
         }
         //两结点Precolored、两结点连边冲突
+        //TODO:错误的hash
         else if (v instanceof PrecoloredNode
                 || interferenceGraph.adjSet.contains(new Pair<Node, Node>(u, v))
         ) {
@@ -267,6 +269,11 @@ public class GraphColoring {
                 || u instanceof UncoloredNode && validUnderBriggs(u, v)) {
             moveInstSet.coalescedMoves.add(moveInst);
             combine(u, (UncoloredNode) v);
+
+//            System.out.println('\n');
+//            System.out.println("combine:\t" + u + '\t' + v);
+//            this.interferenceGraph.print();
+
             addWorkList(u);
         } else {
             moveInstSet.activeMoves.add(moveInst);
