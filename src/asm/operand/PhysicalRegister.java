@@ -10,6 +10,17 @@ public class PhysicalRegister extends Register {
     public PhysicalRegister(String name) {
         this.name = name;
         size = 4;
+        index = ++id;
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return super.equals(o);
     }
 
     @Override
@@ -21,4 +32,5 @@ public class PhysicalRegister extends Register {
     public String toRegColoringString() {
         return name;
     }
+
 }

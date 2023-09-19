@@ -13,11 +13,23 @@ public class VirtualRegister extends Register {
     public VirtualRegister(String name, int size) {
         this.name = name;
         this.size = size;
+        index = ++id;
     }
 
     public VirtualRegister(int offset, int size) {
         this.offset = offset;
         this.size = size;
+        index = ++id;
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return super.equals(o);
     }
 
     @Override

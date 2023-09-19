@@ -5,6 +5,7 @@ import asm.operand.Register;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Objects;
 
 /**
  * @author F
@@ -16,11 +17,14 @@ import java.util.ArrayList;
 public class MoveInst extends ASMInstruction {
     public Register rd;
     public Register rs1;
+    static int id = 0;
+    int index;
 
     public MoveInst(Register rd, Register rs1) {
         this.rd = rd;
         this.rs1 = rs1;
         rd.size = rs1.size;
+        index = ++id;
     }
 
     @Override
@@ -37,6 +41,22 @@ public class MoveInst extends ASMInstruction {
             return;
         }
         out.println("\tmv\t" + rd.toRegColoringString() + ", " + rs1.toRegColoringString());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof MoveInst moveInst)) {
+            return false;
+        }
+        return index == moveInst.index;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(index);
     }
 
     @Override

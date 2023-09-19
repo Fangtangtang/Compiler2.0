@@ -12,6 +12,17 @@ public class PrecoloredNode extends Node {
     public PrecoloredNode(PhysicalRegister register) {
         this.register = register;
         this.color = Colors.Color.valueOf(register.name);
+        index = ++id;
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return super.equals(o);
     }
 
     @Override

@@ -9,9 +9,7 @@ import ir.entity.var.Ptr;
 import ir.function.Function;
 import ir.irType.VoidType;
 import ir.stmt.Stmt;
-import ir.stmt.instruction.Alloca;
-import ir.stmt.instruction.Load;
-import ir.stmt.instruction.Phi;
+import ir.stmt.instruction.*;
 import ir.stmt.terminal.*;
 import utility.Counter;
 import utility.live.GlobalLiveRange;
@@ -349,9 +347,6 @@ public class Mem2Reg {
                 renameStack.get(defVar.getKey()).pop();
             }
         }
-//        for (Map.Entry<String, Entity> phiVar : node.phiFuncDef.entrySet()) {
-//            renameStack.get(phiVar.getKey()).pop();
-//        }
     }
 
     /**

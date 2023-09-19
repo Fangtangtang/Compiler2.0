@@ -11,6 +11,7 @@ public class StackRegister extends Register {
     public StackRegister(int offset, int size) {
         this.offset = offset;
         this.size = size;
+        index = ++id;
     }
 
     @Override

@@ -13,7 +13,7 @@ import java.util.*;
 public class Block {
     public String name;
 
-    public ArrayList<ASMInstruction> instructions = new ArrayList<>();
+    public LinkedList<ASMInstruction> instructions = new LinkedList<>();
     public ArrayList<Block> predecessorList = new ArrayList<>();
     public ArrayList<Block> successorList = new ArrayList<>();
     public int reversePostorder;

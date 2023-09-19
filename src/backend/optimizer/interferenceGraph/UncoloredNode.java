@@ -12,6 +12,17 @@ public class UncoloredNode extends Node {
 
     public UncoloredNode(VirtualRegister register) {
         this.register = register;
+        index = ++id;
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return super.equals(o);
     }
 
     @Override

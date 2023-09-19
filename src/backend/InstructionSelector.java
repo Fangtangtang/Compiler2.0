@@ -174,29 +174,6 @@ public class InstructionSelector implements IRVisitor {
         }
     }
 
-//    /**
-//     * 指针对象
-//     * - 全局变量：直接找到地址
-//     * - 局部变量：为指向空间的指针，目标获得空间地址，此时未知
-//     * - 局部临时变量：值为地址，只需取值
-//     *
-//     * @param reg    存地址的reg
-//     * @param entity 指针对象
-//     * @return pair：true 要地址，false已知或要值
-//     */
-//    private Pair<Register, Boolean> getPointedAddr(PhysicalRegister reg, Entity entity) {
-//        if (entity instanceof GlobalVar globalVar) {
-//            currentBlock.pushBack(
-//                    new GlobalAddrInst(reg, globalVar.identity)
-//            );
-//            return new Pair<>(reg, false);
-//        } else if (entity instanceof LocalVar localVar) {
-//            return new Pair<>(getVirtualRegister(entity), true);
-//        }
-//        //包含值的virtual reg
-//        return new Pair<>(getVirtualRegister(entity), false);
-//    }
-
     private Pair<Register, Boolean> getPointedAddr(PhysicalRegister reg, SSAEntity ssaEntity) {
         Entity entity = ssaEntity.origin;
         if (entity instanceof GlobalVar globalVar) {
@@ -523,13 +500,19 @@ public class InstructionSelector implements IRVisitor {
             }
         }
         //函数调用
-        currentBlock.pushBack(
-                new CallInst(stmt.function.funcName)
-        );
         //存返回值
         if (!(stmt.function.retType instanceof VoidType)) {
             currentBlock.pushBack(
+                    new CallInst(stmt.function.funcName, true)
+            );
+            currentBlock.pushBack(
                     new MoveInst(getVirtualRegister(stmt.ssaResult), registerMap.getReg("a0"))
+            );
+        }
+        //无返回值
+        else {
+            currentBlock.pushBack(
+                    new CallInst(stmt.function.funcName, false)
             );
         }
     }

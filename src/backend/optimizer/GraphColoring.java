@@ -65,8 +65,7 @@ public class GraphColoring {
             rewriteFunction();
         }
         assignColorToReg();
-        addExtraInstToFunc();
-    }
+   }
 
     /**
      * execute循环执行前的初始化
@@ -121,7 +120,7 @@ public class GraphColoring {
                 def = instruction.getDef();
                 if (instruction instanceof MoveInst moveInst) {
                     //live \ use :避免后续在mv间加实边
-                    live.removeAll(use);
+                    use.forEach(live::remove);
                     for (var useReg : use) {
                         toNode(useReg).moveList.add(moveInst);
                     }
@@ -181,11 +180,8 @@ public class GraphColoring {
     }
 
     HashSet<Node> adjacent(Node node) {
-        HashSet<Node> ret = new HashSet<>();
-        ret.addAll(interferenceGraph.getAdjList(node));
-        Iterator<UncoloredNode> iter = selectStack.iterator();
-        while (iter.hasNext()) {
-            UncoloredNode element = iter.next();
+        HashSet<Node> ret = new HashSet<>(interferenceGraph.getAdjList(node));
+        for (UncoloredNode element : selectStack) {
             ret.remove(element);
         }
         ret.removeAll(nodeSet.coalescedNodes);
@@ -258,9 +254,8 @@ public class GraphColoring {
             addWorkList(u);
         }
         //两结点Precolored、两结点连边冲突
-        //TODO:错误的hash
         else if (v instanceof PrecoloredNode
-                || interferenceGraph.adjSet.contains(new Pair<Node, Node>(u, v))
+                || interferenceGraph.adjSet.contains(new Pair<>(u, v))
         ) {
             moveInstSet.constrainedMoves.add(moveInst);
             addWorkList(u);
@@ -432,7 +427,7 @@ public class GraphColoring {
 
     //counter计数，用于给use、def重命名
     HashMap<VirtualRegister, Pair<StackRegister, Counter>> spillToStack;
-    ArrayList<ASMInstruction> rewrittenInstructions;
+    LinkedList<ASMInstruction> rewrittenInstructions;
     Imm zero = new Imm(0);
 
     Pair<Register, Imm> getRegAddress(StackRegister register) {
@@ -504,7 +499,7 @@ public class GraphColoring {
         Register def;
         Register rs;
         for (Block block : func.funcBlocks) {
-            rewrittenInstructions = new ArrayList<>();
+            rewrittenInstructions = new LinkedList<>();
             for (ASMInstruction inst : block.instructions) {
                 use = inst.getUse();
                 def = inst.getDef();
@@ -542,43 +537,6 @@ public class GraphColoring {
         }
     }
 
-    /**
-     * 添加进出函数时的额外指令
-     * - 开栈
-     * - 回收
-     */
-    void addExtraInstToFunc() {
-        int stackSize = func.basicSpace + (func.extraParamCnt << 2);
-        stackSize = (stackSize + 15) >> 4;
-        stackSize <<= 4;
-        //进入函数时的额外指令(不加入funcBlocks)
-        func.entry = new Block(func.name);
-        func.entry.pushBack(
-                new ImmBinaryInst(sp, new Imm(-stackSize), sp, ImmBinaryInst.Opcode.addi)
-        );
-        func.entry.pushBack(
-                new StoreInst(registerMap.getReg("ra"), sp, new Imm(stackSize - 4))
-        );
-        func.entry.pushBack(
-                new StoreInst(fp, sp, new Imm(stackSize - 8))
-        );
-        func.entry.pushBack(
-                new ImmBinaryInst(sp, new Imm(stackSize), fp, ImmBinaryInst.Opcode.addi)
-        );
-        //出函数的指令
-        Block endBlock = func.funcBlocks.get(func.funcBlocks.size() - 1);
-        endBlock.pushBack(
-                new LoadInst(sp, registerMap.getReg("ra"), new Imm(stackSize - 4))
-        );
-        endBlock.pushBack(
-                new LoadInst(sp, fp, new Imm(stackSize - 8))
-        );
-        endBlock.pushBack(
-                new ImmBinaryInst(sp, new Imm(stackSize), sp, ImmBinaryInst.Opcode.addi)
-        );
-        endBlock.pushBack(
-                new RetInst()
-        );
-    }
+
 
 }

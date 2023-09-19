@@ -12,6 +12,8 @@ public abstract class Node {
     public int degree;
     public Node alias;
     public Colors.Color color;
+    static int id = 0;
+    int index;
     //节点相关的move表
     public HashSet<MoveInst> moveList = new HashSet<>();
 
@@ -19,15 +21,18 @@ public abstract class Node {
     public abstract String toString();
 
     @Override
-    public int hashCode() {
-        return toString().hashCode();
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Node node)) {
+            return false;
+        }
+        return index == node.index;
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof Node)) {
-            return false;
-        }
-        return this.toString().equals(obj.toString());
+    public int hashCode() {
+        return Objects.hash(index);
     }
 }

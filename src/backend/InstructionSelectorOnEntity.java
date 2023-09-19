@@ -512,13 +512,17 @@ public class InstructionSelectorOnEntity implements IRVisitor {
             }
         }
         //函数调用
-        currentBlock.pushBack(
-                new CallInst(stmt.function.funcName)
-        );
         //存返回值
         if (!(stmt.function.retType instanceof VoidType)) {
             currentBlock.pushBack(
+                    new CallInst(stmt.function.funcName, true)
+            );
+            currentBlock.pushBack(
                     new MoveInst(getVirtualRegister(stmt.result), registerMap.getReg("a0"))
+            );
+        } else {
+            currentBlock.pushBack(
+                    new CallInst(stmt.function.funcName, false)
             );
         }
     }
