@@ -23,8 +23,8 @@ public class GraphColoring {
     MoveInstSet moveInstSet;
     //reg到冲突图node的映射
     HashMap<Register, Node> reg2node;
-        int K = 26;
-//    int K = 3;
+    int K = 26;
+    //    int K = 3;
     PhysicalRegMap registerMap;
     PhysicalRegister fp, sp, t0;
     HashMap<String, PrecoloredNode> precoloredNodeMap;
@@ -120,7 +120,7 @@ public class GraphColoring {
         Register def;
         for (int i = 0; i < func.funcBlocks.size(); i++) {
             block = func.funcBlocks.get(i);
-            live = block.liveOut;//live reg after current inst
+            live = new HashSet<>(block.liveOut);//live reg after current inst
             //visit inst in reverse order
             ListIterator<ASMInstruction> iter = block.instructions.listIterator(
                     block.instructions.size()

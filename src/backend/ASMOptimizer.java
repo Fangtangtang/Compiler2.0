@@ -88,7 +88,7 @@ public class ASMOptimizer {
         for (var reg : callerSaved) {
             func.basicSpace += reg.size;
             StackRegister newReg = new StackRegister(func.basicSpace, reg.size);
-            pairs.add(new Pair<>(reg, newReg));
+            pairs.add(0, new Pair<>(reg, newReg));
         }
         return pairs;
     }
@@ -98,7 +98,7 @@ public class ASMOptimizer {
     void store(Block block,
                ArrayList<Pair<PhysicalRegister, StackRegister>> pairs) {
         for (var pair : pairs) {
-            pair.getFirst().size=pair.getSecond().size;
+            pair.getFirst().size = pair.getSecond().size;
             if (pair.getSecond().offset < (1 << 11)) {
                 block.pushBack(
                         new StoreInst(pair.getFirst(), fp, new Imm(-pair.getSecond().offset))
@@ -131,7 +131,7 @@ public class ASMOptimizer {
     void load(Block block,
               ArrayList<Pair<PhysicalRegister, StackRegister>> pairs) {
         for (var pair : pairs) {
-            pair.getFirst().size=pair.getSecond().size;
+            pair.getFirst().size = pair.getSecond().size;
             if (pair.getSecond().offset < (1 << 11)) {
                 block.pushBack(
                         new LoadInst(fp, pair.getFirst(), new Imm(-pair.getSecond().offset))

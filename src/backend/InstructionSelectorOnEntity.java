@@ -279,7 +279,6 @@ public class InstructionSelectorOnEntity implements IRVisitor {
             if (i == function.parameterList.size()) {
                 break;
             }
-//            reg = registerMap.getReg("a" + i);
             reg = new PhysicalRegister("a" + i);
             param = function.parameterList.get(i);
             setPhysicalRegSize(reg, param);

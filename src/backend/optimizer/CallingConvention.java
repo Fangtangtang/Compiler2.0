@@ -115,7 +115,7 @@ public class CallingConvention {
         for (var reg : callerSaved) {
             func.basicSpace += reg.size;
             StackRegister newReg = new StackRegister(func.basicSpace, reg.size);
-            pairs.add(new Pair<>(reg, newReg));
+            pairs.add(0, new Pair<>(reg, newReg));
         }
         return pairs;
     }
@@ -125,7 +125,7 @@ public class CallingConvention {
     void beforeCall(ListIterator<ASMInstruction> iter,
                     ArrayList<Pair<PhysicalRegister, StackRegister>> pairs) {
         for (var pair : pairs) {
-            pair.getFirst().size=pair.getSecond().size;
+            pair.getFirst().size = pair.getSecond().size;
             int size;
             if (pair.getSecond().offset < (1 << 11)) {
                 iter.add(
@@ -167,7 +167,7 @@ public class CallingConvention {
                    ArrayList<Pair<PhysicalRegister, StackRegister>> pairs) {
         iter.next();
         for (var pair : pairs) {
-            pair.getFirst().size=pair.getSecond().size;
+            pair.getFirst().size = pair.getSecond().size;
             int size;
             if (pair.getSecond().offset < (1 << 11)) {
                 iter.add(
