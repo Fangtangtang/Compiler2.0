@@ -3,6 +3,7 @@ package backend.optimizer;
 import asm.*;
 import asm.instruction.*;
 import asm.section.Text;
+import utility.error.InternalException;
 
 import java.util.*;
 
@@ -24,7 +25,7 @@ public class CFGBuilder {
         text.functions.forEach(
                 func -> {
                     buildOnFunction(func);
-                    setReorderedBlock(func);
+                    setReorderedBlockOnReverse(func);
                 }
         );
     }
@@ -39,30 +40,34 @@ public class CFGBuilder {
             if (block.instructions.size() == 0) {
                 continue;
             }
-            ASMInstruction instruction = block.instructions.get(
-                    block.instructions.size() - 1
-            );
-            Block target = null;
-            if (instruction instanceof JumpInst jumpInst) {
-                target = blockMap.get(jumpInst.desName);
-            } else if (instruction instanceof BranchInst branchInst) {
-                target = blockMap.get(branchInst.desName);
-            } else {
-                if (i + 1 < func.funcBlocks.size()) {
-                    target = func.funcBlocks.get(i + 1);
+            boolean flag = false;
+            for (var instruction : block.controlInstructions) {
+                Block target = null;
+                if (instruction instanceof JumpInst jumpInst) {
+                    flag = true;
+                    target = blockMap.get(jumpInst.desName);
+                } else if (instruction instanceof BranchInst branchInst) {
+                    target = blockMap.get(branchInst.desName);
+                }
+                if (target != null) {
+                    block.successorList.add(target);
+                    target.predecessorList.add(block);
+                } else {
+                    throw new InternalException("unexpected control inst");
                 }
             }
-            if (target != null) {
+            if (!flag && i + 1 < func.funcBlocks.size()) {
+                Block target = func.funcBlocks.get(i + 1);
                 block.successorList.add(target);
                 target.predecessorList.add(block);
             }
         }
     }
 
-    private void setReorderedBlock(Func func) {
+    private void setReorderedBlockOnReverse(Func func) {
         postorder = new ArrayList<>();
         vis = new HashSet<>();
-        dfs(func.funcBlocks.get(0));
+        dfs(func.funcBlocks.get(func.funcBlocks.size() - 1));
         int maxIndex = postorder.size() - 1;
         for (int index = maxIndex; index >= 0; --index) {
             Block block = postorder.get(index);
@@ -76,10 +81,10 @@ public class CFGBuilder {
 
     private void dfs(Block block) {
         vis.add(block.name);
-        block.successorList.forEach(
-                successor -> {
-                    if (!vis.contains(successor.name)) {
-                        dfs(successor);
+        block.predecessorList.forEach(
+                pred -> {
+                    if (!vis.contains(pred.name)) {
+                        dfs(pred);
                     }
                 }
         );

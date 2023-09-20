@@ -67,19 +67,22 @@ public class Main {
         irBuilder.visit(astRoot);
 
         PrintStream outputStream = System.out;
+
+        //IR
 //        IRPrinter printer = new IRPrinter(outputStream);
 //        printer.visit(irBuilder.irRoot);
 
-        IROptimizer optimizer = new IROptimizer(irBuilder.irRoot);
-        optimizer.execute();
-        Program program = new Program();
-        InstructionSelector selector = new InstructionSelector(program);
-        selector.visit(irBuilder.irRoot);
-
-        ASMOptimizer asmOptimizer = new ASMOptimizer(program.text, selector.registerMap);
-        asmOptimizer.execute();
-
-        program.printRegColoring(outputStream);
+        //OPT
+//        IROptimizer optimizer = new IROptimizer(irBuilder.irRoot);
+//        optimizer.execute();
+//        Program program = new Program();
+//        InstructionSelector selector = new InstructionSelector(program);
+//        selector.visit(irBuilder.irRoot);
+//
+//        ASMOptimizer asmOptimizer = new ASMOptimizer(program.text, selector.registerMap);
+//        asmOptimizer.execute();
+//
+//        program.printRegColoring(outputStream);
 
         //without optimize
 //        Program program = new Program();
@@ -89,7 +92,13 @@ public class Main {
 //        allocator.visit(program);
 //        program.print(outputStream);
 
+        Program program = new Program();
+        InstructionSelectorOnEntity selector = new InstructionSelectorOnEntity(program);
+        selector.visit(irBuilder.irRoot);
+        ASMOptimizer asmOptimizer = new ASMOptimizer(program.text, selector.registerMap);
+        asmOptimizer.execute();
 
+        program.printRegColoring(outputStream);
     }
 }
 

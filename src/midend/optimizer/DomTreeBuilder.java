@@ -22,6 +22,7 @@ public class DomTreeBuilder {
             Function function = entry.getValue();
             function.domTree = new DomTree(function);
         }
+        irRoot.globalVarInitFunction.domTree = new DomTree(irRoot.globalVarInitFunction);
     }
 
 }

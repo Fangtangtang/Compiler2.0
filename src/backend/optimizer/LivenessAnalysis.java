@@ -53,15 +53,12 @@ public class LivenessAnalysis {
         while (changed) {
             changed = false;
             //最后一个basic block的liveOut为空
-            //TODO:which to update
-//            for (int i = 1; i < func.reorderedBlock.size(); i++) {
-            for (int i = func.reorderedBlock.size() - 2; i >= 0; i--) {
+            for (int i = 1; i < func.reorderedBlock.size(); i++) {
                 //updated with RPO
                 Block currentBlock = func.reorderedBlock.get(i);
                 HashSet<Register> tmp = new HashSet<>();
                 Block successor;
                 for (int j = 0; j < currentBlock.successorList.size(); j++) {
-//                for (int j = currentBlock.successorList.size() - 2; j >= 0; --j) {
                     successor = currentBlock.successorList.get(j);
                     tmp.addAll(successor.use);
                     for (Register reg : successor.liveOut) {

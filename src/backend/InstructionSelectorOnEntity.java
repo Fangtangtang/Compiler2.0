@@ -161,7 +161,6 @@ public class InstructionSelectorOnEntity implements IRVisitor {
         }
         //先lui，如果低位非0，addi
         else {
-//            t0.size = 4;
             PhysicalRegister t0 = new PhysicalRegister("t0", 4);
             currentBlock.pushBack(
                     new LuiInst(t0, new Imm((num >> 12)))
@@ -196,7 +195,7 @@ public class InstructionSelectorOnEntity implements IRVisitor {
                     new GlobalAddrInst(reg, globalVar.identity)
             );
             return new Pair<>(reg, false);
-        } else if (entity instanceof LocalVar localVar) {
+        } else if (entity instanceof LocalVar) {
             return new Pair<>(getVirtualRegister(entity), true);
         }
         //包含值的virtual reg
@@ -316,9 +315,6 @@ public class InstructionSelectorOnEntity implements IRVisitor {
                     new MoveInst(a0, getVirtualRegister(function.retVal))
             );
         }
-        currentBlock.pushBack(
-                new RetInst()
-        );
     }
 
     @Override
@@ -397,7 +393,7 @@ public class InstructionSelectorOnEntity implements IRVisitor {
                         new LiInst(t1, imm)
                 );
                 currentBlock.pushBack(
-                        new BinaryInst(t1, (Register) operand2, resultReg, stmt.operator)
+                        new BinaryInst(t1, operand2, resultReg, stmt.operator)
                 );
             } else {
                 currentBlock.pushBack(
@@ -420,7 +416,7 @@ public class InstructionSelectorOnEntity implements IRVisitor {
                         new LiInst(t1, imm)
                 );
                 currentBlock.pushBack(
-                        new BinaryInst((Register) operand1, t1, resultReg, stmt.operator)
+                        new BinaryInst(operand1, t1, resultReg, stmt.operator)
                 );
             } else {
                 currentBlock.pushBack(
@@ -430,7 +426,7 @@ public class InstructionSelectorOnEntity implements IRVisitor {
             return;
         } else {
             currentBlock.pushBack(
-                    new BinaryInst((Register) operand1, (Register) operand2, resultReg, stmt.operator)
+                    new BinaryInst(operand1, (Register) operand2, resultReg, stmt.operator)
             );
         }
     }
@@ -673,7 +669,19 @@ public class InstructionSelectorOnEntity implements IRVisitor {
         //其余
         Operand op1 = toOperand(stmt.op1);
         Operand op2 = toOperand(stmt.op2);
+        PhysicalRegister t1 = new PhysicalRegister("t1", 4);
         if (!(stmt.cond.equals(Icmp.Cond.eq) || stmt.cond.equals(Icmp.Cond.ne))) {
+            if (op1 instanceof Imm imm) {
+                currentBlock.pushBack(
+                        new LiInst(t1, imm)
+                );
+                op1 = t1;
+            } else if (op2 instanceof Imm imm) {
+                currentBlock.pushBack(
+                        new LiInst(t1, imm)
+                );
+                op2 = t1;
+            }
             if (stmt.cond.equals(Icmp.Cond.sle)) {
                 currentBlock.pushBack(
                         new CmpInst(op1, op2, resultReg, Icmp.Cond.sgt)
@@ -694,7 +702,6 @@ public class InstructionSelectorOnEntity implements IRVisitor {
                 );
             }
         } else {
-            PhysicalRegister t1 = new PhysicalRegister("t1", 4);
             if (op1 instanceof Imm imm) {
                 currentBlock.pushBack(
                         new ImmBinaryInst((Register) op2, new Imm(-imm.value), t1, ImmBinaryInst.Opcode.addi)

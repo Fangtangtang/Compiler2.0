@@ -90,7 +90,6 @@ public class RegisterAllocator implements ASMVisitor {
         }
         //先lui，如果低位非0，addi
         else {
-//            t0.size = 4;
             t0 = new PhysicalRegister("t0", 4);
             currentBlock.pushBack(
                     new LuiInst(t0, new Imm((num >> 12)))
@@ -198,13 +197,15 @@ public class RegisterAllocator implements ASMVisitor {
             a0 = new PhysicalRegister("a0", rs1.size);
             loadStackReg(a0, (StackRegister) rs1);
             rs1Reg = a0;
-        } else if (rs1 instanceof Imm imm1) {
-            a1 = new PhysicalRegister("a1", imm1.size);
-            currentBlock.pushBack(
-                    new LiInst(a1, imm1)
-            );
-            rs1Reg = a1;
-        } else {
+        }
+//        else if (rs1 instanceof Imm imm1) {
+//            a1 = new PhysicalRegister("a1", imm1.size);
+//            currentBlock.pushBack(
+//                    new LiInst(a1, imm1)
+//            );
+//            rs1Reg = a1;
+//        }
+        else {
             rs1Reg = rs1;
         }
         if (rs2 instanceof VirtualRegister r2) {
@@ -212,13 +213,15 @@ public class RegisterAllocator implements ASMVisitor {
             a2 = new PhysicalRegister("a2", rs2.size);
             loadStackReg(a2, (StackRegister) rs2);
             rs2Reg = a2;
-        } else if (rs2 instanceof Imm imm2) {
-            a3 = new PhysicalRegister("a3", imm2.size);
-            currentBlock.pushBack(
-                    new LiInst(a3, imm2)
-            );
-            rs2Reg = a3;
-        } else {
+        }
+//        else if (rs2 instanceof Imm imm2) {
+//            a3 = new PhysicalRegister("a3", imm2.size);
+//            currentBlock.pushBack(
+//                    new LiInst(a3, imm2)
+//            );
+//            rs2Reg = a3;
+//        }
+        else {
             rs2Reg = rs2;
         }
         return new Pair<>(rs1Reg, rs2Reg);

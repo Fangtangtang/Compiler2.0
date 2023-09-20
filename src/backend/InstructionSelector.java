@@ -185,7 +185,7 @@ public class InstructionSelector implements IRVisitor {
                     new GlobalAddrInst(reg, globalVar.identity)
             );
             return new Pair<>(reg, false);
-        } else if (entity instanceof LocalVar localVar) {
+        } else if (entity instanceof LocalVar) {
             return new Pair<>(getVirtualRegister(ssaEntity), true);
         }
         //包含值的virtual reg
@@ -195,10 +195,6 @@ public class InstructionSelector implements IRVisitor {
 
     public InstructionSelector(Program program) {
         this.program = program;
-//        t0 = registerMap.getReg("t0");
-//        t1 = registerMap.getReg("t1");
-//        t2 = registerMap.getReg("t2");
-//        t3 = registerMap.getReg("t3");
     }
 
     /**
@@ -667,7 +663,19 @@ public class InstructionSelector implements IRVisitor {
         //其余
         Operand op1 = toOperand(stmt.ssaOp1);
         Operand op2 = toOperand(stmt.ssaOp2);
+        PhysicalRegister t1 = new PhysicalRegister("t1", 4);
         if (!(stmt.cond.equals(Icmp.Cond.eq) || stmt.cond.equals(Icmp.Cond.ne))) {
+            if (op1 instanceof Imm imm) {
+                currentBlock.pushBack(
+                        new LiInst(t1, imm)
+                );
+                op1 = t1;
+            } else if (op2 instanceof Imm imm) {
+                currentBlock.pushBack(
+                        new LiInst(t1, imm)
+                );
+                op2 = t1;
+            }
             if (stmt.cond.equals(Icmp.Cond.sle)) {
                 currentBlock.pushBack(
                         new CmpInst(op1, op2, resultReg, Icmp.Cond.sgt)
@@ -688,7 +696,6 @@ public class InstructionSelector implements IRVisitor {
                 );
             }
         } else {
-            PhysicalRegister t1 = new PhysicalRegister("t1", 4);
             if (op1 instanceof Imm imm) {
                 currentBlock.pushBack(
                         new ImmBinaryInst((Register) op2, new Imm(-imm.value), t1, ImmBinaryInst.Opcode.addi)

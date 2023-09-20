@@ -23,7 +23,7 @@ public class Return extends TerminalStmt {
 
     public Return() {
         super();
-        this.value = new Storage(new VoidType());
+//        this.value = new Storage(new VoidType());
     }
 
     public Return(Entity value) {
@@ -34,7 +34,8 @@ public class Return extends TerminalStmt {
     @Override
     public void print(PrintStream out) {
         StringBuilder str = new StringBuilder("\tret");
-        if (value.type instanceof VoidType) {
+//        if (value.type instanceof VoidType) {
+        if (value == null) {
             str.append(" void");
         } else {
             str.append(" ").append(value.type.toString()).append(" ").append(value.toString());
@@ -45,7 +46,8 @@ public class Return extends TerminalStmt {
     @Override
     public void printSSA(PrintStream out) {
         StringBuilder str = new StringBuilder("\tret");
-        if (value.type instanceof VoidType) {
+//        if (value.type instanceof VoidType) {
+        if (value == null) {
             str.append(" void");
         } else {
             str.append(" ").append(value.type.toString()).append(" ").append(ssaEntity.toString());
@@ -60,6 +62,9 @@ public class Return extends TerminalStmt {
 
     @Override
     public ArrayList<Entity> getUse() {
+        if (value == null) {
+            return null;
+        }
         ArrayList<Entity> ret = new ArrayList<>();
         ret.add(value);
         return ret;

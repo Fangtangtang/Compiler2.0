@@ -291,6 +291,11 @@ public class Mem2Reg {
             ((Jump) stmt).ssaResult = getSsaEntity(jump.result);
         } else if (stmt instanceof Phi phi) {
             function.ssaPhiResult.put(phi.phiLabel, phi.ssaResult);
+        } else if (stmt instanceof Call call) {
+            call.ssaParameterList = new ArrayList<>();
+            for (var param : call.parameterList) {
+                call.ssaParameterList.add(getSsaEntity(param));
+            }
         } else if (stmt instanceof Alloca alloca && "retVal".equals(alloca.result.identity)) {
             function.ssaRetVal = alloca.ssaResult;
         }

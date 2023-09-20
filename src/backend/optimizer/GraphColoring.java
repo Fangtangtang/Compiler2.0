@@ -401,13 +401,13 @@ public class GraphColoring {
     void selectSpill() {
         int maxDegree = -1;
         UncoloredNode m = null;
-        for (UncoloredNode node : nodeSet.spilledNodes) {
+        for (UncoloredNode node : nodeSet.spillWorkList) {
             if (node.degree > maxDegree) {
                 maxDegree = node.degree;
                 m = node;
             }
         }
-        nodeSet.spilledNodes.remove(m);
+        nodeSet.spillWorkList.remove(m);
         nodeSet.simplifyWorkList.add(m);
         freezeMoves(m);
     }

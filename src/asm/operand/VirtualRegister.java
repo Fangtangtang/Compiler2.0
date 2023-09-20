@@ -28,7 +28,7 @@ public class VirtualRegister extends Register {
 
     @Override
     public String toString() {
-        return String.valueOf(offset) + "(fp)";
+        return name;
     }
 
     @Override

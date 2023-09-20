@@ -14,6 +14,7 @@ public class Block {
     public String name;
 
     public LinkedList<ASMInstruction> instructions = new LinkedList<>();
+    public ArrayList<ASMInstruction> controlInstructions = new ArrayList<>();
     public ArrayList<Block> predecessorList = new ArrayList<>();
     public ArrayList<Block> successorList = new ArrayList<>();
     public int reversePostorder;
@@ -28,6 +29,9 @@ public class Block {
 
     public void pushBack(ASMInstruction instruction) {
         instructions.add(instruction);
+        if (instruction instanceof BranchInst || instruction instanceof JumpInst) {
+            controlInstructions.add(instruction);
+        }
     }
 
     public void print(PrintStream out) {

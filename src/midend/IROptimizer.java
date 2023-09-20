@@ -28,5 +28,6 @@ public class IROptimizer {
         for (Map.Entry<String, Function> entry : irRoot.funcDef.entrySet()) {
             mem2Reg.execute(entry.getValue());
         }
+        mem2Reg.execute(irRoot.globalVarInitFunction);
     }
 }
