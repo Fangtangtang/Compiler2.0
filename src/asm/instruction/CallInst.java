@@ -14,7 +14,7 @@ import java.util.ArrayList;
 public class CallInst extends ASMInstruction {
 
     public String funcName;
-    boolean hasReturn = false;
+    public boolean hasReturn = false;
 
     public CallInst(String funcName, boolean hasReturn) {
         this.funcName = funcName;

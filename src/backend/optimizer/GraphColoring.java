@@ -26,6 +26,7 @@ public class GraphColoring {
     int K = 26;
     PhysicalRegMap registerMap;
     PhysicalRegister fp, sp, t0;
+    HashMap<String, PrecoloredNode> precoloredNodeMap;
 
     public GraphColoring(Func func, PhysicalRegMap registerMap) {
         this.func = func;
@@ -65,7 +66,7 @@ public class GraphColoring {
             rewriteFunction();
         }
         assignColorToReg();
-   }
+    }
 
     /**
      * execute循环执行前的初始化
@@ -77,15 +78,23 @@ public class GraphColoring {
         nodeSet = new NodeSet();
         moveInstSet = new MoveInstSet();
         reg2node = new HashMap<>();
+        precoloredNodeMap = new HashMap<>();
     }
 
     Node toNode(Register register) {
         if (reg2node.containsKey(register)) {
             return reg2node.get(register);
         }
-        if (register instanceof PhysicalRegister physicalReg) {
-            PrecoloredNode node = new PrecoloredNode(physicalReg);
-            reg2node.put(physicalReg, node);
+        if (register instanceof PhysicalRegister physicalRegister) {
+            PrecoloredNode node;
+            if (precoloredNodeMap.containsKey(physicalRegister.name)) {
+                node = precoloredNodeMap.get(physicalRegister.name);
+            } else {
+                PhysicalRegister reg = registerMap.getReg(physicalRegister.name);
+                node = new PrecoloredNode((PhysicalRegister) register);
+                precoloredNodeMap.put(reg.name, node);
+            }
+            reg2node.put(physicalRegister, node);
             return node;
         }
         if (register instanceof VirtualRegister virtualReg) {
@@ -126,6 +135,12 @@ public class GraphColoring {
                     }
                     toNode(def).moveList.add(moveInst);
                     moveInstSet.workListMoves.add(moveInst);
+                    if (moveInst.isReturn) {
+                        interferenceGraph.addEdge(
+                                toNode(registerMap.getReg("a0")),
+                                toNode(def)
+                        );
+                    }
                 }
                 //添加实冲突边
                 if (def != null) {
@@ -451,7 +466,7 @@ public class GraphColoring {
         }
         //计算真正地址
         rewrittenInstructions.add(
-                new BinaryInst(registerMap.getReg("fp"), t0, t0, BinaryInst.Opcode.sub)
+                new BinaryInst(fp, t0, t0, BinaryInst.Opcode.sub)
         );
         return new Pair<>(t0, zero);
     }
@@ -536,7 +551,6 @@ public class GraphColoring {
             entry.getKey().color = entry.getValue().color;
         }
     }
-
 
 
 }

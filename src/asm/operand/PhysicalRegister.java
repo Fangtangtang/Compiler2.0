@@ -13,6 +13,13 @@ public class PhysicalRegister extends Register {
         index = ++id;
     }
 
+    //形式physical reg，不唯一
+    public PhysicalRegister(String name, int size) {
+        this.name = name;
+        this.size = size;
+        index = ++id;
+    }
+
     @Override
     public int hashCode() {
         return super.hashCode();

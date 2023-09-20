@@ -17,6 +17,7 @@ import java.util.Objects;
 public class MoveInst extends ASMInstruction {
     public Register rd;
     public Register rs1;
+    public boolean isReturn = false;
     static int id = 0;
     int index;
 
@@ -25,6 +26,14 @@ public class MoveInst extends ASMInstruction {
         this.rs1 = rs1;
         rd.size = rs1.size;
         index = ++id;
+    }
+
+    public MoveInst(Register rd, Register rs1, boolean isReturn) {
+        this.rd = rd;
+        this.rs1 = rs1;
+        rd.size = rs1.size;
+        index = ++id;
+        this.isReturn = isReturn;
     }
 
     @Override

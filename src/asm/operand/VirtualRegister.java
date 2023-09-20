@@ -16,12 +16,6 @@ public class VirtualRegister extends Register {
         index = ++id;
     }
 
-    public VirtualRegister(int offset, int size) {
-        this.offset = offset;
-        this.size = size;
-        index = ++id;
-    }
-
     @Override
     public int hashCode() {
         return super.hashCode();

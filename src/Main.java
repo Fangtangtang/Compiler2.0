@@ -76,10 +76,6 @@ public class Main {
         InstructionSelector selector = new InstructionSelector(program);
         selector.visit(irBuilder.irRoot);
 
-
-//        RegisterAllocator allocator = new RegisterAllocator(selector.registerMap);
-//        allocator.visit(program);
-
         ASMOptimizer asmOptimizer = new ASMOptimizer(program.text, selector.registerMap);
         asmOptimizer.execute();
 
