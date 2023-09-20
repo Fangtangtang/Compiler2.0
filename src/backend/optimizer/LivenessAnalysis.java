@@ -14,6 +14,7 @@ import java.util.*;
  */
 public class LivenessAnalysis {
     Func func;
+    HashSet<Register> globalReg;
 
     public LivenessAnalysis(Func func) {
         this.func = func;
@@ -21,9 +22,12 @@ public class LivenessAnalysis {
     }
 
     void setDefUse() {
+        globalReg = new HashSet<>();
         Block block;
         for (int i = 0; i < func.funcBlocks.size(); i++) {
             block = func.funcBlocks.get(i);
+            block.use = new HashSet<>();
+            block.def = new HashSet<>();
             for (int j = 0; j < block.instructions.size(); j++) {
                 setDefUseOnInst(block.instructions.get(j), block);
             }
@@ -37,9 +41,12 @@ public class LivenessAnalysis {
         }
         ArrayList<Register> use = inst.getUse();
         if (use != null) {
-            use.forEach(
-                    usedReg -> block.use.add(usedReg)
-            );
+            block.use.addAll(use);
+            for (var usedReg : use) {
+                if (!block.def.contains(usedReg)) {
+                    globalReg.add(usedReg);
+                }
+            }
         }
     }
 
@@ -60,9 +67,14 @@ public class LivenessAnalysis {
                 Block successor;
                 for (int j = 0; j < currentBlock.successorList.size(); j++) {
                     successor = currentBlock.successorList.get(j);
-                    tmp.addAll(successor.use);
+                    for (var usedReg : successor.use) {
+                        if (globalReg.contains(usedReg)) {
+                            tmp.add(usedReg);
+                        }
+                    }
+//                    tmp.addAll(successor.use);
                     for (Register reg : successor.liveOut) {
-                        if (!successor.def.contains(reg)) {
+                        if (!successor.def.contains(reg) && globalReg.contains(reg)) {
                             tmp.add(reg);
                         }
                     }

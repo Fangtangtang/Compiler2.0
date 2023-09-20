@@ -121,9 +121,11 @@ public class CallingConvention {
     }
 
     //call前，将reg存到stack
+    //TODO:s0冲突？
     void beforeCall(ListIterator<ASMInstruction> iter,
                     ArrayList<Pair<PhysicalRegister, StackRegister>> pairs) {
         for (var pair : pairs) {
+            pair.getFirst().size=pair.getSecond().size;
             int size;
             if (pair.getSecond().offset < (1 << 11)) {
                 iter.add(
@@ -132,26 +134,26 @@ public class CallingConvention {
                 size = 1;
             } else {
                 size = 3;
-                PhysicalRegister t0 = new PhysicalRegister("t0", 4);
+                PhysicalRegister s0 = new PhysicalRegister("s0", 4);
                 iter.add(
-                        new LuiInst(t0, new Imm((pair.getSecond().offset >> 12)))
+                        new LuiInst(s0, new Imm((pair.getSecond().offset >> 12)))
                 );
                 if ((pair.getSecond().offset & 0xFFF) != 0) {
                     ++size;
                     iter.add(
                             new ImmBinaryInst(
-                                    t0,
+                                    s0,
                                     new Imm(pair.getSecond().offset & 0xFFF),
-                                    t0,
+                                    s0,
                                     ImmBinaryInst.Opcode.addi
                             )
                     );
                 }
                 iter.add(
-                        new BinaryInst(fp, t0, t0, BinaryInst.Opcode.sub)
+                        new BinaryInst(fp, s0, s0, BinaryInst.Opcode.sub)
                 );
                 iter.add(
-                        new StoreInst(pair.getFirst(), t0, zero)
+                        new StoreInst(pair.getFirst(), s0, zero)
                 );
             }
             for (int i = 0; i < size; i++) {
@@ -165,6 +167,7 @@ public class CallingConvention {
                    ArrayList<Pair<PhysicalRegister, StackRegister>> pairs) {
         iter.next();
         for (var pair : pairs) {
+            pair.getFirst().size=pair.getSecond().size;
             int size;
             if (pair.getSecond().offset < (1 << 11)) {
                 iter.add(
@@ -173,26 +176,26 @@ public class CallingConvention {
                 size = 1;
             } else {
                 size = 3;
-                PhysicalRegister t0 = new PhysicalRegister("t0", 4);
+                PhysicalRegister s0 = new PhysicalRegister("s0", 4);
                 iter.add(
-                        new LuiInst(t0, new Imm((pair.getSecond().offset >> 12)))
+                        new LuiInst(s0, new Imm((pair.getSecond().offset >> 12)))
                 );
                 if ((pair.getSecond().offset & 0xFFF) != 0) {
                     ++size;
                     iter.add(
                             new ImmBinaryInst(
-                                    t0,
+                                    s0,
                                     new Imm(pair.getSecond().offset & 0xFFF),
-                                    t0,
+                                    s0,
                                     ImmBinaryInst.Opcode.addi
                             )
                     );
                 }
                 iter.add(
-                        new BinaryInst(fp, t0, t0, BinaryInst.Opcode.sub)
+                        new BinaryInst(fp, s0, s0, BinaryInst.Opcode.sub)
                 );
                 iter.add(
-                        new LoadInst(t0, pair.getFirst(), zero)
+                        new LoadInst(s0, pair.getFirst(), zero)
                 );
             }
             for (int i = 0; i < size; i++) {

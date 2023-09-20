@@ -12,7 +12,7 @@ public abstract class Node {
     public int degree;
     public Node alias;
     public Colors.Color color;
-    static int id = 0;
+    public static int id = 0;
     int index;
     //节点相关的move表
     public HashSet<MoveInst> moveList = new HashSet<>();

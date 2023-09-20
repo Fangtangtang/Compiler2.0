@@ -19,8 +19,8 @@ public class Block {
     public ArrayList<Block> successorList = new ArrayList<>();
     public int reversePostorder;
 
-    public HashSet<Register> use = new HashSet<>();
-    public HashSet<Register> def = new HashSet<>();
+    public HashSet<Register> use;
+    public HashSet<Register> def;
     public HashSet<Register> liveOut;
 
     public Block(String name) {

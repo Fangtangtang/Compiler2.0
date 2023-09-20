@@ -23,7 +23,8 @@ public class GraphColoring {
     MoveInstSet moveInstSet;
     //reg到冲突图node的映射
     HashMap<Register, Node> reg2node;
-    int K = 26;
+        int K = 26;
+//    int K = 3;
     PhysicalRegMap registerMap;
     PhysicalRegister fp, sp, t0;
     HashMap<String, PrecoloredNode> precoloredNodeMap;
@@ -78,6 +79,7 @@ public class GraphColoring {
         nodeSet = new NodeSet();
         moveInstSet = new MoveInstSet();
         reg2node = new HashMap<>();
+        Node.id = 0;
         precoloredNodeMap = new HashMap<>();
     }
 
@@ -477,7 +479,7 @@ public class GraphColoring {
         StackRegister stackRegister = pair.getFirst();
         Counter counter = pair.getSecond();
         ++counter.cnt;
-        VirtualRegister newReg = new VirtualRegister(register.name + counter.cnt, register.size);
+        VirtualRegister newReg = new VirtualRegister(register.name + "." + counter.cnt, register.size);
         Pair<Register, Imm> addrPair = getRegAddress(stackRegister);
         rewrittenInstructions.add(
                 new LoadInst(addrPair.getFirst(), newReg, addrPair.getSecond())
@@ -491,7 +493,7 @@ public class GraphColoring {
         StackRegister stackRegister = pair.getFirst();
         Counter counter = pair.getSecond();
         ++counter.cnt;
-        VirtualRegister newReg = new VirtualRegister(register.name + counter.cnt, register.size);
+        VirtualRegister newReg = new VirtualRegister(register.name + "." + counter.cnt, register.size);
         Pair<Register, Imm> addrPair = getRegAddress(stackRegister);
         rewrittenInstructions.add(
                 new StoreInst(newReg, addrPair.getFirst(), addrPair.getSecond())
