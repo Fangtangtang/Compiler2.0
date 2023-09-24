@@ -16,7 +16,7 @@ import java.util.ArrayList;
  */
 public class ImmBinaryInst extends ASMInstruction {
     public enum Opcode {
-        addi, slli, xori, srli, ori, andi
+        addi, slli, xori, ori, andi
     }
 
     public Imm imm;
@@ -33,7 +33,7 @@ public class ImmBinaryInst extends ASMInstruction {
         switch (operator) {
             case add -> this.op = ImmBinaryInst.Opcode.addi;
             case shl -> this.op = ImmBinaryInst.Opcode.slli;
-            case ashr -> this.op = ImmBinaryInst.Opcode.srli;
+//            case ashr -> this.op = ImmBinaryInst.Opcode.srli;
             case and -> this.op = ImmBinaryInst.Opcode.andi;
             case xor -> this.op = ImmBinaryInst.Opcode.xori;
             case or -> this.op = ImmBinaryInst.Opcode.ori;

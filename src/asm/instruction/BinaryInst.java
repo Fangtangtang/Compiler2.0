@@ -17,7 +17,7 @@ import java.util.ArrayList;
 public class BinaryInst extends ASMInstruction {
     public enum Opcode {
         add, sub, mul, div, rem,
-        sll, xor, srl, or, and
+        sll, xor, sra, or, and
     }
 
     public Operand rs1, rs2;
@@ -39,7 +39,7 @@ public class BinaryInst extends ASMInstruction {
             case sdiv -> this.op = Opcode.div;
             case srem -> this.op = Opcode.rem;
             case shl -> this.op = Opcode.sll;
-            case ashr -> this.op = Opcode.srl;
+            case ashr -> this.op = Opcode.sra;
             case and -> this.op = Opcode.and;
             case xor -> this.op = Opcode.xor;
             case or -> this.op = Opcode.or;

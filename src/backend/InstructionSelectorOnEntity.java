@@ -386,7 +386,9 @@ public class InstructionSelectorOnEntity implements IRVisitor {
             if (stmt.operator.equals(Binary.Operator.sub) ||
                     stmt.operator.equals(Binary.Operator.mul) ||
                     stmt.operator.equals(Binary.Operator.sdiv) ||
-                    stmt.operator.equals(Binary.Operator.srem)) {
+                    stmt.operator.equals(Binary.Operator.srem) ||
+                    stmt.operator.equals(Binary.Operator.shl) ||
+                    stmt.operator.equals(Binary.Operator.ashr)) {
                 currentBlock.pushBack(
                         new LiInst(t1, imm)
                 );
@@ -409,7 +411,8 @@ public class InstructionSelectorOnEntity implements IRVisitor {
             }
             if (stmt.operator.equals(Binary.Operator.mul) ||
                     stmt.operator.equals(Binary.Operator.sdiv) ||
-                    stmt.operator.equals(Binary.Operator.srem)) {
+                    stmt.operator.equals(Binary.Operator.srem) ||
+                    stmt.operator.equals(Binary.Operator.ashr)) {
                 currentBlock.pushBack(
                         new LiInst(t1, imm)
                 );
