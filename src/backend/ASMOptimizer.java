@@ -106,7 +106,7 @@ public class ASMOptimizer {
             } else {
                 PhysicalRegister t0 = new PhysicalRegister("t0", 4);
                 block.pushBack(
-                        new LuiInst(t0, new Imm((pair.getSecond().offset >> 12)))
+                        new LuiInst(t0, new Imm((pair.getSecond().offset >> 12) & 0xFFFFF))
                 );
                 if ((pair.getSecond().offset & 0xFFF) != 0) {
                     block.pushBack(
@@ -139,7 +139,7 @@ public class ASMOptimizer {
             } else {
                 PhysicalRegister t0 = new PhysicalRegister("t0", 4);
                 block.pushBack(
-                        new LuiInst(t0, new Imm((pair.getSecond().offset >> 12)))
+                        new LuiInst(t0, new Imm((pair.getSecond().offset >> 12) & 0xFFFFF))
                 );
                 if ((pair.getSecond().offset & 0xFFF) != 0) {
                     block.pushBack(

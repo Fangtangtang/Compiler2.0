@@ -51,12 +51,12 @@ public class BasicBlock {
      */
     public void pushBack(Stmt stmt) {
         if (stmt instanceof TerminalStmt terminalStmt) {
-            if (tailStmt == null) {
+//            if (tailStmt == null) {
                 tailStmt = terminalStmt;
                 return;
-            } else {
-                throw new InternalException("basic block " + label + " has multiple exits");
-            }
+//            } else {
+//                throw new InternalException("basic block " + label + " has multiple exits");
+//            }
         }
         statements.add(stmt);
     }

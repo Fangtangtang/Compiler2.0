@@ -23,7 +23,7 @@ public class GraphColoring {
     MoveInstSet moveInstSet;
     //reg到冲突图node的映射
     HashMap<Register, Node> reg2node;
-    int K = 26;
+    int K = 25;
     //    int K = 3;
     PhysicalRegMap registerMap;
     PhysicalRegister fp, sp, t0;

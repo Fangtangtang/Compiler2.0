@@ -60,7 +60,6 @@ public class InstructionSelectorOnEntity implements IRVisitor {
                         new GlobalAddrInst(globalVarReg, globalVar.identity)
                 );
             } else {
-//                t0.size = 4;
                 PhysicalRegister t0 = new PhysicalRegister("t0", 4);
                 currentBlock.pushBack(
                         new GlobalAddrInst(t0, globalVar.identity)
@@ -522,7 +521,10 @@ public class InstructionSelectorOnEntity implements IRVisitor {
             PhysicalRegister a0 = new PhysicalRegister("a0");
             setPhysicalRegSize(a0, stmt.result);
             currentBlock.pushBack(
-                    new MoveInst(getVirtualRegister(stmt.result), a0, true)
+                    new MoveInst(registerMap.getReg("gp"), a0, true)
+            );
+            currentBlock.pushBack(
+                    new MoveInst(getVirtualRegister(stmt.result), registerMap.getReg("gp"), true)
             );
         } else {
             currentBlock.pushBack(
@@ -811,6 +813,11 @@ public class InstructionSelectorOnEntity implements IRVisitor {
                 currentBlock.pushBack(
                         new LiInst(pair.getFirst(), (Imm) value)
                 );
+            } else if (value instanceof PhysicalRegister physicalRegister &&
+                    "zero".equals(physicalRegister.name)) {
+                currentBlock.pushBack(
+                        new LiInst(pair.getFirst(), zero)
+                );
             } else {
                 currentBlock.pushBack(
                         new MoveInst(pair.getFirst(), (Register) value)
@@ -833,6 +840,15 @@ public class InstructionSelectorOnEntity implements IRVisitor {
             PhysicalRegister t3 = new PhysicalRegister("t3", value.size);
             currentBlock.pushBack(
                     new LiInst(t3, (Imm) value)
+            );
+            currentBlock.pushBack(
+                    new StoreInst(t3, addr, zero)
+            );
+        } else if (value instanceof PhysicalRegister physicalRegister &&
+                "zero".equals(physicalRegister.name)) {
+            PhysicalRegister t3 = new PhysicalRegister("t3", value.size);
+            currentBlock.pushBack(
+                    new LiInst(t3, zero)
             );
             currentBlock.pushBack(
                     new StoreInst(t3, addr, zero)

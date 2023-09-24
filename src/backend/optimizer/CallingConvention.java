@@ -46,7 +46,7 @@ public class CallingConvention {
         ArrayList<PhysicalRegister> calleeSaved = new ArrayList<>();
         usedInFunc.forEach(
                 regColor -> {
-                    if (regColor.ordinal() >= Colors.Color.s1.ordinal()) {
+                    if (regColor.ordinal() >= Colors.Color.s2.ordinal()) {
                         calleeSaved.add(registerMap.getReg(regColor));
                     }
                 }
@@ -101,7 +101,8 @@ public class CallingConvention {
         ArrayList<PhysicalRegister> callerSaved = new ArrayList<>();
         liveOut.forEach(
                 regColor -> {
-                    if (regColor.ordinal() < Colors.Color.s1.ordinal()) {
+                    if (regColor.ordinal() < Colors.Color.s1.ordinal() &&
+                            regColor.ordinal() > Colors.Color.fp.ordinal()) {
                         callerSaved.add(registerMap.getReg(regColor));
                     }
                 }
@@ -121,7 +122,7 @@ public class CallingConvention {
     }
 
     //call前，将reg存到stack
-    //TODO:s0冲突？
+    //TODO:s1冲突？
     void beforeCall(ListIterator<ASMInstruction> iter,
                     ArrayList<Pair<PhysicalRegister, StackRegister>> pairs) {
         for (var pair : pairs) {
@@ -134,26 +135,26 @@ public class CallingConvention {
                 size = 1;
             } else {
                 size = 3;
-                PhysicalRegister s0 = new PhysicalRegister("s0", 4);
+                PhysicalRegister s1 = new PhysicalRegister("s1", 4);
                 iter.add(
-                        new LuiInst(s0, new Imm((pair.getSecond().offset >> 12)))
+                        new LuiInst(s1, new Imm((pair.getSecond().offset >> 12)))
                 );
                 if ((pair.getSecond().offset & 0xFFF) != 0) {
                     ++size;
                     iter.add(
                             new ImmBinaryInst(
-                                    s0,
+                                    s1,
                                     new Imm(pair.getSecond().offset & 0xFFF),
-                                    s0,
+                                    s1,
                                     ImmBinaryInst.Opcode.addi
                             )
                     );
                 }
                 iter.add(
-                        new BinaryInst(fp, s0, s0, BinaryInst.Opcode.sub)
+                        new BinaryInst(fp, s1, s1, BinaryInst.Opcode.sub)
                 );
                 iter.add(
-                        new StoreInst(pair.getFirst(), s0, zero)
+                        new StoreInst(pair.getFirst(), s1, zero)
                 );
             }
             for (int i = 0; i < size; i++) {
@@ -176,26 +177,26 @@ public class CallingConvention {
                 size = 1;
             } else {
                 size = 3;
-                PhysicalRegister s0 = new PhysicalRegister("s0", 4);
+                PhysicalRegister s1 = new PhysicalRegister("s1", 4);
                 iter.add(
-                        new LuiInst(s0, new Imm((pair.getSecond().offset >> 12)))
+                        new LuiInst(s1, new Imm((pair.getSecond().offset >> 12)))
                 );
                 if ((pair.getSecond().offset & 0xFFF) != 0) {
                     ++size;
                     iter.add(
                             new ImmBinaryInst(
-                                    s0,
+                                    s1,
                                     new Imm(pair.getSecond().offset & 0xFFF),
-                                    s0,
+                                    s1,
                                     ImmBinaryInst.Opcode.addi
                             )
                     );
                 }
                 iter.add(
-                        new BinaryInst(fp, s0, s0, BinaryInst.Opcode.sub)
+                        new BinaryInst(fp, s1, s1, BinaryInst.Opcode.sub)
                 );
                 iter.add(
-                        new LoadInst(s0, pair.getFirst(), zero)
+                        new LoadInst(s1, pair.getFirst(), zero)
                 );
             }
             for (int i = 0; i < size; i++) {
