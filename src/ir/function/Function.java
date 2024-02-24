@@ -34,7 +34,7 @@ public class Function {
     //按照RPO序排列的basic block
     public ArrayList<DomTreeNode> reorderedBlock = new ArrayList<>();
     public DomTree domTree;
-    public HashMap<Integer, Storage> phiResult = new HashMap<>();
+    public HashMap<String, Storage> phiResult = new HashMap<>();
 
     public Function(IRType retType,
                     String funcName) {

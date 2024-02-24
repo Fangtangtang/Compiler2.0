@@ -24,7 +24,7 @@ import java.util.ArrayList;
 public class Phi extends Instruction {
     public LocalTmpVar result;
     public SSAEntity ssaResult;
-    public int phiLabel;
+    public String phiLabel;
     public Storage ans1, ans2;
     public SSAEntity ssaAns1, ssaAns2;
     public ArrayList<String> label1 = new ArrayList<>(), label2 = new ArrayList<>();
@@ -34,7 +34,7 @@ public class Phi extends Instruction {
                Storage ans2,
                String label1,
                String label2,
-               int phiLabel) {
+               String phiLabel) {
         this.result = result;
         this.ans1 = ans1;
         this.ans2 = ans2;
@@ -48,7 +48,7 @@ public class Phi extends Instruction {
                Storage ans2,
                ArrayList<String> label1,
                String label2,
-               int phiLabel) {
+               String phiLabel) {
         this.result = result;
         this.ans1 = ans1;
         this.ans2 = ans2;

@@ -40,6 +40,8 @@ public class IRRoot {
 
     public GlobalVarInitFunction globalVarInitFunction;
 
+    public MainFunc mainFunc;
+
     /**
      * 将AST上的符号表重新转化为IR上的相应类型
      *
@@ -66,7 +68,8 @@ public class IRRoot {
             }
         }
         //特殊函数main，直接覆盖原先建的main
-        funcDef.put("main", new MainFunc());
+        mainFunc = new MainFunc();
+        funcDef.put("main", mainFunc);
         //添加array的方法
         for (Map.Entry<String, Type> entry : ast.type.ArrayType.members.entrySet()) {
             String name = entry.getKey();

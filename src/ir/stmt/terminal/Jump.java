@@ -16,7 +16,7 @@ public class Jump extends TerminalStmt {
     public String targetName;
     public BasicBlock target = null;
     public String phiLabel = null;
-    public int index = 0;
+    public String index;
     public Storage result;
     public SSAEntity ssaResult;
 
@@ -31,7 +31,7 @@ public class Jump extends TerminalStmt {
         this.target = target;
     }
 
-    public Jump(BasicBlock target, int index,
+    public Jump(BasicBlock target, String index,
                 String phiLabel, Storage result) {
         super();
         this.targetName = target.label;

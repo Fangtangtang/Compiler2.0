@@ -21,7 +21,7 @@ public class Branch extends TerminalStmt {
     public BasicBlock trueBranch, falseBranch;
 
     public String phiLabel = null;
-    public int index = 0;
+    public String index;
     public Storage result;
     public SSAEntity ssaResult;
 
@@ -37,7 +37,7 @@ public class Branch extends TerminalStmt {
     public Branch(Entity condition,
                   BasicBlock trueBranch,
                   BasicBlock falseBranch,
-                  int index,
+                  String index,
                   String phiLabel,
                   Storage result) {
         super();

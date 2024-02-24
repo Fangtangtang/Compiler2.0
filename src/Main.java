@@ -1,7 +1,6 @@
 import asm.Program;
 import ast.other.RootNode;
-import backend.ASMOptimizer;
-import backend.InstructionSelectorOnEntity;
+import backend.*;
 import frontend.*;
 import midend.IROptimizer;
 import midend.IRBuilder;
@@ -67,8 +66,8 @@ public class Main {
         PrintStream outputStream = System.out;
 
         //IR
-//        IRPrinter printer = new IRPrinter(outputStream);
-//        printer.visit(irBuilder.irRoot);
+        IRPrinter printer = new IRPrinter(outputStream);
+        printer.visit(irBuilder.irRoot);
 
         //OPT
 //        IROptimizer optimizer = new IROptimizer(irBuilder.irRoot);
@@ -90,15 +89,15 @@ public class Main {
 //        allocator.visit(program);
 //        program.print(outputStream);
 
-        Program program = new Program();
-        // ir -> asm:含“mem2reg”
-        InstructionSelectorOnEntity selector = new InstructionSelectorOnEntity(program);
-        selector.visit(irBuilder.irRoot);
-        // asm上优化
-        ASMOptimizer asmOptimizer = new ASMOptimizer(program.text, selector.registerMap);
-        asmOptimizer.execute();
-
-        program.printRegColoring(outputStream);
+//        Program program = new Program();
+//        // ir -> asm:含“mem2reg”
+//        InstructionSelectorOnEntity selector = new InstructionSelectorOnEntity(program);
+//        selector.visit(irBuilder.irRoot);
+//        // asm上优化
+//        ASMOptimizer asmOptimizer = new ASMOptimizer(program.text, selector.registerMap);
+//        asmOptimizer.execute();
+//
+//        program.printRegColoring(outputStream);
     }
 }
 

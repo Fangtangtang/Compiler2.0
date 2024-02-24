@@ -934,7 +934,6 @@ public class InstructionSelectorOnEntity implements IRVisitor {
         if (stmt.phiLabel != null
                 && currentIRFunc.phiResult.containsKey(stmt.index)) {
             Entity ans = stmt.result;
-//                    currentIRFunc.phiMap.get(stmt.index + stmt.phiLabel);
             Operand ansOperand = toOperand(ans);
             if (ansOperand instanceof Imm imm) {
                 currentBlock.pushBack(

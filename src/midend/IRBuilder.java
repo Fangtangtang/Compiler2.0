@@ -11,6 +11,7 @@ import ir.*;
 import ir.entity.var.*;
 import ir.function.Function;
 import ir.function.GlobalVarInitFunction;
+import ir.function.MainFunc;
 import ir.irType.*;
 import ir.stmt.Stmt;
 import ir.stmt.instruction.*;
@@ -188,6 +189,12 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 def -> def.accept(this)
         );
         exitScope();
+//        // 直接将globalVarInitFunction内联入main
+//        if (!irRoot.globalVarInitFunction.isEmpty()) {
+//            //重命名globalVarInitFunction的basic block
+//
+//
+//        }
         irRoot.globalVarInitFunction.currentBlock.pushBack(
                 new Return()
         );
@@ -390,7 +397,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
         }
         currentInitStmts.addAll(currentFunction.entry.statements);
         currentFunction.entry.statements = currentInitStmts;
-//        currentFunction.blockMap.put(node.name + "_return", currentFunction.ret);
         currentFunction.ret.pushBack(
                 new Return()
         );
@@ -533,7 +539,8 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 );
             }
         }
-        if ("main".equals(funcName) && !irRoot.globalVarInitFunction.isEmpty()) {
+        // TODO 直接将全局变量初始化语句内联
+        if (currentFunction instanceof MainFunc mainFunc && !irRoot.globalVarInitFunction.isEmpty()) {
             currentInitStmts.add(
                     new Call(irRoot.globalVarInitFunction, new LocalTmpVar(new VoidType(), tmpCounter.cnt))
             );
@@ -1050,7 +1057,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         Storage leftResult = toBool(getValue(node.lhs.accept(this)));
         pushBack(
                 new Branch(leftResult, trueBlock, falseBlock,
-                        phiLabel, ".left", resultFromLeft)
+                        currentFunction.funcName + String.valueOf(phiLabel), ".left", resultFromLeft)
         );
         String labelFromLeft = currentBlock.label;
         //右子树都返回end
@@ -1058,7 +1065,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         Storage resultFromRight = toBool(getValue(node.rhs.accept(this)));
         pushBack(
-                new Jump(endBlock, phiLabel, ".right", resultFromRight)
+                new Jump(endBlock, currentFunction.funcName + String.valueOf(phiLabel), ".right", resultFromRight)
         );
         String labelFromRight = currentBlock.label;
         changeBlock(endBlock);
@@ -1069,9 +1076,9 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 new Phi(result,
                         resultFromLeft, resultFromRight,
                         labelFromLeft, labelFromRight,
-                        phiLabel)
+                        currentFunction.funcName + String.valueOf(phiLabel))
         );
-        currentFunction.phiResult.put(phiLabel, result);
+        currentFunction.phiResult.put(currentFunction.funcName + String.valueOf(phiLabel), result);
         return result;
     }
 
@@ -1248,7 +1255,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 endBlock = new BasicBlock("loop.end" + label);
         //int i=0;
         LocalVar i_;//允许被通用的全局变量
-        String i_name=currentFunction.funcName+".i";
+        String i_name = currentFunction.funcName + ".i";
         if (rename2mem.containsKey(i_name)) {
             i_ = (LocalVar) rename2mem.get(i_name);
         } else {
@@ -1458,7 +1465,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         operator = null;
         Storage trueAns = getValue(node.trueExpr.accept(this));
         pushBack(
-                new Jump(endBlock, phiLabel, ".true", trueAns)
+                new Jump(endBlock, currentFunction.funcName + String.valueOf(phiLabel), ".true", trueAns)
         );
         BasicBlock trueBlock = currentBlock;
         changeBlock(falseStmtBlock);
@@ -1466,7 +1473,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         operator = null;
         Storage falseAns = getValue(node.falseExpr.accept(this));
         pushBack(
-                new Jump(endBlock, phiLabel, ".false", falseAns)
+                new Jump(endBlock, currentFunction.funcName + String.valueOf(phiLabel), ".false", falseAns)
         );
         BasicBlock falseBlock = currentBlock;
         changeBlock(endBlock);
@@ -1477,9 +1484,9 @@ public class IRBuilder implements ASTVisitor<Entity> {
             pushBack(
                     new Phi(result, trueAns, falseAns,
                             trueBlock.label, falseBlock.label,
-                            phiLabel)
+                            currentFunction.funcName + String.valueOf(phiLabel))
             );
-            currentFunction.phiResult.put(phiLabel, result);
+            currentFunction.phiResult.put(currentFunction.funcName + String.valueOf(phiLabel), result);
         } else {
             //仅用于表示类型
             result = new LocalTmpVar(trueAns.type, tmpCounter.cnt);
