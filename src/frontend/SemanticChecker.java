@@ -15,7 +15,7 @@ import ast.type.*;
 
 /**
  * @author F
- * 语法检查，遍历所有的ASTNode
+ * 语义检查，遍历所有的ASTNode
  * 仅起检查正确性作用，不按break等顺序走
  */
 public class SemanticChecker implements ASTVisitor<Type> {

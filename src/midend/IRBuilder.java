@@ -503,7 +503,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                     new Return(tmp)
             );
         }
-        //合并currentInitStmts和_start
+        //合并currentInitStmts和_start !!
         currentInitStmts.addAll(currentFunction.entry.statements);
         currentFunction.entry.statements = currentInitStmts;
         exitScope();
@@ -1235,7 +1235,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
 
     /**
      * 递归建立数组
-     * TODO：类的最后一维（类相当于一维数组）,全部为null
      */
     private void constructArray(ArrayList<Storage> indexList,
                                 int dimension,
