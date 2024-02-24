@@ -34,6 +34,8 @@ public class IRRoot {
 
     public HashMap<String, Function> builtinFuncDef = new HashMap<>();
     //global指令
+
+    //包含globalVar和str，定义在全局
     public BasicBlock globalVarDefBlock;
 
     public GlobalVarInitFunction globalVarInitFunction;

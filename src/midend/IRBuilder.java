@@ -1247,17 +1247,18 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 bodyBlock = new BasicBlock("loop.body" + label),
                 endBlock = new BasicBlock("loop.end" + label);
         //int i=0;
-        GlobalVar i;//允许被通用的全局变量
-        if (rename2mem.containsKey("i")) {
-            i = (GlobalVar) rename2mem.get("i");
+        LocalVar i_;//允许被通用的全局变量
+        String i_name=currentFunction.funcName+".i";
+        if (rename2mem.containsKey(i_name)) {
+            i_ = (LocalVar) rename2mem.get(i_name);
         } else {
-            Global stmt = new Global(zero, "i");
-            globalVarDefBlock.pushBack(stmt);
-            i = stmt.result;
-            rename2mem.put("i", i);
+            Alloca stmt = new Alloca(zero.type, i_name);
+            pushBack(stmt);
+            i_ = stmt.result;
+            rename2mem.put(i_name, i_);
         }
         pushBack(
-                new Store(zero, i)
+                new Store(zero, i_)
         );
         pushBack(
                 new Jump(condBlock)
@@ -1265,7 +1266,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         //i<size;
         changeBlock(condBlock);
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
-        Entity op1 = getValue(i), op2 = getValue(indexList.get(layer - 1));
+        Entity op1 = getValue(i_), op2 = getValue(indexList.get(layer - 1));
         LocalTmpVar cmpResult = new LocalTmpVar(tmpBoolType, ++tmpCounter.cnt);
         pushBack(
                 new Icmp(CmpExprNode.CmpOperator.Less,
@@ -1291,7 +1292,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         //计算需要的空间
         LocalTmpVar index = new LocalTmpVar(intType, ++tmpCounter.cnt);
         pushBack(
-                new Load(index, i)
+                new Load(index, i_)
         );
         LocalTmpVar newRoot = new LocalTmpVar(new PtrType(type), ++tmpCounter.cnt);
         pushBack(
@@ -1319,7 +1320,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         //step
         changeBlock(incBlock);
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
-        Entity op = getValue(i);
+        Entity op = getValue(i_);
         LocalTmpVar addResult = new LocalTmpVar(intType, ++tmpCounter.cnt);
         pushBack(
                 new Binary(BinaryExprNode.BinaryOperator.Plus,
@@ -1328,7 +1329,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                         new ConstInt("1"))
         );
         pushBack(
-                new Store(addResult, i)
+                new Store(addResult, i_)
         );
         pushBack(
                 new Jump(condBlock)
