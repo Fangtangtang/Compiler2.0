@@ -11,14 +11,17 @@ import ir.irType.IRType;
 public class LocalTmpVar extends Storage {
     public int index;
 
-    public LocalTmpVar(IRType type, int num) {
+    public String funcName;
+
+    public LocalTmpVar(IRType type, int num, String currentFuncName) {
         super(type);
         index = num;
+        funcName = currentFuncName;
     }
 
     @Override
     public String toString() {
-        return "%" + this.index;
+        return "%" + funcName + this.index;
     }
 
     @Override

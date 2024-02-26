@@ -18,6 +18,9 @@ import ir.stmt.terminal.Return;
  */
 public class MainFunc extends Function {
 
+    //TODO:useful?
+    public BasicBlock allocaBlock;
+
     public MainFunc() {
         super(new IntType(IntType.TypeName.INT), "main");
         this.retVal.storage = new ConstInt("0");

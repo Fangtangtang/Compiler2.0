@@ -219,8 +219,6 @@ public class InstructionSelectorOnEntity implements IRVisitor {
         root.globalVarDefBlock.statements.forEach(
                 stmt -> stmt.accept(this)
         );
-        //全局变量的初始化函数
-        root.globalVarInitFunction.accept(this);
         //函数
         for (Map.Entry<String, Function> function : root.funcDef.entrySet()) {
             Function func = function.getValue();
