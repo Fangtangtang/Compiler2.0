@@ -45,14 +45,6 @@ public class Global2Local {
                 }
             }
         }
-        //globalVarInitFunction
-        if (irRoot.globalVarInitFunction.entry != null) {
-            for (Map.Entry<String, BasicBlock> bbEntry : irRoot.globalVarInitFunction.blockMap.entrySet()) {
-                BasicBlock block = bbEntry.getValue();
-                block.statements.forEach(stmt -> collectOnStmt(irRoot.globalVarInitFunction.funcName, stmt));
-                collectOnStmt(irRoot.globalVarInitFunction.funcName, block.tailStmt);
-            }
-        }
     }
 
     private void collectOnStmt(String funcName, Stmt stmt) {

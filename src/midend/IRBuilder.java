@@ -200,8 +200,8 @@ public class IRBuilder implements ASTVisitor<Entity> {
             newBlockMap.putAll(irRoot.globalVarInitFunction.blockMap);
             newBlockMap.putAll(irRoot.mainFunc.blockMap);
             irRoot.mainFunc.blockMap = newBlockMap;
+            irRoot.mainFunc.entry = irRoot.globalVarInitFunction.entry;
         }
-        irRoot.mainFunc.entry = irRoot.globalVarInitFunction.entry;
         return null;
     }
 
@@ -513,7 +513,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
                     new Return(tmp)
             );
         }
-        //合并currentInitStmts和_start !!
+        //合并currentInitStmts和_start
         currentInitStmts.addAll(currentFunction.entry.statements);
         currentFunction.entry.statements = currentInitStmts;
         exitScope();
