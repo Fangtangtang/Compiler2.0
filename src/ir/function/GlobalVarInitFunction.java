@@ -18,8 +18,8 @@ public class GlobalVarInitFunction extends Function {
 
     public GlobalVarInitFunction() {
         super(new VoidType(),
-                "global_var_init",
-                new BasicBlock("global_var_init")
+                "global-var-init",
+                new BasicBlock("global-var-init_start")
         );
         currentBlock = this.entry;
     }

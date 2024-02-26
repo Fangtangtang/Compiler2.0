@@ -13,7 +13,7 @@ asm.output
 src/LocalMain.java
 src/LocalSSA.java
 src/LocalJudge.java
-src/LocalIR.java
+src/IR.java
 src/LocalASM.java
 sample
 my.out

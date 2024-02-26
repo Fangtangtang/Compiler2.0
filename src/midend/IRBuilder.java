@@ -237,7 +237,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
     public Entity visit(BreakStmtNode node) {
         LoopScope loopScope = currentScope.getParentLoopScope();
         pushBack(
-                new Jump("loop.end" + loopScope.label)
+                new Jump(currentFunction.funcName + "_loop.end" + loopScope.label)
         );
         terminated = true;
         currentScope.terminated = true;
@@ -256,15 +256,15 @@ public class IRBuilder implements ASTVisitor<Entity> {
         LoopScope loopScope = currentScope.getParentLoopScope();
         if (loopScope.hasInc) {
             pushBack(
-                    new Jump("loop.inc" + loopScope.label)
+                    new Jump(currentFunction.funcName + "_loop.inc" + loopScope.label)
             );
         } else if (loopScope.hasCond) {
             pushBack(
-                    new Jump("loop.cond" + loopScope.label)
+                    new Jump(currentFunction.funcName + "_loop.cond" + loopScope.label)
             );
         } else {
             pushBack(
-                    new Jump("loop.body" + loopScope.label)
+                    new Jump(currentFunction.funcName + "_loop.body" + loopScope.label)
             );
         }
         terminated = true;
@@ -307,8 +307,8 @@ public class IRBuilder implements ASTVisitor<Entity> {
         loopScope.label = funcBlockCounter++;
         //loop的组分
         BasicBlock condBlock, incBlock;
-        BasicBlock bodyBlock = new BasicBlock("loop.body" + loopScope.label),
-                endBlock = new BasicBlock("loop.end" + loopScope.label);
+        BasicBlock bodyBlock = new BasicBlock(currentFunction.funcName + "_loop.body" + loopScope.label),
+                endBlock = new BasicBlock(currentFunction.funcName + "_loop.end" + loopScope.label);
         //init加在currentBlock
         if (node.initializationStmt != null) {
             node.initializationStmt.accept(this);
@@ -316,7 +316,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         BasicBlock start;
         //cond若存在，条件跳转，否则直接跳转到body
         if (loopScope.hasCond) {
-            condBlock = new BasicBlock("loop.cond" + loopScope.label);
+            condBlock = new BasicBlock(currentFunction.funcName + "_loop.cond" + loopScope.label);
             start = condBlock;
             pushBack(
                     new Jump(condBlock)
@@ -342,7 +342,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             node.statement.accept(this);
         }
         if (loopScope.hasInc) {
-            incBlock = new BasicBlock("loop.inc" + loopScope.label);
+            incBlock = new BasicBlock(currentFunction.funcName + "_loop.inc" + loopScope.label);
             pushBack(
                     new Jump(incBlock)
             );
@@ -386,7 +386,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         getCurrentFunc(node.name);
         //添加隐含的this参数
         addThisParam();
-        changeBlock(new BasicBlock("_start"));
+        changeBlock(new BasicBlock(currentFunction.funcName + "_start"));
         currentFunction.entry = currentBlock;
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         node.suite.accept(this);
@@ -486,7 +486,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         }
         //函数作用域
         enterScope(node);
-        changeBlock(new BasicBlock("_start"));
+        changeBlock(new BasicBlock(currentFunction.funcName + "_start"));
         currentFunction.entry = currentBlock;
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         node.functionBody.accept(this);
@@ -559,12 +559,12 @@ public class IRBuilder implements ASTVisitor<Entity> {
     @Override
     public Entity visit(IfStmtNode node) {
         int label = funcBlockCounter++;
-        BasicBlock trueStmtBlock = new BasicBlock("if.then" + label);
+        BasicBlock trueStmtBlock = new BasicBlock(currentFunction.funcName + "_if.then" + label);
         BasicBlock falseStmtBlock = null;
-        BasicBlock endBlock = new BasicBlock("if.end" + label);
+        BasicBlock endBlock = new BasicBlock(currentFunction.funcName + "_if.end" + label);
         BasicBlock next = endBlock;
         if (node.falseStatement != null) {
-            falseStmtBlock = new BasicBlock("if.else" + label);
+            falseStmtBlock = new BasicBlock(currentFunction.funcName + "_if.else" + label);
             next = falseStmtBlock;
         }
         //cond：在上一个块里
@@ -678,9 +678,9 @@ public class IRBuilder implements ASTVisitor<Entity> {
         //作为当前block的特殊标识符
         LoopScope loopScope = (LoopScope) currentScope;
         loopScope.label = funcBlockCounter++;
-        BasicBlock condBlock = new BasicBlock("loop.cond" + loopScope.label);
-        BasicBlock bodyBlock = new BasicBlock("loop.body" + loopScope.label);
-        BasicBlock endBlock = new BasicBlock("loop.end" + loopScope.label);
+        BasicBlock condBlock = new BasicBlock(currentFunction.funcName + "_loop.cond" + loopScope.label);
+        BasicBlock bodyBlock = new BasicBlock(currentFunction.funcName + "_loop.body" + loopScope.label);
+        BasicBlock endBlock = new BasicBlock(currentFunction.funcName + "_loop.end" + loopScope.label);
         pushBack(
                 new Jump(condBlock)
         );
@@ -1039,8 +1039,8 @@ public class IRBuilder implements ASTVisitor<Entity> {
         int phiLabel = phiCounter.cnt;
         int label = logicExprCounter;//函数中出现的第几个逻辑表达式
         ++logicExprCounter;
-        BasicBlock nextBlock = new BasicBlock("logic.next" + label);//右子树
-        BasicBlock endBlock = new BasicBlock("logic.end" + label);//phi和后续（父亲）
+        BasicBlock nextBlock = new BasicBlock(currentFunction.funcName + "_logic.next" + label);//右子树
+        BasicBlock endBlock = new BasicBlock(currentFunction.funcName + "_logic.end" + label);//phi和后续（父亲）
         //根据自身的运算符放trueBlock，falseBlock
         ConstBool resultFromLeft;
         BasicBlock trueBlock, falseBlock;
@@ -1249,10 +1249,10 @@ public class IRBuilder implements ASTVisitor<Entity> {
                                 LocalTmpVar root) {
         //手写IR上for循环向下递归
         int label = funcBlockCounter++;
-        BasicBlock condBlock = new BasicBlock("loop.cond" + label),
-                incBlock = new BasicBlock("loop.inc" + label),
-                bodyBlock = new BasicBlock("loop.body" + label),
-                endBlock = new BasicBlock("loop.end" + label);
+        BasicBlock condBlock = new BasicBlock(currentFunction.funcName + "_loop.cond" + label),
+                incBlock = new BasicBlock(currentFunction.funcName + "_loop.inc" + label),
+                bodyBlock = new BasicBlock(currentFunction.funcName + "_loop.body" + label),
+                endBlock = new BasicBlock(currentFunction.funcName + "_loop.end" + label);
         //int i=0;
         LocalVar i_;//允许被通用的全局变量
         String i_name = currentFunction.funcName + ".i";
@@ -1451,9 +1451,9 @@ public class IRBuilder implements ASTVisitor<Entity> {
     public Entity visit(TernaryExprNode node) {
         Integer phiLabel = ++phiCounter.cnt;
         int label = funcBlockCounter++;
-        BasicBlock trueStmtBlock = new BasicBlock("cond.true" + label);
-        BasicBlock falseStmtBlock = new BasicBlock("cond.false" + label);
-        BasicBlock endBlock = new BasicBlock("cond.end" + label);
+        BasicBlock trueStmtBlock = new BasicBlock(currentFunction.funcName + "_cond.true" + label);
+        BasicBlock falseStmtBlock = new BasicBlock(currentFunction.funcName + "_cond.false" + label);
+        BasicBlock endBlock = new BasicBlock(currentFunction.funcName + "_cond.end" + label);
         //cond：在上一个块里
         operator = null;
         Entity entity = toBool(getValue(node.condition.accept(this)));
