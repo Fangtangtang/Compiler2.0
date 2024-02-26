@@ -81,16 +81,18 @@ public class Global2Local {
             if (stmt instanceof Global globalStmt) {
                 if (!(globalStmt.result.storage instanceof ConstString)) {
                     if (globalStmt.result.occurrence.size() == 1) {
-                        iterator.remove();
                         for (String funcName : globalStmt.result.occurrence) {
-                            Function func = irRoot.funcDef.get(funcName);//使用该全局变量的函数
-                            GlobalVar var = globalStmt.result;
-                            var.convertedLocalVar = new LocalVar(var.storage, var.identity);
-                            if (var.storage instanceof Constant) {
-                                func.entry.statements.addFirst(new Store(var.storage, var.convertedLocalVar));
+                            if (Objects.equals(funcName, "main")) {
+                                iterator.remove();
+                                Function func = irRoot.funcDef.get(funcName);//使用该全局变量的函数
+                                GlobalVar var = globalStmt.result;
+                                var.convertedLocalVar = new LocalVar(var.storage, var.identity);
+                                if (var.storage instanceof Constant) {
+                                    func.entry.statements.addFirst(new Store(var.storage, var.convertedLocalVar));
+                                }
+                                //alloca
+                                func.entry.statements.addFirst(new Alloca(var.convertedLocalVar.storage.type, var.convertedLocalVar.identity));
                             }
-                            //alloca
-                            func.entry.statements.addFirst(new Alloca(var.convertedLocalVar.storage.type, var.convertedLocalVar.identity));
                         }
                     } else if (globalStmt.result.occurrence.size() == 0) {
                         iterator.remove();

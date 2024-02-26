@@ -62,6 +62,9 @@ public class Main {
 
         IRBuilder irBuilder = new IRBuilder(Scope.symbolTable);
         irBuilder.visit(astRoot);
+        //IR OPT
+        IROptimizer optimizer = new IROptimizer(irBuilder.irRoot);
+        optimizer.execute();
 
         PrintStream outputStream = System.out;
 
@@ -69,9 +72,7 @@ public class Main {
 //        IRPrinter printer = new IRPrinter(outputStream);
 //        printer.visit(irBuilder.irRoot);
 
-        //OPT
-//        IROptimizer optimizer = new IROptimizer(irBuilder.irRoot);
-//        optimizer.execute();
+
 //        Program program = new Program();
 //        InstructionSelector selector = new InstructionSelector(program);
 //        selector.visit(irBuilder.irRoot);
