@@ -3,6 +3,7 @@ package ir.stmt.instruction;
 import ir.IRVisitor;
 import ir.entity.*;
 import ir.entity.constant.Constant;
+import ir.entity.var.GlobalVar;
 import ir.entity.var.LocalTmpVar;
 import ir.entity.var.Ptr;
 import ir.irType.ArrayType;
@@ -118,6 +119,19 @@ public class GetElementPtr extends Instruction {
     @Override
     public Entity getDef() {
         return result;
+    }
+
+    @Override
+    public void promoteGlobalVar() {
+        if (result instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null){
+            result = globalVar.convertedLocalVar;
+        }
+        if (idx instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null){
+            idx = globalVar.convertedLocalVar;
+        }
+        if (ptrVal instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null){
+            ptrVal = globalVar.convertedLocalVar;
+        }
     }
 
     @Override

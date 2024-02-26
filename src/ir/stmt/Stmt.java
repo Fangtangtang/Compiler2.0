@@ -23,6 +23,8 @@ public abstract class Stmt {
 
     public abstract Entity getDef();
 
+    public abstract void promoteGlobalVar();
+
     public abstract void setUse(ArrayList<SSAEntity> list);
 
     public abstract void setDef(SSAEntity entity);

@@ -83,6 +83,16 @@ public class Store extends Instruction {
     }
 
     @Override
+    public void promoteGlobalVar() {
+        if (value instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null){
+            value = globalVar.convertedLocalVar;
+        }
+        if (pointer instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null){
+            pointer = globalVar.convertedLocalVar;
+        }
+    }
+
+    @Override
     public void setUse(ArrayList<SSAEntity> list) {
         ssaValue = list.get(0);
     }

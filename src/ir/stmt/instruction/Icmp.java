@@ -121,6 +121,16 @@ public class Icmp extends Instruction {
     }
 
     @Override
+    public void promoteGlobalVar() {
+        if (op1 instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null) {
+            op1 = globalVar.convertedLocalVar;
+        }
+        if (op2 instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null) {
+            op2 = globalVar.convertedLocalVar;
+        }
+    }
+
+    @Override
     public void setUse(ArrayList<SSAEntity> list) {
         ssaOp1 = list.get(0);
         ssaOp2 = list.get(1);

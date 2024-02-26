@@ -4,6 +4,7 @@ import ir.IRVisitor;
 import ir.entity.Entity;
 import ir.entity.SSAEntity;
 import ir.entity.Storage;
+import ir.entity.var.GlobalVar;
 import ir.entity.var.LocalTmpVar;
 import ir.entity.var.Ptr;
 import ir.function.Function;
@@ -131,6 +132,15 @@ public class Call extends Instruction {
     @Override
     public Entity getDef() {
         return result;
+    }
+
+    @Override
+    public void promoteGlobalVar() {
+        for (Storage para : parameterList) {
+            if (para instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null) {
+                para = globalVar.convertedLocalVar;
+            }
+        }
     }
 
     @Override

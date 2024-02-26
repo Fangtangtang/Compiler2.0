@@ -41,7 +41,7 @@ public class InstructionSelectorOnEntity implements IRVisitor {
 
     //共用的重命名规则
     private String renameBlock(String blockName) {
-        return ".L" + blockName + "_" + currentFunc.name;
+        return ".L" + blockName;
     }
 
     private Operand toOperand(Entity entity) {

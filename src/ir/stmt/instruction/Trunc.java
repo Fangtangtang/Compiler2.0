@@ -4,6 +4,7 @@ import ir.IRVisitor;
 import ir.entity.Entity;
 import ir.entity.SSAEntity;
 import ir.entity.Storage;
+import ir.entity.var.GlobalVar;
 import ir.entity.var.LocalTmpVar;
 
 import java.io.PrintStream;
@@ -67,6 +68,13 @@ public class Trunc extends Instruction {
     @Override
     public Entity getDef() {
         return result;
+    }
+
+    @Override
+    public void promoteGlobalVar() {
+        if (value instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null){
+            value = globalVar.convertedLocalVar;
+        }
     }
 
     @Override

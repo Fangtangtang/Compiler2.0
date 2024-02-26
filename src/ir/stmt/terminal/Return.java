@@ -4,6 +4,7 @@ import ir.IRVisitor;
 import ir.entity.Entity;
 import ir.entity.SSAEntity;
 import ir.entity.Storage;
+import ir.entity.var.GlobalVar;
 import ir.irType.VoidType;
 
 import java.io.PrintStream;
@@ -73,6 +74,13 @@ public class Return extends TerminalStmt {
     @Override
     public Entity getDef() {
         return null;
+    }
+
+    @Override
+    public void promoteGlobalVar() {
+        if (value instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null){
+            value = globalVar.convertedLocalVar;
+        }
     }
 
     @Override

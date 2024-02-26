@@ -5,6 +5,7 @@ import ir.IRVisitor;
 import ir.entity.Entity;
 import ir.entity.SSAEntity;
 import ir.entity.Storage;
+import ir.entity.var.GlobalVar;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -81,6 +82,13 @@ public class Branch extends TerminalStmt {
     @Override
     public Entity getDef() {
         return null;
+    }
+
+    @Override
+    public void promoteGlobalVar() {
+        if (condition instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null){
+            condition = globalVar.convertedLocalVar;
+        }
     }
 
     @Override

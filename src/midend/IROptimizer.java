@@ -4,6 +4,7 @@ import ir.IRRoot;
 import ir.function.Function;
 import midend.optimizer.CFGBuilder;
 import midend.optimizer.DomTreeBuilder;
+import midend.optimizer.Global2Local;
 
 import java.util.Map;
 
@@ -19,9 +20,11 @@ public class IROptimizer {
     }
 
     public void execute() {
-        CFGBuilder cfgBuilder = new CFGBuilder(irRoot);
-        cfgBuilder.build();
-        DomTreeBuilder domTreeBuilder = new DomTreeBuilder(irRoot);
-        domTreeBuilder.build();
+        Global2Local global2Local=new Global2Local(irRoot);
+        global2Local.work();
+//        CFGBuilder cfgBuilder = new CFGBuilder(irRoot);
+//        cfgBuilder.build();
+//        DomTreeBuilder domTreeBuilder = new DomTreeBuilder(irRoot);
+//        domTreeBuilder.build();
     }
 }

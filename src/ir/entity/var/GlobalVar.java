@@ -11,6 +11,8 @@ import java.util.*;
  * 全局的指针，指向存储全局变量的固定空间
  */
 public class GlobalVar extends Ptr {
+    //被转为local后的变量
+    public LocalVar convertedLocalVar = null;
 
     //记录使用了该全局变量的所有函数(name)
     public HashSet<String> occurrence = new HashSet<>();
@@ -18,6 +20,10 @@ public class GlobalVar extends Ptr {
     public GlobalVar(Storage storage,
                      String identity) {
         super(storage, identity);
+    }
+
+    public Ptr promote() {
+        return Objects.requireNonNullElse(convertedLocalVar, this);
     }
 
     @Override

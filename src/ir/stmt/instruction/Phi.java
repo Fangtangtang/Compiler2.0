@@ -5,6 +5,7 @@ import ir.entity.Entity;
 import ir.entity.SSAEntity;
 import ir.entity.Storage;
 import ir.entity.constant.ConstInt;
+import ir.entity.var.GlobalVar;
 import ir.entity.var.LocalTmpVar;
 
 import java.io.PrintStream;
@@ -109,6 +110,16 @@ public class Phi extends Instruction {
     @Override
     public Entity getDef() {
         return result;
+    }
+
+    @Override
+    public void promoteGlobalVar() {
+        if (ans1 instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null){
+            ans1 = globalVar.convertedLocalVar;
+        }
+        if (ans2 instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null){
+            ans2 = globalVar.convertedLocalVar;
+        }
     }
 
     @Override

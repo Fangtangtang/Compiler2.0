@@ -84,6 +84,11 @@ public class Global extends Instruction {
     }
 
     @Override
+    public void promoteGlobalVar() {
+        return;
+    }
+
+    @Override
     public void setUse(ArrayList<SSAEntity> list) {
         return;
     }
