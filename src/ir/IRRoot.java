@@ -2,6 +2,7 @@ package ir;
 
 
 import ir.entity.Storage;
+import ir.entity.var.LocalTmpVar;
 import ir.entity.var.LocalVar;
 import ir.function.*;
 import ir.irType.*;
@@ -232,13 +233,13 @@ public class IRRoot {
                 type2irType(type.returnType),
                 funcName
         );
-        function.parameterList.add(new LocalVar(
-                new Storage(new PtrType(irType)),
+        function.parameterList.add(new LocalTmpVar(
+                new PtrType(irType),
                 "this"
         ));
         type.parameters.forEach(
-                param -> function.parameterList.add(new LocalVar(
-                        new Storage(type2irType(param.type)),
+                param -> function.parameterList.add(new LocalTmpVar(
+                        type2irType(param.type),
                         param.name
                 ))
         );
@@ -247,20 +248,20 @@ public class IRRoot {
 
     //添加内建函数的参数
     private void addBuiltinFuncParam() {
-        LocalVar intParam = new LocalVar(
-                new Storage(types.get("int")),
+        LocalTmpVar intParam = new LocalTmpVar(
+                types.get("int"),
                 "n"
         );
-        LocalVar intParam1 = new LocalVar(
-                new Storage(types.get("int")),
+        LocalTmpVar intParam1 = new LocalTmpVar(
+                types.get("int"),
                 "n1"
         );
-        LocalVar strParam = new LocalVar(
-                new Storage(types.get("string")),
+        LocalTmpVar strParam = new LocalTmpVar(
+                types.get("string"),
                 "str"
         );
-        LocalVar strParam1 = new LocalVar(
-                new Storage(types.get("string")),
+        LocalTmpVar strParam1 = new LocalTmpVar(
+                types.get("string"),
                 "str1"
         );
         Function builtinFunc;

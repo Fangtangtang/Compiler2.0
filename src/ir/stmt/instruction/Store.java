@@ -44,6 +44,8 @@ public class Store extends Instruction {
             str = value.type.toString() + " " + value.toString();
         } else if (value instanceof Ptr ptr) {
             str = ptr.storage.type + " " + ptr;
+        } else if (value instanceof ConstBool constBool) {
+            str = "i8 " + constBool.toString();
         } else {
             str = value.toString();
         }

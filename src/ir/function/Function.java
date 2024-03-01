@@ -24,7 +24,7 @@ public class Function {
     public String funcName;
     //参数表，无法在函数中直接使用的量
     //var_def块中alloca新局部变量，将这些store
-    public ArrayList<LocalVar> parameterList = new ArrayList<>();
+    public ArrayList<LocalTmpVar> parameterList = new ArrayList<>();
     public LocalVar retVal;
     //进入函数的第一个basic block
     public BasicBlock entry = null;
@@ -58,10 +58,10 @@ public class Function {
     public String printParameterList() {
         StringBuilder str = new StringBuilder("(");
         if (parameterList.size() > 0) {
-            str.append(parameterList.get(0).storage.type).append(" ").append(parameterList.get(0));
+            str.append(parameterList.get(0).type).append(" ").append(parameterList.get(0));
         }
         for (int i = 1; i < parameterList.size(); ++i) {
-            str.append(", ").append(parameterList.get(i).storage.type).append(" ")
+            str.append(", ").append(parameterList.get(i).type).append(" ")
                     .append(parameterList.get(i).toString());
         }
         str.append(")");

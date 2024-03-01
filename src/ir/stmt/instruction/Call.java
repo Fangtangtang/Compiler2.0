@@ -146,11 +146,12 @@ public class Call extends Instruction {
 
     @Override
     public void propagateLocalTmpVar() {
-        for (Storage para : parameterList) {
-            if (para instanceof Ptr ptr) {
-                para = ptr.valueInBasicBlock == null ? para : ptr.valueInBasicBlock;
-            } else if (para instanceof LocalTmpVar tmpVar) {
-                para = tmpVar.valueInBasicBlock == null ? para : tmpVar.valueInBasicBlock;
+        for (int i = 0; i < parameterList.size(); i++) {
+            Storage para = parameterList.get(i);
+            if (para instanceof Ptr ptr && ptr.valueInBasicBlock != null) {
+                parameterList.set(i, ptr.valueInBasicBlock);
+            } else if (para instanceof LocalTmpVar tmpVar && tmpVar.valueInBasicBlock != null) {
+                parameterList.set(i, tmpVar.valueInBasicBlock);
             }
         }
     }

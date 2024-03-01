@@ -5,6 +5,7 @@ import ir.function.Function;
 import midend.optimizer.CFGBuilder;
 import midend.optimizer.DomTreeBuilder;
 import midend.optimizer.Global2Local;
+import midend.optimizer.LocalTmpVarPropagation;
 
 import java.util.Map;
 
@@ -20,8 +21,10 @@ public class IROptimizer {
     }
 
     public void execute() {
-        Global2Local global2Local=new Global2Local(irRoot);
+        Global2Local global2Local = new Global2Local(irRoot);
         global2Local.execute();
+        LocalTmpVarPropagation localTmpVarPropagation = new LocalTmpVarPropagation(irRoot);
+        localTmpVarPropagation.execute();
 //        CFGBuilder cfgBuilder = new CFGBuilder(irRoot);
 //        cfgBuilder.build();
 //        DomTreeBuilder domTreeBuilder = new DomTreeBuilder(irRoot);

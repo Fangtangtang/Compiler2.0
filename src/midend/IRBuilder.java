@@ -414,14 +414,14 @@ public class IRBuilder implements ASTVisitor<Entity> {
         Entity entity = node.typeNode.accept(this);
         String name = rename(node.name);
         //构造局部变量，加入参数表(参数表中的)
-        LocalVar var = new LocalVar(
-                new Storage(entity.type),
-                node.name
-        );
+//        LocalVar var = new LocalVar(
+//                new Storage(entity.type),
+//                node.name
+//        );
+        LocalTmpVar var = new LocalTmpVar(entity.type, node.name);
         currentFunction.parameterList.add(var);
-        rename2mem.put(var.identity, var);
         //构建var_def
-        Alloca stmt = new Alloca(var.storage.type, name);
+        Alloca stmt = new Alloca(entity.type, name);
         currentInitStmts.add(stmt);
         currentInitStmts.add(
                 new Store(var, stmt.result)
@@ -431,14 +431,11 @@ public class IRBuilder implements ASTVisitor<Entity> {
 
     //添加隐含的this参数
     private void addThisParam() {
-        LocalVar var = new LocalVar(
-                new Storage(new StructPtrType(currentClass)),
-                "this"
-        );
+        StructPtrType type = new StructPtrType(currentClass);
+        LocalTmpVar var = new LocalTmpVar(type, "this");
         currentFunction.parameterList.add(var);
-        rename2mem.put(var.identity, var);
         //构建var_def
-        Alloca stmt = new Alloca(var.storage.type, "this1");
+        Alloca stmt = new Alloca(type, "this1");
         currentInitStmts.add(stmt);
         currentInitStmts.add(
                 new Store(var, stmt.result)
