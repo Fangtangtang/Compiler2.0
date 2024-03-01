@@ -21,7 +21,7 @@ public class IROptimizer {
 
     public void execute() {
         Global2Local global2Local=new Global2Local(irRoot);
-        global2Local.work();
+        global2Local.execute();
 //        CFGBuilder cfgBuilder = new CFGBuilder(irRoot);
 //        cfgBuilder.build();
 //        DomTreeBuilder domTreeBuilder = new DomTreeBuilder(irRoot);

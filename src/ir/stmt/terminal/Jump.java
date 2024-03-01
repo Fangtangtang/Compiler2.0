@@ -72,6 +72,11 @@ public class Jump extends TerminalStmt {
     }
 
     @Override
+    public void propagateLocalTmpVar() {
+        return;
+    }
+
+    @Override
     public void setUse(ArrayList<SSAEntity> list) {
         return;
     }

@@ -9,6 +9,7 @@ import utility.error.InternalException;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Objects;
 
 /**
  * @author F
@@ -56,7 +57,7 @@ public class Icmp extends Instruction {
 
     @Override
     public void print(PrintStream out) {
-        String s1, s2;
+        String s1, s2, op = op1.type.toString();
         if (op1 instanceof ConstInt constant) {
             s1 = constant.printValue();
         } else if (op1 instanceof Null) {
@@ -71,9 +72,12 @@ public class Icmp extends Instruction {
         } else {
             s2 = op2.toString();
         }
+        if (Objects.equals(op2.type.toString(), "i8") && Objects.equals(op, "i1")) {
+            op = "i8";
+        }
         out.println("\t" + result.toString()
                 + " = icmp " + cond.name()
-                + " " + op1.type + " "
+                + " " + op + " "
                 + s1 + ", " + s2
         );
     }
@@ -128,6 +132,50 @@ public class Icmp extends Instruction {
         if (op2 instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null) {
             op2 = globalVar.convertedLocalVar;
         }
+    }
+
+    @Override
+    public void propagateLocalTmpVar() {
+        if (op1 instanceof Ptr ptr) {
+            op1 = ptr.valueInBasicBlock == null ? op1 : ptr.valueInBasicBlock;
+        } else if (op1 instanceof LocalTmpVar tmpVar) {
+            op1 = tmpVar.valueInBasicBlock == null ? op1 : tmpVar.valueInBasicBlock;
+        }
+        if (op2 instanceof Ptr ptr) {
+            op2 = ptr.valueInBasicBlock == null ? op2 : ptr.valueInBasicBlock;
+        } else if (op2 instanceof LocalTmpVar tmpVar) {
+            op2 = tmpVar.valueInBasicBlock == null ? op2 : tmpVar.valueInBasicBlock;
+        }
+    }
+
+    //两个操作数都为常数，直接传播
+    @Override
+    public ConstBool getConstResult() {
+        ConstBool ret = null;
+        if (op1 instanceof ConstInt const1 && op2 instanceof ConstInt const2) {
+            boolean result;
+            int num1 = Integer.parseInt(const1.value);
+            int num2 = Integer.parseInt(const2.value);
+            switch (cond) {
+                case eq -> result = num1 == num2;
+                case ne -> result = num1 != num2;
+                case slt -> result = num1 < num2;
+                case sgt -> result = num1 > num2;
+                case sle -> result = num1 <= num2;
+                case sge -> result = num1 >= num2;
+                default -> throw new InternalException("unexpected cond in Icmp instruction");
+            }
+            ret = new ConstBool(result);
+        } else if (op1 instanceof ConstBool const1 && op2 instanceof ConstBool const2) {
+            boolean result;
+            switch (cond) {
+                case eq -> result = const1.value == const2.value;
+                case ne -> result = const1.value != const2.value;
+                default -> throw new InternalException("unexpected cond in Icmp instruction");
+            }
+            ret = new ConstBool(result);
+        }
+        return ret;
     }
 
     @Override

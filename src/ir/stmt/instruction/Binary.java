@@ -23,6 +23,7 @@ import java.util.ArrayList;
  * + --------------------------------------------
  */
 public class Binary extends Instruction {
+
     public enum Operator {
         add, sub, mul, sdiv, srem,
         shl, ashr,
@@ -123,6 +124,54 @@ public class Binary extends Instruction {
         if (op2 instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null) {
             op2 = globalVar.convertedLocalVar;
         }
+    }
+
+    @Override
+    public void propagateLocalTmpVar() {
+        if (op1 instanceof Ptr ptr) {
+            op1 = ptr.valueInBasicBlock == null ? op1 : ptr.valueInBasicBlock;
+        } else if (op1 instanceof LocalTmpVar tmpVar) {
+            op1 = tmpVar.valueInBasicBlock == null ? op1 : tmpVar.valueInBasicBlock;
+        }
+        if (op2 instanceof Ptr ptr) {
+            op2 = ptr.valueInBasicBlock == null ? op2 : ptr.valueInBasicBlock;
+        } else if (op2 instanceof LocalTmpVar tmpVar) {
+            op2 = tmpVar.valueInBasicBlock == null ? op2 : tmpVar.valueInBasicBlock;
+        }
+    }
+
+    @Override
+    public Constant getConstResult() {
+        Constant ret = null;
+        if (op1 instanceof ConstInt const1 && op2 instanceof ConstInt const2) {
+            int result;
+            int num1 = Integer.parseInt(const1.value);
+            int num2 = Integer.parseInt(const2.value);
+            switch (operator) {
+                case add -> result = num1 + num2;
+                case sub -> result = num1 - num2;
+                case mul -> result = num1 * num2;
+                case sdiv -> result = num1 / num2;
+                case srem -> result = num1 % num2;
+                case shl -> result = num1 << num2;
+                case ashr -> result = num1 >> num2;
+                case and -> result = num1 & num2;
+                case xor -> result = num1 ^ num2;
+                case or -> result = num1 | num2;
+                default -> throw new InternalException("unexpected cond in Binary instruction");
+            }
+            ret = new ConstInt(Integer.toString(result));
+        } else if (op1 instanceof ConstBool const1 && op2 instanceof ConstBool const2) {
+            boolean result;
+            switch (operator) {
+                case and -> result = const1.value & const2.value;
+                case xor -> result = const1.value ^ const2.value;
+                case or -> result = const1.value | const2.value;
+                default -> throw new InternalException("unexpected cond in Binary instruction");
+            }
+            ret = new ConstBool(result);
+        }
+        return ret;
     }
 
     @Override

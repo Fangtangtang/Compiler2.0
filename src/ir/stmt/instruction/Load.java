@@ -3,6 +3,7 @@ package ir.stmt.instruction;
 import ir.IRVisitor;
 import ir.entity.Entity;
 import ir.entity.SSAEntity;
+import ir.entity.constant.Constant;
 import ir.entity.var.*;
 
 import java.io.PrintStream;
@@ -79,12 +80,22 @@ public class Load extends Instruction {
 
     @Override
     public void promoteGlobalVar() {
-        if (pointer instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null){
+        if (pointer instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null) {
             pointer = globalVar.convertedLocalVar;
         }
-        if (result instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null){
+        if (result instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null) {
             result = globalVar.convertedLocalVar;
         }
+    }
+
+    @Override
+    public void propagateLocalTmpVar() {
+        return;
+    }
+
+    @Override
+    public Constant getConstResult() {
+        return null;
     }
 
     @Override
@@ -108,4 +119,5 @@ public class Load extends Instruction {
     public SSAEntity getSSADef() {
         return ssaResult;
     }
+
 }

@@ -4,12 +4,16 @@ import ir.IRVisitor;
 import ir.entity.Entity;
 import ir.entity.SSAEntity;
 import ir.entity.Storage;
+import ir.entity.constant.ConstBool;
 import ir.entity.constant.ConstInt;
+import ir.entity.constant.Constant;
 import ir.entity.var.GlobalVar;
 import ir.entity.var.LocalTmpVar;
+import ir.entity.var.Ptr;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Objects;
 
 /**
  * @author F
@@ -114,12 +118,44 @@ public class Phi extends Instruction {
 
     @Override
     public void promoteGlobalVar() {
-        if (ans1 instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null){
+        if (ans1 instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null) {
             ans1 = globalVar.convertedLocalVar;
         }
-        if (ans2 instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null){
+        if (ans2 instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null) {
             ans2 = globalVar.convertedLocalVar;
         }
+    }
+
+    @Override
+    public void propagateLocalTmpVar() {
+        if (ans1 instanceof Ptr ptr) {
+            ans1 = ptr.valueInBasicBlock == null ? ans1 : ptr.valueInBasicBlock;
+        } else if (ans1 instanceof LocalTmpVar tmpVar) {
+            ans1 = tmpVar.valueInBasicBlock == null ? ans1 : tmpVar.valueInBasicBlock;
+        }
+        if (ans2 instanceof Ptr ptr) {
+            ans2 = ptr.valueInBasicBlock == null ? ans2 : ptr.valueInBasicBlock;
+        } else if (ans2 instanceof LocalTmpVar tmpVar) {
+            ans2 = tmpVar.valueInBasicBlock == null ? ans2 : tmpVar.valueInBasicBlock;
+        }
+    }
+
+    @Override
+    public Constant getConstResult() {
+        if (ans1 instanceof ConstInt const1 && ans2 instanceof ConstInt const2) {
+            if (Objects.equals(const1.value, const2.value)) {
+                return const1;
+            } else {
+                return null;
+            }
+        } else if (ans1 instanceof ConstBool const1 && ans2 instanceof ConstBool const2) {
+            if (const1.value == const2.value) {
+                return const1;
+            } else {
+                return null;
+            }
+        }
+        return null;
     }
 
     @Override

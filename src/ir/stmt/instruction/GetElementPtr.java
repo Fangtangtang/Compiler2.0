@@ -123,15 +123,34 @@ public class GetElementPtr extends Instruction {
 
     @Override
     public void promoteGlobalVar() {
-        if (result instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null){
+        if (result instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null) {
             result = globalVar.convertedLocalVar;
         }
-        if (idx instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null){
+        if (idx instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null) {
             idx = globalVar.convertedLocalVar;
         }
-        if (ptrVal instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null){
+        if (ptrVal instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null) {
             ptrVal = globalVar.convertedLocalVar;
         }
+    }
+
+    @Override
+    public void propagateLocalTmpVar() {
+        if (idx instanceof Ptr ptr) {
+            idx = ptr.valueInBasicBlock == null ? idx : ptr.valueInBasicBlock;
+        } else if (idx instanceof LocalTmpVar tmpVar) {
+            idx = tmpVar.valueInBasicBlock == null ? idx : tmpVar.valueInBasicBlock;
+        }
+        if (ptrVal instanceof Ptr ptr) {
+            ptrVal = ptr.valueInBasicBlock == null ? ptrVal : ptr.valueInBasicBlock;
+        } else if (ptrVal instanceof LocalTmpVar tmpVar) {
+            ptrVal = tmpVar.valueInBasicBlock == null ? ptrVal : tmpVar.valueInBasicBlock;
+        }
+    }
+
+    @Override
+    public Constant getConstResult() {
+        return null;
     }
 
     @Override
@@ -157,4 +176,6 @@ public class GetElementPtr extends Instruction {
     public SSAEntity getSSADef() {
         return ssaResult;
     }
+
+
 }

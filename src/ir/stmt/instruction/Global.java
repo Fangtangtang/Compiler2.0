@@ -56,7 +56,7 @@ public class Global extends Instruction {
     public void printSSA(PrintStream out) {
         String str;
         if (result.storage instanceof Constant) {
-            str =result.storage.toString();
+            str = result.storage.toString();
         } else if (result.storage.type instanceof PtrType) {
             str = "ptr null";
         } else if (result.storage.type instanceof StructType
@@ -89,6 +89,16 @@ public class Global extends Instruction {
     }
 
     @Override
+    public void propagateLocalTmpVar() {
+        return;
+    }
+
+    @Override
+    public Constant getConstResult() {
+        return null;
+    }
+
+    @Override
     public void setUse(ArrayList<SSAEntity> list) {
         return;
     }
@@ -107,4 +117,5 @@ public class Global extends Instruction {
     public SSAEntity getSSADef() {
         return ssaResult;
     }
+
 }

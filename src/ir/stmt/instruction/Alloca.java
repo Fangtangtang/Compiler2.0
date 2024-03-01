@@ -2,6 +2,7 @@ package ir.stmt.instruction;
 
 import ir.IRVisitor;
 import ir.entity.*;
+import ir.entity.constant.Constant;
 import ir.entity.var.*;
 import ir.irType.IRType;
 
@@ -62,6 +63,16 @@ public class Alloca extends Instruction {
     }
 
     @Override
+    public void propagateLocalTmpVar() {
+        return;
+    }
+
+    @Override
+    public Constant getConstResult() {
+        return null;
+    }
+
+    @Override
     public void setUse(ArrayList<SSAEntity> list) {
         return;
     }
@@ -80,4 +91,6 @@ public class Alloca extends Instruction {
     public SSAEntity getSSADef() {
         return ssaResult;
     }
+
+
 }

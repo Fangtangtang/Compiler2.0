@@ -12,6 +12,9 @@ public abstract class Ptr extends Storage {
     public String identity;
     public Storage storage;
 
+    //在当前BB中的最新赋值
+    public Storage valueInBasicBlock = null;
+
     public Ptr(Storage storage,
                String identity) {
         super(new PtrType());

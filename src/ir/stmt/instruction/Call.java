@@ -4,6 +4,7 @@ import ir.IRVisitor;
 import ir.entity.Entity;
 import ir.entity.SSAEntity;
 import ir.entity.Storage;
+import ir.entity.constant.Constant;
 import ir.entity.var.GlobalVar;
 import ir.entity.var.LocalTmpVar;
 import ir.entity.var.Ptr;
@@ -144,6 +145,22 @@ public class Call extends Instruction {
     }
 
     @Override
+    public void propagateLocalTmpVar() {
+        for (Storage para : parameterList) {
+            if (para instanceof Ptr ptr) {
+                para = ptr.valueInBasicBlock == null ? para : ptr.valueInBasicBlock;
+            } else if (para instanceof LocalTmpVar tmpVar) {
+                para = tmpVar.valueInBasicBlock == null ? para : tmpVar.valueInBasicBlock;
+            }
+        }
+    }
+
+    @Override
+    public Constant getConstResult() {
+        return null;
+    }
+
+    @Override
     public void setUse(ArrayList<SSAEntity> list) {
         ssaParameterList = list;
     }
@@ -162,4 +179,6 @@ public class Call extends Instruction {
     public SSAEntity getSSADef() {
         return ssaResult;
     }
+
+
 }

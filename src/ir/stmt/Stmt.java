@@ -25,6 +25,9 @@ public abstract class Stmt {
 
     public abstract void promoteGlobalVar();
 
+    //将能替换的变量替换掉（含部分常量传播）
+    public abstract void propagateLocalTmpVar();
+
     public abstract void setUse(ArrayList<SSAEntity> list);
 
     public abstract void setDef(SSAEntity entity);

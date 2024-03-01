@@ -30,7 +30,7 @@ public class Global2Local {
     /**
      * 执行优化
      */
-    public void work() {
+    public void execute() {
         analysisGlobalVarUsage();
         simplifyGlobalVarDefBlock();
         promoteGlobalToLocal();

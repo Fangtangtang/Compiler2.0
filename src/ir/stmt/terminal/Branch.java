@@ -6,6 +6,8 @@ import ir.entity.Entity;
 import ir.entity.SSAEntity;
 import ir.entity.Storage;
 import ir.entity.var.GlobalVar;
+import ir.entity.var.LocalTmpVar;
+import ir.entity.var.Ptr;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -88,6 +90,15 @@ public class Branch extends TerminalStmt {
     public void promoteGlobalVar() {
         if (condition instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null){
             condition = globalVar.convertedLocalVar;
+        }
+    }
+
+    @Override
+    public void propagateLocalTmpVar() {
+        if (condition instanceof Ptr ptr) {
+            condition = ptr.valueInBasicBlock == null ? condition : ptr.valueInBasicBlock;
+        } else if (condition instanceof LocalTmpVar tmpVar){
+            condition = tmpVar.valueInBasicBlock == null ? condition : tmpVar.valueInBasicBlock;
         }
     }
 

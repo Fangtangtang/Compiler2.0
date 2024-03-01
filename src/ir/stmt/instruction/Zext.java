@@ -5,8 +5,10 @@ import ir.IRVisitor;
 import ir.entity.Entity;
 import ir.entity.SSAEntity;
 import ir.entity.Storage;
+import ir.entity.constant.Constant;
 import ir.entity.var.GlobalVar;
 import ir.entity.var.LocalTmpVar;
+import ir.entity.var.Ptr;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -73,9 +75,26 @@ public class Zext extends Instruction {
 
     @Override
     public void promoteGlobalVar() {
-        if (value instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null){
+        if (value instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null) {
             value = globalVar.convertedLocalVar;
         }
+    }
+
+    @Override
+    public void propagateLocalTmpVar() {
+        if (value instanceof Ptr ptr) {
+            value = ptr.valueInBasicBlock == null ? value : ptr.valueInBasicBlock;
+        } else if (value instanceof LocalTmpVar tmpVar) {
+            value = tmpVar.valueInBasicBlock == null ? value : tmpVar.valueInBasicBlock;
+        }
+    }
+
+    @Override
+    public Constant getConstResult() {
+        if (value instanceof Constant constant) {
+            return constant;
+        }
+        return null;
     }
 
     @Override

@@ -5,6 +5,8 @@ import ir.entity.Entity;
 import ir.entity.SSAEntity;
 import ir.entity.Storage;
 import ir.entity.var.GlobalVar;
+import ir.entity.var.LocalTmpVar;
+import ir.entity.var.Ptr;
 import ir.irType.VoidType;
 
 import java.io.PrintStream;
@@ -78,8 +80,18 @@ public class Return extends TerminalStmt {
 
     @Override
     public void promoteGlobalVar() {
-        if (value instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null){
+        if (value instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null) {
             value = globalVar.convertedLocalVar;
+        }
+    }
+
+    @Override
+    public void propagateLocalTmpVar() {
+        if (value instanceof Ptr ptr) {
+            value = ptr.valueInBasicBlock == null ? value : ptr.valueInBasicBlock;
+        }
+        if (value instanceof LocalTmpVar tmpVar) {
+            value = tmpVar.valueInBasicBlock == null ? value : tmpVar.valueInBasicBlock;
         }
     }
 

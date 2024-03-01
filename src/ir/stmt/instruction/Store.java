@@ -84,12 +84,26 @@ public class Store extends Instruction {
 
     @Override
     public void promoteGlobalVar() {
-        if (value instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null){
+        if (value instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null) {
             value = globalVar.convertedLocalVar;
         }
-        if (pointer instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null){
+        if (pointer instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null) {
             pointer = globalVar.convertedLocalVar;
         }
+    }
+
+    @Override
+    public void propagateLocalTmpVar() {
+        if (value instanceof Ptr ptr) {
+            value = ptr.valueInBasicBlock == null ? value : ptr.valueInBasicBlock;
+        } else if (value instanceof LocalTmpVar tmpVar) {
+            value = tmpVar.valueInBasicBlock == null ? value : tmpVar.valueInBasicBlock;
+        }
+    }
+
+    @Override
+    public Constant getConstResult() {
+        return null;
     }
 
     @Override
