@@ -92,6 +92,7 @@ public class LocalTmpVarPropagation {
                 }
             }
         }
+        block.tailStmt.propagateLocalTmpVar();
         //出BB将valueInBasicBlock赋值全部清空
         for (Ptr ptr : defs) {
             ptr.valueInBasicBlock = null;
