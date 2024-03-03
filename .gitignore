@@ -17,4 +17,5 @@ src/IR.java
 src/ASM.java
 sample
 my.out
+in
 tmp.s
