@@ -88,7 +88,7 @@ public class Branch extends TerminalStmt {
 
     @Override
     public void promoteGlobalVar() {
-        if (condition instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null){
+        if (condition instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null) {
             condition = globalVar.convertedLocalVar;
         }
     }
@@ -97,8 +97,13 @@ public class Branch extends TerminalStmt {
     public void propagateLocalTmpVar() {
         if (condition instanceof Ptr ptr) {
             condition = ptr.valueInBasicBlock == null ? condition : ptr.valueInBasicBlock;
-        } else if (condition instanceof LocalTmpVar tmpVar){
+        } else if (condition instanceof LocalTmpVar tmpVar) {
             condition = tmpVar.valueInBasicBlock == null ? condition : tmpVar.valueInBasicBlock;
+        }
+        if (result instanceof Ptr ptr) {
+            result = ptr.valueInBasicBlock == null ? result : ptr.valueInBasicBlock;
+        } else if (result instanceof LocalTmpVar tmpVar) {
+            result = tmpVar.valueInBasicBlock == null ? result : tmpVar.valueInBasicBlock;
         }
     }
 

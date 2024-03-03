@@ -576,14 +576,21 @@ public class InstructionSelectorOnEntity implements IRVisitor {
             );
         } else {
             if (baseSize == 4) {
+                PhysicalRegister t2 = new PhysicalRegister("t2");
+                setPhysicalRegSize(t2, stmt.idx);
                 currentBlock.pushBack(
-                        new ImmBinaryInst((Register) idx, new Imm(2), (Register) idx, ImmBinaryInst.Opcode.slli)
+                        new ImmBinaryInst((Register) idx, new Imm(2), t2, ImmBinaryInst.Opcode.slli)
+                );
+                //计算地址
+                currentBlock.pushBack(
+                        new BinaryInst((Register) ptr, t2, getVirtualRegister(stmt.result), BinaryInst.Opcode.add)
+                );
+            } else {
+                //计算地址
+                currentBlock.pushBack(
+                        new BinaryInst((Register) ptr, (Register) idx, getVirtualRegister(stmt.result), BinaryInst.Opcode.add)
                 );
             }
-            //计算地址
-            currentBlock.pushBack(
-                    new BinaryInst((Register) ptr, (Register) idx, getVirtualRegister(stmt.result), BinaryInst.Opcode.add)
-            );
         }
     }
 
@@ -685,6 +692,7 @@ public class InstructionSelectorOnEntity implements IRVisitor {
                 op2 = t1;
             }
             if (stmt.cond.equals(Icmp.Cond.sle)) {
+                //atomic
                 currentBlock.pushBack(
                         new CmpInst(op1, op2, resultReg, Icmp.Cond.sgt)
                 );
@@ -692,6 +700,7 @@ public class InstructionSelectorOnEntity implements IRVisitor {
                         new NotInst(resultReg, resultReg)
                 );
             } else if (stmt.cond.equals(Icmp.Cond.sge)) {
+                //atomic
                 currentBlock.pushBack(
                         new CmpInst(op1, op2, resultReg, Icmp.Cond.slt)
                 );
@@ -879,7 +888,6 @@ public class InstructionSelectorOnEntity implements IRVisitor {
         //phi
         if (stmt.phiLabel != null) {
             Entity ans = stmt.result;
-//                    currentIRFunc.phiMap.get(stmt.index + stmt.phiLabel);
             Operand ansOperand = toOperand(ans);
             if (ansOperand instanceof Imm imm) {
                 currentBlock.pushBack(
@@ -908,12 +916,14 @@ public class InstructionSelectorOnEntity implements IRVisitor {
             }
 
         } else if (condReg instanceof Register register) {
+            PhysicalRegister t2 = new PhysicalRegister("t2");
+            setPhysicalRegSize(t2, stmt.condition);
             currentBlock.pushBack(
-                    new ImmBinaryInst(register, new Imm(true), register, ImmBinaryInst.Opcode.andi)
+                    new ImmBinaryInst(register, new Imm(true), t2, ImmBinaryInst.Opcode.andi)
             );
             //neqz branch
             currentBlock.pushBack(
-                    new BranchInst(register, renameBlock(stmt.trueBranch.label))
+                    new BranchInst(t2, renameBlock(stmt.trueBranch.label))
             );
             currentBlock.pushBack(
                     new JumpInst(renameBlock(stmt.falseBranch.label))

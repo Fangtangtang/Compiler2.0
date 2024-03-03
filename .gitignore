@@ -3,7 +3,7 @@ test.sh
 .idea
 out/
 antlr-4.12.0-complete.jar
-output
+output*
 code
 ravel
 *.out
@@ -17,3 +17,4 @@ src/IR.java
 src/ASM.java
 sample
 my.out
+tmp.s

@@ -4,6 +4,9 @@ import ir.*;
 import ir.entity.Entity;
 import ir.entity.SSAEntity;
 import ir.entity.Storage;
+import ir.entity.var.GlobalVar;
+import ir.entity.var.LocalTmpVar;
+import ir.entity.var.Ptr;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -73,7 +76,11 @@ public class Jump extends TerminalStmt {
 
     @Override
     public void propagateLocalTmpVar() {
-        return;
+        if (result instanceof Ptr ptr) {
+            result = ptr.valueInBasicBlock == null ? result : ptr.valueInBasicBlock;
+        } else if (result instanceof LocalTmpVar tmpVar){
+            result = tmpVar.valueInBasicBlock == null ? result : tmpVar.valueInBasicBlock;
+        }
     }
 
     @Override
