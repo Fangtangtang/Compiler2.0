@@ -20,7 +20,7 @@ import java.util.*;
 public class CallingConvention {
     Func func;
     PhysicalRegMap registerMap;
-    PhysicalRegister fp, sp;
+    PhysicalRegister fp, sp, gp;
     Imm zero = new Imm(0);
     //大index，callee saved
     HashSet<Colors.Color> usedInFunc = new HashSet<>();
@@ -30,6 +30,8 @@ public class CallingConvention {
         this.registerMap = registerMap;
         fp = registerMap.getReg("fp");
         sp = registerMap.getReg("sp");
+        gp = registerMap.getReg("gp");
+        gp.color = Colors.Color.gp;
     }
 
     /**
@@ -73,6 +75,16 @@ public class CallingConvention {
                 //call后插入
                 if (callInst.hasReturn) {
                     iter.next();
+                    MoveInst mvRetInst = (MoveInst) iter.next();
+                    iter.remove();
+                    iter.add(
+                            new MoveInst(gp, mvRetInst.rs1)
+                    );
+                    iter.add(
+                            new MoveInst(mvRetInst.rd, gp)
+                    );
+                    iter.previous();
+                    iter.previous();
                     afterCall(iter, pairs);
                     iter.previous();
                 } else {

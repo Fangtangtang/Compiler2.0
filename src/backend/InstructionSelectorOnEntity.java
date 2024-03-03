@@ -4,6 +4,7 @@ import asm.*;
 import asm.instruction.*;
 import asm.operand.*;
 import asm.section.*;
+import backend.optimizer.interferenceGraph.Colors;
 import ir.*;
 import ir.entity.*;
 import ir.entity.constant.*;
@@ -520,12 +521,10 @@ public class InstructionSelectorOnEntity implements IRVisitor {
                     new CallInst(stmt.function.funcName, true)
             );
             PhysicalRegister a0 = new PhysicalRegister("a0");
+//            a0.color = Colors.Color.a0;
             setPhysicalRegSize(a0, stmt.result);
             currentBlock.pushBack(
-                    new MoveInst(registerMap.getReg("gp"), a0, true)
-            );
-            currentBlock.pushBack(
-                    new MoveInst(getVirtualRegister(stmt.result), registerMap.getReg("gp"), true)
+                    new MoveInst(getVirtualRegister(stmt.result), a0)
             );
         } else {
             currentBlock.pushBack(

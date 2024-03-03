@@ -25,9 +25,5 @@ public class IROptimizer {
         global2Local.execute();
         LocalTmpVarPropagation localTmpVarPropagation = new LocalTmpVarPropagation(irRoot);
         localTmpVarPropagation.execute();
-//        CFGBuilder cfgBuilder = new CFGBuilder(irRoot);
-//        cfgBuilder.build();
-//        DomTreeBuilder domTreeBuilder = new DomTreeBuilder(irRoot);
-//        domTreeBuilder.build();
     }
 }

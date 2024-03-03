@@ -83,22 +83,22 @@ public class Main {
 //        program.printRegColoring(outputStream);
 
         //without optimize
-        Program program = new Program();
-        InstructionSelectorOnEntity instSelector = new InstructionSelectorOnEntity(program);
-        instSelector.visit(irBuilder.irRoot);
-        RegisterAllocator allocator = new RegisterAllocator(instSelector.registerMap);
-        allocator.visit(program);
-        program.print(outputStream);
-
 //        Program program = new Program();
-//        // ir -> asm:含“mem2reg”
-//        InstructionSelectorOnEntity selector = new InstructionSelectorOnEntity(program);
-//        selector.visit(irBuilder.irRoot);
-//        // asm上优化
-//        ASMOptimizer asmOptimizer = new ASMOptimizer(program.text, selector.registerMap);
-//        asmOptimizer.execute();
-//
-//        program.printRegColoring(outputStream);
+//        InstructionSelectorOnEntity instSelector = new InstructionSelectorOnEntity(program);
+//        instSelector.visit(irBuilder.irRoot);
+//        RegisterAllocator allocator = new RegisterAllocator(instSelector.registerMap);
+//        allocator.visit(program);
+//        program.print(outputStream);
+
+        Program program = new Program();
+        // ir -> asm:含“mem2reg”
+        InstructionSelectorOnEntity selector = new InstructionSelectorOnEntity(program);
+        selector.visit(irBuilder.irRoot);
+        // asm上优化
+        ASMOptimizer asmOptimizer = new ASMOptimizer(program.text, selector.registerMap);
+        asmOptimizer.execute();
+
+        program.printRegColoring(outputStream);
     }
 }
 

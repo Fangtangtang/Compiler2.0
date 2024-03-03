@@ -137,12 +137,6 @@ public class GraphColoring {
                     }
                     toNode(def).moveList.add(moveInst);
                     moveInstSet.workListMoves.add(moveInst);
-                    if (moveInst.isReturn) {
-                        interferenceGraph.addEdge(
-                                toNode(registerMap.getReg("a0")),
-                                toNode(def)
-                        );
-                    }
                 }
                 //添加实冲突边
                 if (def != null) {
@@ -281,11 +275,6 @@ public class GraphColoring {
                 || u instanceof UncoloredNode && validUnderBriggs(u, v)) {
             moveInstSet.coalescedMoves.add(moveInst);
             combine(u, (UncoloredNode) v);
-
-//            System.out.println('\n');
-//            System.out.println("combine:\t" + u + '\t' + v);
-//            this.interferenceGraph.print();
-
             addWorkList(u);
         } else {
             moveInstSet.activeMoves.add(moveInst);
