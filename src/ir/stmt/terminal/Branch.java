@@ -8,8 +8,10 @@ import ir.entity.Storage;
 import ir.entity.var.GlobalVar;
 import ir.entity.var.LocalTmpVar;
 import ir.entity.var.Ptr;
+import ir.stmt.Stmt;
 
 import java.io.PrintStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 
 /**

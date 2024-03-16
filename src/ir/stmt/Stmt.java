@@ -5,6 +5,7 @@ import ir.entity.Entity;
 import ir.entity.SSAEntity;
 
 import java.io.PrintStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
@@ -12,7 +13,7 @@ import java.util.ArrayList;
  * IR上的语句
  * 派生出instruction（IR指令）、terminalStmt（终结语句）
  */
-public abstract class Stmt {
+public abstract class Stmt implements Serializable {
     public abstract void print(PrintStream out);
 
     public abstract void printSSA(PrintStream out);
@@ -27,6 +28,8 @@ public abstract class Stmt {
 
     //将能替换的变量替换掉（含部分常量传播）
     public abstract void propagateLocalTmpVar();
+
+//    public abstract Stmt cloneStmt();
 
     public abstract void setUse(ArrayList<SSAEntity> list);
 

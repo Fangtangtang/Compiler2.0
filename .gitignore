@@ -15,6 +15,7 @@ src/LocalSSA.java
 src/LocalJudge.java
 src/IR.java
 src/ASM.java
+src/test.java
 sample
 my.out
 in

@@ -530,7 +530,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         currentInitStmts = new LinkedList<>();
         //如果有返回值，先给retVal分配空间
         if (!(currentFunction.retType instanceof VoidType)) {
-            Alloca stmt = new Alloca(currentFunction.retType, "retVal");
+            Alloca stmt = new Alloca(currentFunction.retType, currentFunction.funcName+"_retVal");
             currentInitStmts.add(stmt);
             currentFunction.retVal = stmt.result;
             //main有缺省的返回值

@@ -5,8 +5,6 @@ import ir.IRVisitor;
 import ir.entity.*;
 import ir.entity.var.*;
 import ir.irType.*;
-import ir.stmt.instruction.Load;
-import ir.stmt.terminal.Return;
 import utility.dominance.DomTree;
 import utility.dominance.DomTreeNode;
 
@@ -36,11 +34,15 @@ public class Function {
     public DomTree domTree;
     public HashMap<String, Storage> phiResult = new HashMap<>();
 
+    public HashMap<Function, Integer> calleeMap = null;
+
+    public HashSet<String> inlinedToCaller = new HashSet<>();
+
     public Function(IRType retType,
                     String funcName) {
         this.ret = new BasicBlock(funcName + "_return");
         this.retType = retType;
-        this.retVal = new LocalVar(new Storage(retType), "retVal");
+        this.retVal = new LocalVar(new Storage(retType), funcName+"_retVal");
         this.funcName = funcName;
     }
 
