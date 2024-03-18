@@ -1,14 +1,15 @@
 package midend.optimizer;
 
 import ir.*;
+import ir.entity.*;
+import ir.entity.var.*;
 import ir.function.*;
 import ir.stmt.*;
-import ir.stmt.instruction.Call;
+import ir.stmt.instruction.*;
+import ir.stmt.terminal.*;
+import utility.Pair;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.ListIterator;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author F
@@ -19,6 +20,9 @@ import java.util.Map;
  */
 public class FunctionInlining {
     IRRoot irRoot;
+
+    //记录局部变量在target中的alloca
+    HashMap<LocalVar, LocalVar> curAllocaMap = null;
 
     public FunctionInlining(IRRoot root) {
         this.irRoot = root;
@@ -75,6 +79,7 @@ public class FunctionInlining {
         boolean flag = false;
         for (Map.Entry<String, Function> funcEntry : irRoot.funcDef.entrySet()) {
             Function func = funcEntry.getValue();
+            curAllocaMap = new HashMap<>();
             //普通local function
             if (func.entry != null) {
                 for (Map.Entry<String, BasicBlock> bbEntry : func.blockMap.entrySet()) {
@@ -89,6 +94,7 @@ public class FunctionInlining {
                             int num = func.calleeMap.get(callStmt.function);
                             inlineToFunc(callStmt.function, func,
                                     block,
+                                    callStmt,
                                     stmtIterator,
                                     num
                             );
@@ -101,6 +107,7 @@ public class FunctionInlining {
                     }
                 }
             }
+            curAllocaMap = null;
         }
         return flag;
     }
@@ -117,16 +124,115 @@ public class FunctionInlining {
      */
     void inlineToFunc(Function src, Function tar,
                       BasicBlock callingBlock,
+                      Call call,
                       ListIterator<Stmt> stmtIterator,
                       int num) {
-        //未被inline到该函数中
-        if (!src.inlinedToCaller.contains(tar.funcName)) {
-            //转移localVar
-
-            //重新打标签
-            src.inlinedToCaller.add(tar.funcName);
+        //当前在处理的tar中block
+        BasicBlock curBlock = new BasicBlock(callingBlock.label);
+        tar.blockMap.remove(callingBlock.label);
+        tar.blockMap.put(curBlock.label, curBlock);
+        //call前的不变
+        curBlock.statements.addAll(callingBlock.statements.subList(0, stmtIterator.previousIndex()));
+        ListIterator<Stmt> iterInCurBlock = curBlock.statements.listIterator(
+                curBlock.statements.size()
+        );
+        stmtIterator.previous();//指向call前
+        //内联的localTmpVar需要创建副本
+        HashMap<LocalTmpVar, Storage> copyMap = new HashMap<>();
+        //函数入参
+        for (int i = 0; i < src.parameterList.size(); i++) {
+            LocalTmpVar param = src.parameterList.get(i);
+            copyMap.put(param, call.parameterList.get(i));
         }
-
-
+        boolean is_first = true;
+        for (Map.Entry<String, BasicBlock> bbEntry : src.blockMap.entrySet()) {
+            BasicBlock srcBlock = bbEntry.getValue();
+            ListIterator<Stmt> iterator = srcBlock.statements.listIterator();
+            //非src的第一个BB
+            if (!is_first) {
+                curBlock = new BasicBlock(srcBlock.label + "_" + num);
+                tar.blockMap.put(curBlock.label, curBlock);
+                iterInCurBlock = curBlock.statements.listIterator();
+            } else {
+                is_first = false;
+            }
+            //对BB中的每个语句处理
+            while (iterator.hasNext()) {
+                Stmt stmt = iterator.next();
+                if (stmt instanceof Alloca alloca) {
+                    //第一次inline到该函数中
+                    if (!curAllocaMap.containsKey(alloca.result)) {
+                        //转移localVar
+                        Alloca allocaStmt = new Alloca(
+                                alloca.result.type,
+                                alloca.result.identity
+                        );
+                        curAllocaMap.put(alloca.result, allocaStmt.result);
+                        tar.entry.statements.add(allocaStmt);
+                    }
+                } else {
+                    ArrayList<Entity> use = stmt.getUse();
+                    ArrayList<Entity> newUse = new ArrayList<>();
+                    //replace
+                    if (use != null) {
+                        for (Entity element : use) {
+                            if (element instanceof LocalVar localVar) {
+                                newUse.add(curAllocaMap.get(localVar));
+                            } else if (element instanceof LocalTmpVar localTmpVar) {
+                                newUse.add(copyMap.get(localTmpVar));
+                            } else {
+                                newUse.add(element);
+                            }
+                        }
+                    }
+                    Pair<Stmt, LocalTmpVar> stmtCopy = stmt.creatCopy(newUse,"_"+num);
+                    LocalTmpVar newDef = stmtCopy.getSecond();
+                    if (newDef != null) {
+                        LocalTmpVar def = (LocalTmpVar) stmt.getDef();
+                        copyMap.put(def, newDef);
+                    }
+                    //insert stmt
+                    Stmt newStmt = stmtCopy.getFirst();
+                    iterInCurBlock.add(newStmt);
+                }
+            }
+            TerminalStmt tailStmt = srcBlock.tailStmt;
+            ArrayList<Entity> use = tailStmt.getUse();
+            ArrayList<Entity> newUse = new ArrayList<>();
+            //replace
+            if (use != null) {
+                for (Entity element : use) {
+                    if (element instanceof LocalVar localVar) {
+                        newUse.add(curAllocaMap.get(localVar));
+                    } else if (element instanceof LocalTmpVar localTmpVar) {
+                        newUse.add(copyMap.get(localTmpVar));
+                    } else {
+                        newUse.add(element);
+                    }
+                }
+            }
+            Pair<Stmt, LocalTmpVar> stmtCopy = tailStmt.creatCopy(newUse,"_"+num);
+            LocalTmpVar newDef = stmtCopy.getSecond();
+            if (newDef != null) {
+                LocalTmpVar def = (LocalTmpVar) tailStmt.getDef();
+                copyMap.put(def, newDef);
+            }
+            curBlock.tailStmt = (TerminalStmt) stmtCopy.getFirst();
+        }
+        //todo:src.ret != null能保证？
+        curBlock = new BasicBlock(src.ret.label + "_" + num);
+        tar.blockMap.put(curBlock.label, curBlock);
+        iterInCurBlock = curBlock.statements.listIterator();
+        if (call.result != null) {
+            Load loadStmt = (Load) src.ret.statements.get(0);
+            iterInCurBlock.add(
+                    new Load(call.result, curAllocaMap.get((LocalVar) loadStmt.pointer))
+            );
+        }
+        curBlock.statements.addAll(
+                callingBlock.statements.subList
+                        (stmtIterator.nextIndex(), callingBlock.statements.size())
+        );
+        curBlock.tailStmt = callingBlock.tailStmt;
     }
 }

@@ -36,7 +36,7 @@ public class Function {
 
     public HashMap<Function, Integer> calleeMap = null;
 
-    public HashSet<String> inlinedToCaller = new HashSet<>();
+//    public HashSet<String> inlinedToCaller = new HashSet<>();
 
     public Function(IRType retType,
                     String funcName) {

@@ -5,6 +5,8 @@ import ir.IRVisitor;
 import ir.entity.*;
 import ir.entity.constant.*;
 import ir.entity.var.*;
+import ir.stmt.Stmt;
+import utility.Pair;
 import utility.error.InternalException;
 
 import java.io.PrintStream;
@@ -138,6 +140,11 @@ public class Binary extends Instruction {
         } else if (op2 instanceof LocalTmpVar tmpVar) {
             op2 = tmpVar.valueInBasicBlock == null ? op2 : tmpVar.valueInBasicBlock;
         }
+    }
+
+    @Override
+    public Pair<Stmt, LocalTmpVar> creatCopy(ArrayList<Entity> newUse, String suffix) {
+
     }
 
     @Override

@@ -414,10 +414,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
         Entity entity = node.typeNode.accept(this);
         String name = rename(node.name);
         //构造局部变量，加入参数表(参数表中的)
-//        LocalVar var = new LocalVar(
-//                new Storage(entity.type),
-//                node.name
-//        );
         LocalTmpVar var = new LocalTmpVar(entity.type, node.name);
         currentFunction.parameterList.add(var);
         //构建var_def
@@ -504,7 +500,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
             //labeled as useless
             LocalTmpVar tmp = new LocalTmpVar(currentFunction.retType, ++tmpCounter.cnt, currentFunction.funcName);
             currentFunction.ret.pushBack(
-                    new Load(tmp, currentFunction.retVal, true)
+                    new Load(tmp, currentFunction.retVal)
             );
             currentFunction.ret.pushBack(
                     new Return(tmp)

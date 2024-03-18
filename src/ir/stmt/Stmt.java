@@ -3,6 +3,8 @@ package ir.stmt;
 import ir.IRVisitor;
 import ir.entity.Entity;
 import ir.entity.SSAEntity;
+import ir.entity.var.LocalTmpVar;
+import utility.Pair;
 
 import java.io.PrintStream;
 import java.io.Serializable;
@@ -29,7 +31,9 @@ public abstract class Stmt implements Serializable {
     //将能替换的变量替换掉（含部分常量传播）
     public abstract void propagateLocalTmpVar();
 
-//    public abstract Stmt cloneStmt();
+    //为内联的语句创建副本
+    //包括需要新建的def
+    public abstract Pair<Stmt, LocalTmpVar> creatCopy(ArrayList<Entity> newUse,String suffix);
 
     public abstract void setUse(ArrayList<SSAEntity> list);
 

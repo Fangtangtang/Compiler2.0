@@ -5,6 +5,8 @@ import ir.entity.*;
 import ir.entity.constant.Constant;
 import ir.entity.var.*;
 import ir.irType.IRType;
+import ir.stmt.Stmt;
+import utility.Pair;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -65,6 +67,11 @@ public class Alloca extends Instruction {
     @Override
     public void propagateLocalTmpVar() {
         return;
+    }
+
+    @Override
+    public Pair<Stmt,LocalTmpVar> creatCopy(ArrayList<Entity> newUse,String suffix) {
+        return null;
     }
 
     @Override

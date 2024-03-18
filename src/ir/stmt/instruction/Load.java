@@ -42,13 +42,6 @@ public class Load extends Instruction {
         this.pointer = pointer;
     }
 
-    public Load(Entity result,
-                Entity pointer,
-                boolean loadRet) {
-        this.result = result;
-        this.pointer = pointer;
-    }
-
     @Override
     public void print(PrintStream out) {
         out.println("\t" + result.toString() + " = load "
