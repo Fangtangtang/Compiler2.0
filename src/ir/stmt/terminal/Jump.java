@@ -4,9 +4,9 @@ import ir.*;
 import ir.entity.Entity;
 import ir.entity.SSAEntity;
 import ir.entity.Storage;
-import ir.entity.var.GlobalVar;
-import ir.entity.var.LocalTmpVar;
-import ir.entity.var.Ptr;
+import ir.entity.var.*;
+import ir.stmt.Stmt;
+import utility.Pair;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -39,6 +39,15 @@ public class Jump extends TerminalStmt {
         super();
         this.targetName = target.label;
         this.target = target;
+        this.index = index;
+        this.phiLabel = phiLabel;
+        this.result = result;
+    }
+
+    public Jump(String targetName, String index,
+                String phiLabel, Storage result) {
+        super();
+        this.targetName = targetName;
         this.index = index;
         this.phiLabel = phiLabel;
         this.result = result;
@@ -78,9 +87,15 @@ public class Jump extends TerminalStmt {
     public void propagateLocalTmpVar() {
         if (result instanceof Ptr ptr) {
             result = ptr.valueInBasicBlock == null ? result : ptr.valueInBasicBlock;
-        } else if (result instanceof LocalTmpVar tmpVar){
+        } else if (result instanceof LocalTmpVar tmpVar) {
             result = tmpVar.valueInBasicBlock == null ? result : tmpVar.valueInBasicBlock;
         }
+    }
+
+    @Override
+    public Pair<Stmt, LocalTmpVar> creatCopy(ArrayList<Entity> newUse, String suffix) {
+        Stmt stmt = new Jump(targetName + suffix, index, phiLabel, (Storage) newUse.get(0));
+        return new Pair<>(stmt, null);
     }
 
     @Override

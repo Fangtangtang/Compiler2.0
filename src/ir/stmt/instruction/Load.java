@@ -5,6 +5,8 @@ import ir.entity.Entity;
 import ir.entity.SSAEntity;
 import ir.entity.constant.Constant;
 import ir.entity.var.*;
+import ir.stmt.Stmt;
+import utility.Pair;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -30,13 +32,13 @@ import java.util.ArrayList;
  * + ------------------------------------
  */
 public class Load extends Instruction {
-    public Entity result;
+    public LocalTmpVar result;
     public SSAEntity ssaResult;
     public Entity pointer;
     public SSAEntity ssaPtr;
     public boolean loadRet = false;
 
-    public Load(Entity result,
+    public Load(LocalTmpVar result,
                 Entity pointer) {
         this.result = result;
         this.pointer = pointer;
@@ -76,14 +78,18 @@ public class Load extends Instruction {
         if (pointer instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null) {
             pointer = globalVar.convertedLocalVar;
         }
-        if (result instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null) {
-            result = globalVar.convertedLocalVar;
-        }
     }
 
     @Override
     public void propagateLocalTmpVar() {
         return;
+    }
+
+    @Override
+    public Pair<Stmt, LocalTmpVar> creatCopy(ArrayList<Entity> newUse, String suffix) {
+        LocalTmpVar newResult = new LocalTmpVar(result.type, result.identity + suffix);
+        Stmt stmt = new Load(newResult, newUse.get(0));
+        return new Pair<>(stmt, newResult);
     }
 
     @Override

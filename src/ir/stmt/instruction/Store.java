@@ -6,6 +6,8 @@ import ir.entity.SSAEntity;
 import ir.entity.constant.*;
 import ir.entity.var.*;
 import ir.irType.PtrType;
+import ir.stmt.Stmt;
+import utility.Pair;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -72,16 +74,21 @@ public class Store extends Instruction {
         irVisitor.visit(this);
     }
 
+    //todo:correct??
     @Override
     public ArrayList<Entity> getUse() {
         ArrayList<Entity> ret = new ArrayList<>();
         ret.add(value);
+        ret.add(pointer);
         return ret;
     }
 
     @Override
     public Entity getDef() {
-        return pointer;
+        if (pointer instanceof Ptr) {
+            return pointer;
+        }
+        return null;
     }
 
     @Override
@@ -101,6 +108,12 @@ public class Store extends Instruction {
         } else if (value instanceof LocalTmpVar tmpVar) {
             value = tmpVar.valueInBasicBlock == null ? value : tmpVar.valueInBasicBlock;
         }
+    }
+
+    @Override
+    public Pair<Stmt, LocalTmpVar> creatCopy(ArrayList<Entity> newUse, String suffix) {
+        Stmt stmt = new Store(newUse.get(0), newUse.get(1));
+        return new Pair<>(stmt, null);
     }
 
     @Override

@@ -145,6 +145,8 @@ public class FunctionInlining {
             copyMap.put(param, call.parameterList.get(i));
         }
         boolean is_first = true;
+        //可能需要bb重定向
+        ArrayList<TerminalStmt> terminalStmts = new ArrayList<>();
         for (Map.Entry<String, BasicBlock> bbEntry : src.blockMap.entrySet()) {
             BasicBlock srcBlock = bbEntry.getValue();
             ListIterator<Stmt> iterator = srcBlock.statements.listIterator();
@@ -185,7 +187,7 @@ public class FunctionInlining {
                             }
                         }
                     }
-                    Pair<Stmt, LocalTmpVar> stmtCopy = stmt.creatCopy(newUse,"_"+num);
+                    Pair<Stmt, LocalTmpVar> stmtCopy = stmt.creatCopy(newUse, "_" + num);
                     LocalTmpVar newDef = stmtCopy.getSecond();
                     if (newDef != null) {
                         LocalTmpVar def = (LocalTmpVar) stmt.getDef();
@@ -197,27 +199,27 @@ public class FunctionInlining {
                 }
             }
             TerminalStmt tailStmt = srcBlock.tailStmt;
-            ArrayList<Entity> use = tailStmt.getUse();
-            ArrayList<Entity> newUse = new ArrayList<>();
-            //replace
-            if (use != null) {
-                for (Entity element : use) {
-                    if (element instanceof LocalVar localVar) {
-                        newUse.add(curAllocaMap.get(localVar));
-                    } else if (element instanceof LocalTmpVar localTmpVar) {
-                        newUse.add(copyMap.get(localTmpVar));
-                    } else {
-                        newUse.add(element);
-                    }
+            Entity newUse = null;
+            ArrayList<Entity> newUseList = new ArrayList<>();
+            if (tailStmt instanceof Jump jump) {
+                newUse = jump.result;
+            } else if (tailStmt instanceof Branch br) {
+                if (br.condition instanceof LocalVar localVar) {
+                    newUseList.add(curAllocaMap.get(localVar));
+                } else if (br.condition instanceof LocalTmpVar localTmpVar) {
+                    newUseList.add(copyMap.get(localTmpVar));
                 }
+                newUse = br.result;
             }
-            Pair<Stmt, LocalTmpVar> stmtCopy = tailStmt.creatCopy(newUse,"_"+num);
-            LocalTmpVar newDef = stmtCopy.getSecond();
-            if (newDef != null) {
-                LocalTmpVar def = (LocalTmpVar) tailStmt.getDef();
-                copyMap.put(def, newDef);
+            if (newUse instanceof LocalVar localVar) {
+                newUse = curAllocaMap.get(localVar);
+            } else if (newUse instanceof LocalTmpVar localTmpVar) {
+                newUse = copyMap.get(localTmpVar);
             }
+            newUseList.add(newUse);
+            Pair<Stmt, LocalTmpVar> stmtCopy = tailStmt.creatCopy(newUseList, "_" + num);
             curBlock.tailStmt = (TerminalStmt) stmtCopy.getFirst();
+            terminalStmts.add(curBlock.tailStmt);
         }
         //todo:src.ret != null能保证？
         curBlock = new BasicBlock(src.ret.label + "_" + num);
@@ -234,5 +236,14 @@ public class FunctionInlining {
                         (stmtIterator.nextIndex(), callingBlock.statements.size())
         );
         curBlock.tailStmt = callingBlock.tailStmt;
+        //terminalStmts跳转重定向
+        for (TerminalStmt tailStmt : terminalStmts) {
+            if (tailStmt instanceof Jump jump) {
+                jump.target = tar.blockMap.get(jump.targetName);
+            } else if (tailStmt instanceof Branch branch) {
+                branch.trueBranch = tar.blockMap.get(branch.trueBranchName);
+                branch.falseBranch = tar.blockMap.get(branch.falseBranchName);
+            }
+        }
     }
 }

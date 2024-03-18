@@ -5,6 +5,8 @@ import ir.IRVisitor;
 import ir.entity.*;
 import ir.entity.constant.*;
 import ir.entity.var.*;
+import ir.stmt.Stmt;
+import utility.Pair;
 import utility.error.InternalException;
 
 import java.io.PrintStream;
@@ -53,6 +55,16 @@ public class Icmp extends Instruction {
             case NotEqual -> this.cond = Cond.ne;
             default -> throw new InternalException("unexpected operator in Icmp instruction");
         }
+    }
+
+    public Icmp(Cond op,
+                LocalTmpVar result,
+                Entity op1,
+                Entity op2) {
+        this.result = result;
+        this.op1 = op1;
+        this.op2 = op2;
+        this.cond = op;
     }
 
     @Override
@@ -146,6 +158,16 @@ public class Icmp extends Instruction {
         } else if (op2 instanceof LocalTmpVar tmpVar) {
             op2 = tmpVar.valueInBasicBlock == null ? op2 : tmpVar.valueInBasicBlock;
         }
+    }
+
+    @Override
+    public Pair<Stmt, LocalTmpVar> creatCopy(ArrayList<Entity> newUse, String suffix) {
+        LocalTmpVar newResult = new LocalTmpVar(result.type, result.identity + suffix);
+        Stmt stmt = new Icmp(cond, newResult,
+                newUse.get(0),
+                newUse.get(1)
+        );
+        return new Pair<>(stmt, newResult);
     }
 
     //两个操作数都为常数，直接传播

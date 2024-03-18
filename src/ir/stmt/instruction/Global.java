@@ -6,10 +6,13 @@ import ir.entity.SSAEntity;
 import ir.entity.Storage;
 import ir.entity.constant.Constant;
 import ir.entity.var.GlobalVar;
+import ir.entity.var.LocalTmpVar;
 import ir.irType.ArrayType;
 import ir.irType.IRType;
 import ir.irType.PtrType;
 import ir.irType.StructType;
+import ir.stmt.Stmt;
+import utility.Pair;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -91,6 +94,11 @@ public class Global extends Instruction {
     @Override
     public void propagateLocalTmpVar() {
         return;
+    }
+
+    @Override
+    public Pair<Stmt, LocalTmpVar> creatCopy(ArrayList<Entity> newUse, String suffix) {
+        return null;
     }
 
     @Override

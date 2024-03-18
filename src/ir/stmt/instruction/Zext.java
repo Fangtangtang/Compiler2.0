@@ -9,6 +9,8 @@ import ir.entity.constant.Constant;
 import ir.entity.var.GlobalVar;
 import ir.entity.var.LocalTmpVar;
 import ir.entity.var.Ptr;
+import ir.stmt.Stmt;
+import utility.Pair;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -87,6 +89,13 @@ public class Zext extends Instruction {
         } else if (value instanceof LocalTmpVar tmpVar) {
             value = tmpVar.valueInBasicBlock == null ? value : tmpVar.valueInBasicBlock;
         }
+    }
+
+    @Override
+    public Pair<Stmt, LocalTmpVar> creatCopy(ArrayList<Entity> newUse, String suffix) {
+        LocalTmpVar newResult = new LocalTmpVar(result.type, result.identity + suffix);
+        Stmt stmt = new Zext(newResult, (Storage) newUse.get(0));
+        return new Pair<>(stmt, newResult);
     }
 
     @Override

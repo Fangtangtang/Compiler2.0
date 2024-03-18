@@ -60,6 +60,16 @@ public class Binary extends Instruction {
         }
     }
 
+    public Binary(Operator op,
+                  LocalTmpVar result,
+                  Entity op1,
+                  Entity op2) {
+        this.result = result;
+        this.op1 = op1;
+        this.op2 = op2;
+        operator = op;
+    }
+
     @Override
     public void print(PrintStream out) {
         String s1, s2;
@@ -144,7 +154,12 @@ public class Binary extends Instruction {
 
     @Override
     public Pair<Stmt, LocalTmpVar> creatCopy(ArrayList<Entity> newUse, String suffix) {
-
+        LocalTmpVar newResult = new LocalTmpVar(result.type, result.identity + suffix);
+        Stmt stmt = new Binary(operator, newResult,
+                newUse.get(0),
+                newUse.get(1)
+        );
+        return new Pair<>(stmt, newResult);
     }
 
     @Override

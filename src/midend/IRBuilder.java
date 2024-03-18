@@ -428,7 +428,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
     //添加隐含的this参数
     private void addThisParam() {
         StructPtrType type = new StructPtrType(currentClass);
-        LocalTmpVar var = new LocalTmpVar(type, "this");
+        LocalTmpVar var = new LocalTmpVar(type, currentFunction.funcName + "_this");
         currentFunction.parameterList.add(var);
         //构建var_def
         Alloca stmt = new Alloca(type, "this1");
@@ -526,7 +526,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         currentInitStmts = new LinkedList<>();
         //如果有返回值，先给retVal分配空间
         if (!(currentFunction.retType instanceof VoidType)) {
-            Alloca stmt = new Alloca(currentFunction.retType, currentFunction.funcName+"_retVal");
+            Alloca stmt = new Alloca(currentFunction.retType, currentFunction.funcName + "_retVal");
             currentInitStmts.add(stmt);
             currentFunction.retVal = stmt.result;
             //main有缺省的返回值

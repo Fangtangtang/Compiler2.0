@@ -8,6 +8,8 @@ import ir.entity.var.LocalTmpVar;
 import ir.entity.var.Ptr;
 import ir.irType.ArrayType;
 import ir.irType.StructType;
+import ir.stmt.Stmt;
+import utility.Pair;
 import utility.error.InternalException;
 
 import java.io.PrintStream;
@@ -30,14 +32,14 @@ import java.util.ArrayList;
  */
 public class GetElementPtr extends Instruction {
 
-    public Storage result;
+    public LocalTmpVar result;
     public SSAEntity ssaResult;
     public Storage ptrVal;//指针类型
     public SSAEntity ssaPtrVal;
     public Entity idx;
     public SSAEntity ssaIdx;
 
-    public GetElementPtr(Storage result,
+    public GetElementPtr(LocalTmpVar result,
                          Storage ptrVal,
                          Entity index) {
         this.result = result;
@@ -123,9 +125,6 @@ public class GetElementPtr extends Instruction {
 
     @Override
     public void promoteGlobalVar() {
-        if (result instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null) {
-            result = globalVar.convertedLocalVar;
-        }
         if (idx instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null) {
             idx = globalVar.convertedLocalVar;
         }
@@ -146,6 +145,15 @@ public class GetElementPtr extends Instruction {
         } else if (ptrVal instanceof LocalTmpVar tmpVar) {
             ptrVal = tmpVar.valueInBasicBlock == null ? ptrVal : tmpVar.valueInBasicBlock;
         }
+    }
+
+    @Override
+    public Pair<Stmt, LocalTmpVar> creatCopy(ArrayList<Entity> newUse, String suffix) {
+        LocalTmpVar newResult = new LocalTmpVar(result.type, result.identity + suffix);
+        Stmt stmt = new GetElementPtr(
+                newResult, (Storage) newUse.get(1), newUse.get(0)
+        );
+        return new Pair<>(stmt, newResult);
     }
 
     @Override

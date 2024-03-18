@@ -9,6 +9,7 @@ import ir.entity.var.GlobalVar;
 import ir.entity.var.LocalTmpVar;
 import ir.entity.var.Ptr;
 import ir.stmt.Stmt;
+import utility.Pair;
 
 import java.io.PrintStream;
 import java.io.Serializable;
@@ -24,6 +25,7 @@ public class Branch extends TerminalStmt {
     public SSAEntity ssaCondition;
     //两个分支
     public BasicBlock trueBranch, falseBranch;
+    public String trueBranchName, falseBranchName;
 
     public String phiLabel = null;
     public String index;
@@ -49,6 +51,21 @@ public class Branch extends TerminalStmt {
         this.condition = condition;
         this.trueBranch = trueBranch;
         this.falseBranch = falseBranch;
+        this.index = index;
+        this.phiLabel = phiLabel;
+        this.result = result;
+    }
+
+    public Branch(Entity condition,
+                  String trueBranchStr,
+                  String falseBranchStr,
+                  String index,
+                  String phiLabel,
+                  Storage result) {
+        super();
+        this.condition = condition;
+        this.trueBranchName = trueBranchStr;
+        this.falseBranchName = falseBranchStr;
         this.index = index;
         this.phiLabel = phiLabel;
         this.result = result;
@@ -107,6 +124,16 @@ public class Branch extends TerminalStmt {
         } else if (result instanceof LocalTmpVar tmpVar) {
             result = tmpVar.valueInBasicBlock == null ? result : tmpVar.valueInBasicBlock;
         }
+    }
+
+    @Override
+    public Pair<Stmt, LocalTmpVar> creatCopy(ArrayList<Entity> newUse, String suffix) {
+        Stmt stmt = new Branch(newUse.get(0),
+                trueBranch.label + suffix,
+                falseBranch.label + suffix,
+                index, phiLabel, (Storage) newUse.get(1)
+        );
+        return new Pair<>(stmt, null);
     }
 
     @Override

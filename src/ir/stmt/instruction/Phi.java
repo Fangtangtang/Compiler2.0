@@ -10,6 +10,8 @@ import ir.entity.constant.Constant;
 import ir.entity.var.GlobalVar;
 import ir.entity.var.LocalTmpVar;
 import ir.entity.var.Ptr;
+import ir.stmt.Stmt;
+import utility.Pair;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -138,6 +140,17 @@ public class Phi extends Instruction {
         } else if (ans2 instanceof LocalTmpVar tmpVar) {
             ans2 = tmpVar.valueInBasicBlock == null ? ans2 : tmpVar.valueInBasicBlock;
         }
+    }
+
+    @Override
+    public Pair<Stmt, LocalTmpVar> creatCopy(ArrayList<Entity> newUse, String suffix) {
+        LocalTmpVar newResult = new LocalTmpVar(result.type, result.identity + suffix);
+        Stmt stmt = new Phi(
+                newResult, (Storage) newUse.get(0), (Storage) newUse.get(1),
+                label1.get(0) + suffix, label2.get(0) + suffix,
+                phiLabel    //todo:what for??
+        );
+        return new Pair<>(stmt, newResult);
     }
 
     @Override

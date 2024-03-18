@@ -10,6 +10,8 @@ import ir.entity.var.LocalTmpVar;
 import ir.entity.var.Ptr;
 import ir.function.Function;
 import ir.irType.VoidType;
+import ir.stmt.Stmt;
+import utility.Pair;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -154,6 +156,22 @@ public class Call extends Instruction {
                 parameterList.set(i, tmpVar.valueInBasicBlock);
             }
         }
+    }
+
+    @Override
+    public Pair<Stmt, LocalTmpVar> creatCopy(ArrayList<Entity> newUse, String suffix) {
+        LocalTmpVar newResult;
+        if (result == null) {
+            newResult = null;
+        } else {
+            newResult = new LocalTmpVar(result.type, result.identity + suffix);
+        }
+        ArrayList<Storage> newParams = new ArrayList<>();
+        for (Entity use : newUse) {
+            newParams.add((Storage) use);
+        }
+        Stmt stmt = new Call(function, newResult, newParams);
+        return new Pair<>(stmt, newResult);
     }
 
     @Override

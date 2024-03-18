@@ -67,15 +67,12 @@ public class LocalTmpVarPropagation {
             //将指向空间的值load
             if (stmt instanceof Load loadStmt) {
                 if (loadStmt.pointer instanceof Ptr ptr) {
-                    if (loadStmt.result instanceof Ptr ptr1) {
-                        ptr1.valueInBasicBlock = ptr.valueInBasicBlock;
-                        defs.add(ptr1);
-                    } else if (loadStmt.result instanceof LocalTmpVar tmpVar) {
-                        tmpVar.valueInBasicBlock = ptr.valueInBasicBlock;
-                        if (tmpVar.valueInBasicBlock != null) {
+//                    if (loadStmt.result instanceof LocalTmpVar tmpVar) {
+                    loadStmt.result.valueInBasicBlock = ptr.valueInBasicBlock;
+                        if (loadStmt.result.valueInBasicBlock != null) {
                             iterator.remove();
                         }
-                    }
+//                    }
                 }
             }
             Entity result = stmt.getDef();
