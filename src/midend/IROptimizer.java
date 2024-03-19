@@ -2,10 +2,7 @@ package midend;
 
 import ir.IRRoot;
 import ir.function.Function;
-import midend.optimizer.CFGBuilder;
-import midend.optimizer.DomTreeBuilder;
-import midend.optimizer.Global2Local;
-import midend.optimizer.LocalTmpVarPropagation;
+import midend.optimizer.*;
 
 import java.util.Map;
 
@@ -21,6 +18,8 @@ public class IROptimizer {
     }
 
     public void execute() {
+        FunctionInlining functionInlining = new FunctionInlining(irRoot);
+        functionInlining.execute();
         Global2Local global2Local = new Global2Local(irRoot);
         global2Local.execute();
         LocalTmpVarPropagation localTmpVarPropagation = new LocalTmpVarPropagation(irRoot);

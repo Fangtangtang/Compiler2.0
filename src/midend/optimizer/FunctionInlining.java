@@ -24,6 +24,8 @@ public class FunctionInlining {
     //记录局部变量在target中的alloca
     HashMap<LocalVar, LocalVar> curAllocaMap = null;
 
+    LinkedList<Stmt> newAllocaStmt = null;
+
     public FunctionInlining(IRRoot root) {
         this.irRoot = root;
     }
@@ -80,6 +82,7 @@ public class FunctionInlining {
         for (Map.Entry<String, Function> funcEntry : irRoot.funcDef.entrySet()) {
             Function func = funcEntry.getValue();
             curAllocaMap = new HashMap<>();
+            newAllocaStmt = new LinkedList<>();
             //普通local function
             if (func.entry != null) {
                 for (Map.Entry<String, BasicBlock> bbEntry : func.blockMap.entrySet()) {
@@ -103,11 +106,14 @@ public class FunctionInlining {
                             } else {
                                 func.calleeMap.put(callStmt.function, num - 1);
                             }
+                            break;
                         }
                     }
                 }
+                func.entry.statements.addAll(0, newAllocaStmt);
             }
             curAllocaMap = null;
+            newAllocaStmt = null;
         }
         return flag;
     }
@@ -131,12 +137,14 @@ public class FunctionInlining {
         BasicBlock curBlock = new BasicBlock(callingBlock.label);
         tar.blockMap.remove(callingBlock.label);
         tar.blockMap.put(curBlock.label, curBlock);
+        if (callingBlock == tar.entry) {
+            tar.entry = curBlock;
+        }
         //call前的不变
         curBlock.statements.addAll(callingBlock.statements.subList(0, stmtIterator.previousIndex()));
         ListIterator<Stmt> iterInCurBlock = curBlock.statements.listIterator(
                 curBlock.statements.size()
         );
-        stmtIterator.previous();//指向call前
         //内联的localTmpVar需要创建副本
         HashMap<LocalTmpVar, Storage> copyMap = new HashMap<>();
         //函数入参
@@ -170,7 +178,7 @@ public class FunctionInlining {
                                 alloca.result.identity
                         );
                         curAllocaMap.put(alloca.result, allocaStmt.result);
-                        tar.entry.statements.add(allocaStmt);
+                        newAllocaStmt.add(allocaStmt);
                     }
                 } else {
                     ArrayList<Entity> use = stmt.getUse();
