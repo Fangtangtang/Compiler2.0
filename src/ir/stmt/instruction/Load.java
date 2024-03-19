@@ -3,6 +3,7 @@ package ir.stmt.instruction;
 import ir.IRVisitor;
 import ir.entity.Entity;
 import ir.entity.SSAEntity;
+import ir.entity.Storage;
 import ir.entity.constant.Constant;
 import ir.entity.var.*;
 import ir.stmt.Stmt;
@@ -10,6 +11,7 @@ import utility.Pair;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 
 /**
@@ -86,10 +88,15 @@ public class Load extends Instruction {
     }
 
     @Override
-    public Pair<Stmt, LocalTmpVar> creatCopy(ArrayList<Entity> newUse, String suffix) {
+    public Pair<Stmt, LocalTmpVar> creatCopy(String suffix) {
         LocalTmpVar newResult = new LocalTmpVar(result.type, result.identity + suffix);
-        Stmt stmt = new Load(newResult, newUse.get(0));
+        Stmt stmt = new Load(newResult, pointer);
         return new Pair<>(stmt, newResult);
+    }
+
+    @Override
+    public void replaceUse(HashMap<LocalTmpVar, Storage> copyMap, HashMap<LocalVar, LocalVar> curAllocaMap) {
+        pointer = replace(pointer, copyMap, curAllocaMap);
     }
 
     @Override

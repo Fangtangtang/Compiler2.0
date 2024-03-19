@@ -7,6 +7,7 @@ import ir.entity.Storage;
 import ir.entity.constant.Constant;
 import ir.entity.var.GlobalVar;
 import ir.entity.var.LocalTmpVar;
+import ir.entity.var.LocalVar;
 import ir.irType.ArrayType;
 import ir.irType.IRType;
 import ir.irType.PtrType;
@@ -16,6 +17,7 @@ import utility.Pair;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * @author F
@@ -97,9 +99,14 @@ public class Global extends Instruction {
     }
 
     @Override
-    public Pair<Stmt, LocalTmpVar> creatCopy(ArrayList<Entity> newUse, String suffix) {
+    public Pair<Stmt, LocalTmpVar> creatCopy(String suffix) {
         return null;
     }
+
+    @Override
+    public void replaceUse(HashMap<LocalTmpVar, Storage> copyMap, HashMap<LocalVar, LocalVar> curAllocaMap) {
+    }
+
 
     @Override
     public Constant getConstResult() {

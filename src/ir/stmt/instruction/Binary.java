@@ -11,6 +11,7 @@ import utility.error.InternalException;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * @author F
@@ -153,13 +154,19 @@ public class Binary extends Instruction {
     }
 
     @Override
-    public Pair<Stmt, LocalTmpVar> creatCopy(ArrayList<Entity> newUse, String suffix) {
+    public Pair<Stmt, LocalTmpVar> creatCopy(String suffix) {
         LocalTmpVar newResult = new LocalTmpVar(result.type, result.identity + suffix);
         Stmt stmt = new Binary(operator, newResult,
-                newUse.get(0),
-                newUse.get(1)
+                op1, op2
         );
         return new Pair<>(stmt, newResult);
+    }
+
+    @Override
+    public void replaceUse(HashMap<LocalTmpVar, Storage> copyMap, HashMap<LocalVar, LocalVar> curAllocaMap) {
+        op1 = replace(op1, copyMap, curAllocaMap);
+        op2 = replace(op2, copyMap, curAllocaMap);
+
     }
 
     @Override

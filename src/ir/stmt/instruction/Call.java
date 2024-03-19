@@ -7,6 +7,7 @@ import ir.entity.Storage;
 import ir.entity.constant.Constant;
 import ir.entity.var.GlobalVar;
 import ir.entity.var.LocalTmpVar;
+import ir.entity.var.LocalVar;
 import ir.entity.var.Ptr;
 import ir.function.Function;
 import ir.irType.VoidType;
@@ -15,6 +16,7 @@ import utility.Pair;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * @author F
@@ -161,19 +163,24 @@ public class Call extends Instruction {
     }
 
     @Override
-    public Pair<Stmt, LocalTmpVar> creatCopy(ArrayList<Entity> newUse, String suffix) {
+    public Pair<Stmt, LocalTmpVar> creatCopy(String suffix) {
         LocalTmpVar newResult;
         if (result == null) {
             newResult = null;
         } else {
             newResult = new LocalTmpVar(result.type, result.identity + suffix);
         }
-        ArrayList<Storage> newParams = new ArrayList<>();
-        for (Entity use : newUse) {
-            newParams.add((Storage) use);
-        }
-        Stmt stmt = new Call(function, newResult, newParams);
+        Stmt stmt = new Call(function, result, parameterList);
         return new Pair<>(stmt, newResult);
+    }
+
+    @Override
+    public void replaceUse(HashMap<LocalTmpVar, Storage> copyMap, HashMap<LocalVar, LocalVar> curAllocaMap) {
+        ArrayList<Storage> prev = parameterList;
+        parameterList = new ArrayList<>();
+        for (Storage param : prev) {
+            parameterList.add((Storage) replace(param, copyMap, curAllocaMap));
+        }
     }
 
     @Override

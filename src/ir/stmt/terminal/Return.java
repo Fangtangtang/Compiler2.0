@@ -6,6 +6,7 @@ import ir.entity.SSAEntity;
 import ir.entity.Storage;
 import ir.entity.var.GlobalVar;
 import ir.entity.var.LocalTmpVar;
+import ir.entity.var.LocalVar;
 import ir.entity.var.Ptr;
 import ir.irType.VoidType;
 import ir.stmt.Stmt;
@@ -13,6 +14,7 @@ import utility.Pair;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * @author F
@@ -98,15 +100,16 @@ public class Return extends TerminalStmt {
     }
 
     @Override
-    public Pair<Stmt, LocalTmpVar> creatCopy(ArrayList<Entity> newUse, String suffix) {
-        Stmt stmt;
-        if (newUse == null) {
-            stmt = new Return();
-        } else {
-            stmt = new Return(newUse.get(0));
-        }
+    public Pair<Stmt, LocalTmpVar> creatCopy(String suffix) {
+        Stmt stmt = new Return(value);
         return new Pair<>(stmt, null);
     }
+
+    @Override
+    public void replaceUse(HashMap<LocalTmpVar, Storage> copyMap, HashMap<LocalVar, LocalVar> curAllocaMap) {
+        value = replace(value, copyMap, curAllocaMap);
+    }
+
 
     @Override
     public void setUse(ArrayList<SSAEntity> list) {

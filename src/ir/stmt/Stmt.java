@@ -3,12 +3,15 @@ package ir.stmt;
 import ir.IRVisitor;
 import ir.entity.Entity;
 import ir.entity.SSAEntity;
+import ir.entity.Storage;
 import ir.entity.var.LocalTmpVar;
+import ir.entity.var.LocalVar;
 import utility.Pair;
 
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * @author F
@@ -33,7 +36,18 @@ public abstract class Stmt implements Serializable {
 
     //为内联的语句创建副本
     //包括需要新建的def
-    public abstract Pair<Stmt, LocalTmpVar> creatCopy(ArrayList<Entity> newUse,String suffix);
+    public abstract Pair<Stmt, LocalTmpVar> creatCopy(String suffix);
+
+    public abstract void replaceUse(HashMap<LocalTmpVar, Storage> copyMap, HashMap<LocalVar, LocalVar> curAllocaMap);
+
+   public Entity replace(Entity entity, HashMap<LocalTmpVar, Storage> copyMap, HashMap<LocalVar, LocalVar> curAllocaMap) {
+        if (entity instanceof LocalVar && curAllocaMap.containsKey(entity)) {
+            entity = curAllocaMap.get(entity);
+        } else if (entity instanceof LocalTmpVar && copyMap.containsKey(entity)) {
+            entity = copyMap.get(entity);
+        }
+        return entity;
+    }
 
     public abstract void setUse(ArrayList<SSAEntity> list);
 

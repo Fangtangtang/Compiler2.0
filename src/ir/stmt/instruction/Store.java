@@ -3,6 +3,7 @@ package ir.stmt.instruction;
 import ir.IRVisitor;
 import ir.entity.Entity;
 import ir.entity.SSAEntity;
+import ir.entity.Storage;
 import ir.entity.constant.*;
 import ir.entity.var.*;
 import ir.irType.PtrType;
@@ -11,6 +12,7 @@ import utility.Pair;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * @author F
@@ -111,9 +113,15 @@ public class Store extends Instruction {
     }
 
     @Override
-    public Pair<Stmt, LocalTmpVar> creatCopy(ArrayList<Entity> newUse, String suffix) {
-        Stmt stmt = new Store(newUse.get(0), newUse.get(1));
+    public Pair<Stmt, LocalTmpVar> creatCopy(String suffix) {
+        Stmt stmt = new Store(value, pointer);
         return new Pair<>(stmt, null);
+    }
+
+    @Override
+    public void replaceUse(HashMap<LocalTmpVar, Storage> copyMap, HashMap<LocalVar, LocalVar> curAllocaMap) {
+        value = replace(value, copyMap, curAllocaMap);
+        pointer = replace(pointer, copyMap, curAllocaMap);
     }
 
     @Override

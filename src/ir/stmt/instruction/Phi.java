@@ -9,12 +9,14 @@ import ir.entity.constant.ConstInt;
 import ir.entity.constant.Constant;
 import ir.entity.var.GlobalVar;
 import ir.entity.var.LocalTmpVar;
+import ir.entity.var.LocalVar;
 import ir.entity.var.Ptr;
 import ir.stmt.Stmt;
 import utility.Pair;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Objects;
 
 /**
@@ -143,14 +145,20 @@ public class Phi extends Instruction {
     }
 
     @Override
-    public Pair<Stmt, LocalTmpVar> creatCopy(ArrayList<Entity> newUse, String suffix) {
+    public Pair<Stmt, LocalTmpVar> creatCopy(String suffix) {
         LocalTmpVar newResult = new LocalTmpVar(result.type, result.identity + suffix);
         Stmt stmt = new Phi(
-                newResult, (Storage) newUse.get(0), (Storage) newUse.get(1),
+                newResult, ans1, ans2,
                 label1.get(0) + suffix, label2.get(0) + suffix,
                 phiLabel    //todo:what for??
         );
         return new Pair<>(stmt, newResult);
+    }
+
+    @Override
+    public void replaceUse(HashMap<LocalTmpVar, Storage> copyMap, HashMap<LocalVar, LocalVar> curAllocaMap) {
+        ans1 = (Storage) replace(ans1, copyMap, curAllocaMap);
+        ans2 = (Storage) replace(ans2, copyMap, curAllocaMap);
     }
 
     @Override

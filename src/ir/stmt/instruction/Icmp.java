@@ -11,6 +11,7 @@ import utility.error.InternalException;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Objects;
 
 /**
@@ -161,13 +162,16 @@ public class Icmp extends Instruction {
     }
 
     @Override
-    public Pair<Stmt, LocalTmpVar> creatCopy(ArrayList<Entity> newUse, String suffix) {
+    public Pair<Stmt, LocalTmpVar> creatCopy(String suffix) {
         LocalTmpVar newResult = new LocalTmpVar(result.type, result.identity + suffix);
-        Stmt stmt = new Icmp(cond, newResult,
-                newUse.get(0),
-                newUse.get(1)
-        );
+        Stmt stmt = new Icmp(cond, newResult, op1, op2);
         return new Pair<>(stmt, newResult);
+    }
+
+    @Override
+    public void replaceUse(HashMap<LocalTmpVar, Storage> copyMap, HashMap<LocalVar, LocalVar> curAllocaMap) {
+        op1 = replace(op1, copyMap, curAllocaMap);
+        op2 = replace(op2, copyMap, curAllocaMap);
     }
 
     //两个操作数都为常数，直接传播

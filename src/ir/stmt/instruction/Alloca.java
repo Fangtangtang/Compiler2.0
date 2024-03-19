@@ -10,6 +10,7 @@ import utility.Pair;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 
 /**
@@ -70,8 +71,13 @@ public class Alloca extends Instruction {
     }
 
     @Override
-    public Pair<Stmt,LocalTmpVar> creatCopy(ArrayList<Entity> newUse,String suffix) {
+    public Pair<Stmt, LocalTmpVar> creatCopy(String suffix) {
         return null;
+    }
+
+    @Override
+    public void replaceUse(HashMap<LocalTmpVar, Storage> copyMap, HashMap<LocalVar, LocalVar> curAllocaMap) {
+        return;
     }
 
     @Override

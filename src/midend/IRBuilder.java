@@ -431,7 +431,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         LocalTmpVar var = new LocalTmpVar(type, currentFunction.funcName + "_this");
         currentFunction.parameterList.add(var);
         //构建var_def
-        Alloca stmt = new Alloca(type, "this1");
+        Alloca stmt = new Alloca(type, currentFunction.funcName +"_this1");
         currentInitStmts.add(stmt);
         currentInitStmts.add(
                 new Store(var, stmt.result)

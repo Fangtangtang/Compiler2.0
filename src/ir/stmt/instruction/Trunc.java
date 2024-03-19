@@ -7,12 +7,14 @@ import ir.entity.Storage;
 import ir.entity.constant.Constant;
 import ir.entity.var.GlobalVar;
 import ir.entity.var.LocalTmpVar;
+import ir.entity.var.LocalVar;
 import ir.entity.var.Ptr;
 import ir.stmt.Stmt;
 import utility.Pair;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * @author F
@@ -91,10 +93,15 @@ public class Trunc extends Instruction {
     }
 
     @Override
-    public Pair<Stmt, LocalTmpVar> creatCopy(ArrayList<Entity> newUse, String suffix) {
+    public Pair<Stmt, LocalTmpVar> creatCopy(String suffix) {
         LocalTmpVar newResult = new LocalTmpVar(result.type, result.identity + suffix);
-        Stmt stmt = new Trunc(newResult, (Storage) newUse.get(0));
+        Stmt stmt = new Trunc(newResult, value);
         return new Pair<>(stmt, newResult);
+    }
+
+    @Override
+    public void replaceUse(HashMap<LocalTmpVar, Storage> copyMap, HashMap<LocalVar, LocalVar> curAllocaMap) {
+        value = (Storage) replace(value, copyMap, curAllocaMap);
     }
 
     @Override

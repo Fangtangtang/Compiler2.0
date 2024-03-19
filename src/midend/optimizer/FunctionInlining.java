@@ -158,6 +158,8 @@ public class FunctionInlining {
         renameMap.put(src.entry.label + "_" + num, callingBlock.label);
         //当前在处理的tar中block
         BasicBlock curBlock = new BasicBlock(callingBlock.label);
+        ArrayList<BasicBlock> blocks = new ArrayList<>();
+        blocks.add(curBlock);
         newBlock.put(curBlock.label, curBlock);
         if (callingBlock == tar.entry) {
             tar.entry = curBlock;
@@ -184,6 +186,7 @@ public class FunctionInlining {
             if (!isFirst) {
                 curBlock = new BasicBlock(srcBlock.label + "_" + num);
                 newBlock.put(curBlock.label, curBlock);
+                blocks.add(curBlock);
                 iterInCurBlock = curBlock.statements.listIterator();
             } else {
                 isFirst = false;
@@ -223,7 +226,7 @@ public class FunctionInlining {
                             }
                         }
                     }
-                    Pair<Stmt, LocalTmpVar> stmtCopy = stmt.creatCopy(newUse, "_" + num);
+                    Pair<Stmt, LocalTmpVar> stmtCopy = stmt.creatCopy("_" + num);
                     LocalTmpVar newDef = stmtCopy.getSecond();
                     if (newDef != null) {
                         LocalTmpVar def = (LocalTmpVar) stmt.getDef();
@@ -265,12 +268,13 @@ public class FunctionInlining {
                 newUse = copyMap.get(localTmpVar);
             }
             newUseList.add(newUse);
-            Pair<Stmt, LocalTmpVar> stmtCopy = tailStmt.creatCopy(newUseList, "_" + num);
+            Pair<Stmt, LocalTmpVar> stmtCopy = tailStmt.creatCopy("_" + num);
             curBlock.tailStmt = (TerminalStmt) stmtCopy.getFirst();
             terminalStmts.add(curBlock.tailStmt);
         }
         //todo:src.ret != null能保证？
         curBlock = new BasicBlock(src.ret.label + "_" + num);
+        blocks.add(curBlock);
         newBlock.put(curBlock.label, curBlock);
         renameMap.put(callingBlock.label, curBlock.label);
         iterInCurBlock = curBlock.statements.listIterator();
@@ -293,6 +297,16 @@ public class FunctionInlining {
                 branch.trueBranch = newBlock.get(branch.trueBranchName);
                 branch.falseBranch = newBlock.get(branch.falseBranchName);
             }
+        }
+        replaceUse(copyMap, blocks);
+    }
+
+    void replaceUse(HashMap<LocalTmpVar, Storage> copyMap, ArrayList<BasicBlock> blocks) {
+        for (BasicBlock block : blocks) {
+            for (Stmt stmt : block.statements) {
+                stmt.replaceUse(copyMap, curAllocaMap);
+            }
+            block.tailStmt.replaceUse(copyMap, curAllocaMap);
         }
     }
 }

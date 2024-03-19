@@ -7,6 +7,7 @@ import ir.entity.SSAEntity;
 import ir.entity.Storage;
 import ir.entity.var.GlobalVar;
 import ir.entity.var.LocalTmpVar;
+import ir.entity.var.LocalVar;
 import ir.entity.var.Ptr;
 import ir.stmt.Stmt;
 import utility.Pair;
@@ -14,6 +15,7 @@ import utility.Pair;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * @author F
@@ -127,13 +129,19 @@ public class Branch extends TerminalStmt {
     }
 
     @Override
-    public Pair<Stmt, LocalTmpVar> creatCopy(ArrayList<Entity> newUse, String suffix) {
-        Stmt stmt = new Branch(newUse.get(0),
+    public Pair<Stmt, LocalTmpVar> creatCopy(String suffix) {
+        Stmt stmt = new Branch(condition,
                 trueBranch.label + suffix,
                 falseBranch.label + suffix,
-                index, phiLabel, (Storage) newUse.get(1)
+                index, phiLabel, result
         );
         return new Pair<>(stmt, null);
+    }
+
+    @Override
+    public void replaceUse(HashMap<LocalTmpVar, Storage> copyMap, HashMap<LocalVar, LocalVar> curAllocaMap) {
+        condition = replace(condition, copyMap, curAllocaMap);
+        result = (Storage) replace(result, copyMap, curAllocaMap);
     }
 
     @Override

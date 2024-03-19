@@ -10,6 +10,7 @@ import utility.Pair;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * @author F
@@ -93,9 +94,14 @@ public class Jump extends TerminalStmt {
     }
 
     @Override
-    public Pair<Stmt, LocalTmpVar> creatCopy(ArrayList<Entity> newUse, String suffix) {
-        Stmt stmt = new Jump(targetName + suffix, index, phiLabel, (Storage) newUse.get(0));
+    public Pair<Stmt, LocalTmpVar> creatCopy(String suffix) {
+        Stmt stmt = new Jump(targetName + suffix, index, phiLabel, result);
         return new Pair<>(stmt, null);
+    }
+
+    @Override
+    public void replaceUse(HashMap<LocalTmpVar, Storage> copyMap, HashMap<LocalVar, LocalVar> curAllocaMap) {
+        result = (Storage) replace(result, copyMap, curAllocaMap);
     }
 
     @Override
