@@ -26,13 +26,15 @@ public class FunctionInlining {
 
     LinkedList<Stmt> newAllocaStmt = null;
 
+    HashMap<String, BasicBlock> newBlock = null;
+
     public FunctionInlining(IRRoot root) {
         this.irRoot = root;
     }
 
     public void execute() {
         analysisCalling();
-        int pass = 1;
+        int pass = 2;
         while (pass > 0) {
             if (inliningPass()) {
                 --pass;
@@ -83,6 +85,7 @@ public class FunctionInlining {
             Function func = funcEntry.getValue();
             curAllocaMap = new HashMap<>();
             newAllocaStmt = new LinkedList<>();
+            newBlock = new HashMap<>();
             //普通local function
             if (func.entry != null) {
                 for (Map.Entry<String, BasicBlock> bbEntry : func.blockMap.entrySet()) {
@@ -111,9 +114,11 @@ public class FunctionInlining {
                     }
                 }
                 func.entry.statements.addAll(0, newAllocaStmt);
+                func.blockMap.putAll(newBlock);
             }
             curAllocaMap = null;
             newAllocaStmt = null;
+            newBlock = null;
         }
         return flag;
     }
@@ -135,8 +140,7 @@ public class FunctionInlining {
                       int num) {
         //当前在处理的tar中block
         BasicBlock curBlock = new BasicBlock(callingBlock.label);
-        tar.blockMap.remove(callingBlock.label);
-        tar.blockMap.put(curBlock.label, curBlock);
+        newBlock.put(curBlock.label, curBlock);
         if (callingBlock == tar.entry) {
             tar.entry = curBlock;
         }
@@ -161,7 +165,7 @@ public class FunctionInlining {
             //非src的第一个BB
             if (!is_first) {
                 curBlock = new BasicBlock(srcBlock.label + "_" + num);
-                tar.blockMap.put(curBlock.label, curBlock);
+                newBlock.put(curBlock.label, curBlock);
                 iterInCurBlock = curBlock.statements.listIterator();
             } else {
                 is_first = false;
@@ -172,13 +176,19 @@ public class FunctionInlining {
                 if (stmt instanceof Alloca alloca) {
                     //第一次inline到该函数中
                     if (!curAllocaMap.containsKey(alloca.result)) {
+                        Alloca allocaStmt;
+                        if (tar.addedAlloca.containsKey(alloca.result)) {
+                            allocaStmt = tar.addedAlloca.get(alloca.result);
+                        } else {
+                            allocaStmt = new Alloca(
+                                    alloca.result.type,
+                                    alloca.result.identity
+                            );
+                            tar.addedAlloca.put(alloca.result, allocaStmt);
+                            newAllocaStmt.add(allocaStmt);
+                        }
                         //转移localVar
-                        Alloca allocaStmt = new Alloca(
-                                alloca.result.type,
-                                alloca.result.identity
-                        );
                         curAllocaMap.put(alloca.result, allocaStmt.result);
-                        newAllocaStmt.add(allocaStmt);
                     }
                 } else {
                     ArrayList<Entity> use = stmt.getUse();
@@ -231,7 +241,7 @@ public class FunctionInlining {
         }
         //todo:src.ret != null能保证？
         curBlock = new BasicBlock(src.ret.label + "_" + num);
-        tar.blockMap.put(curBlock.label, curBlock);
+        newBlock.put(curBlock.label, curBlock);
         iterInCurBlock = curBlock.statements.listIterator();
         if (call.result != null) {
             Load loadStmt = (Load) src.ret.statements.get(0);
@@ -247,10 +257,10 @@ public class FunctionInlining {
         //terminalStmts跳转重定向
         for (TerminalStmt tailStmt : terminalStmts) {
             if (tailStmt instanceof Jump jump) {
-                jump.target = tar.blockMap.get(jump.targetName);
+                jump.target = newBlock.get(jump.targetName);
             } else if (tailStmt instanceof Branch branch) {
-                branch.trueBranch = tar.blockMap.get(branch.trueBranchName);
-                branch.falseBranch = tar.blockMap.get(branch.falseBranchName);
+                branch.trueBranch = newBlock.get(branch.trueBranchName);
+                branch.falseBranch = newBlock.get(branch.falseBranchName);
             }
         }
     }

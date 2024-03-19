@@ -5,6 +5,7 @@ import ir.IRVisitor;
 import ir.entity.*;
 import ir.entity.var.*;
 import ir.irType.*;
+import ir.stmt.instruction.Alloca;
 import utility.dominance.DomTree;
 import utility.dominance.DomTreeNode;
 
@@ -36,13 +37,13 @@ public class Function {
 
     public HashMap<Function, Integer> calleeMap = null;
 
-//    public HashSet<String> inlinedToCaller = new HashSet<>();
+    public HashMap<LocalVar, Alloca> addedAlloca = new HashMap<>();
 
     public Function(IRType retType,
                     String funcName) {
         this.ret = new BasicBlock(funcName + "_return");
         this.retType = retType;
-        this.retVal = new LocalVar(new Storage(retType), funcName+"_retVal");
+        this.retVal = new LocalVar(new Storage(retType), funcName + "_retVal");
         this.funcName = funcName;
     }
 

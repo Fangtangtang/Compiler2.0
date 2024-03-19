@@ -50,7 +50,9 @@ public class Call extends Instruction {
                 LocalTmpVar result,
                 ArrayList<Storage> parameterList) {
         this.function = function;
-        if (result.type instanceof VoidType) {
+        if (result == null) {
+            this.result = null;
+        } else if (result.type instanceof VoidType) {
             this.result = null;
         } else {
             this.result = result;
