@@ -28,6 +28,9 @@ public class FunctionInlining {
 
     HashMap<String, BasicBlock> newBlock = null;
 
+    //BB重命名
+    HashMap<String, String> renameMap = null;
+
     public FunctionInlining(IRRoot root) {
         this.irRoot = root;
     }
@@ -86,6 +89,7 @@ public class FunctionInlining {
             curAllocaMap = new HashMap<>();
             newAllocaStmt = new LinkedList<>();
             newBlock = new HashMap<>();
+            renameMap = new HashMap<>();
             //普通local function
             if (func.entry != null) {
                 for (Map.Entry<String, BasicBlock> bbEntry : func.blockMap.entrySet()) {
@@ -110,6 +114,17 @@ public class FunctionInlining {
                                 func.calleeMap.put(callStmt.function, num - 1);
                             }
                             break;
+                        } else if (stmt instanceof Phi phi) {
+                            for (int i = 0; i < phi.label1.size(); i++) {
+                                if (renameMap.containsKey(phi.label1.get(i))) {
+                                    phi.label1.set(i, renameMap.get(phi.label1.get(i)));
+                                }
+                            }
+                            for (int i = 0; i < phi.label2.size(); i++) {
+                                if (renameMap.containsKey(phi.label2.get(i))) {
+                                    phi.label2.set(i, renameMap.get(phi.label2.get(i)));
+                                }
+                            }
                         }
                     }
                 }
@@ -119,6 +134,7 @@ public class FunctionInlining {
             curAllocaMap = null;
             newAllocaStmt = null;
             newBlock = null;
+            renameMap = null;
         }
         return flag;
     }
@@ -138,6 +154,8 @@ public class FunctionInlining {
                       Call call,
                       ListIterator<Stmt> stmtIterator,
                       int num) {
+        //entry特殊重命名
+        renameMap.put(src.entry.label + "_" + num, callingBlock.label);
         //当前在处理的tar中block
         BasicBlock curBlock = new BasicBlock(callingBlock.label);
         newBlock.put(curBlock.label, curBlock);
@@ -156,19 +174,19 @@ public class FunctionInlining {
             LocalTmpVar param = src.parameterList.get(i);
             copyMap.put(param, call.parameterList.get(i));
         }
-        boolean is_first = true;
+        boolean isFirst = true;
         //可能需要bb重定向
         ArrayList<TerminalStmt> terminalStmts = new ArrayList<>();
         for (Map.Entry<String, BasicBlock> bbEntry : src.blockMap.entrySet()) {
             BasicBlock srcBlock = bbEntry.getValue();
             ListIterator<Stmt> iterator = srcBlock.statements.listIterator();
             //非src的第一个BB
-            if (!is_first) {
+            if (!isFirst) {
                 curBlock = new BasicBlock(srcBlock.label + "_" + num);
                 newBlock.put(curBlock.label, curBlock);
                 iterInCurBlock = curBlock.statements.listIterator();
             } else {
-                is_first = false;
+                isFirst = false;
             }
             //对BB中的每个语句处理
             while (iterator.hasNext()) {
@@ -213,6 +231,18 @@ public class FunctionInlining {
                     }
                     //insert stmt
                     Stmt newStmt = stmtCopy.getFirst();
+                    if (newStmt instanceof Phi phi) {
+                        for (int i = 0; i < phi.label1.size(); i++) {
+                            if (renameMap.containsKey(phi.label1.get(i))) {
+                                phi.label1.set(i, renameMap.get(phi.label1.get(i)));
+                            }
+                        }
+                        for (int i = 0; i < phi.label2.size(); i++) {
+                            if (renameMap.containsKey(phi.label2.get(i))) {
+                                phi.label2.set(i, renameMap.get(phi.label2.get(i)));
+                            }
+                        }
+                    }
                     iterInCurBlock.add(newStmt);
                 }
             }
@@ -242,6 +272,7 @@ public class FunctionInlining {
         //todo:src.ret != null能保证？
         curBlock = new BasicBlock(src.ret.label + "_" + num);
         newBlock.put(curBlock.label, curBlock);
+        renameMap.put(callingBlock.label, curBlock.label);
         iterInCurBlock = curBlock.statements.listIterator();
         if (call.result != null) {
             Load loadStmt = (Load) src.ret.statements.get(0);
