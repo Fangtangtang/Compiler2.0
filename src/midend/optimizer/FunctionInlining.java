@@ -37,7 +37,7 @@ public class FunctionInlining {
 
     public void execute() {
         analysisCalling();
-        int pass = 1;
+        int pass = 2;
         while (pass > 0) {
             if (inliningPass()) {
                 --pass;
@@ -90,6 +90,7 @@ public class FunctionInlining {
             newAllocaStmt = new LinkedList<>();
             newBlock = new HashMap<>();
             renameMap = new HashMap<>();
+            ArrayList<Phi> phis = new ArrayList<>();
             //普通local function
             if (func.entry != null) {
                 for (Map.Entry<String, BasicBlock> bbEntry : func.blockMap.entrySet()) {
@@ -115,21 +116,24 @@ public class FunctionInlining {
                             }
                             break;
                         } else if (stmt instanceof Phi phi) {
-                            for (int i = 0; i < phi.label1.size(); i++) {
-                                if (renameMap.containsKey(phi.label1.get(i))) {
-                                    phi.label1.set(i, renameMap.get(phi.label1.get(i)));
-                                }
-                            }
-                            for (int i = 0; i < phi.label2.size(); i++) {
-                                if (renameMap.containsKey(phi.label2.get(i))) {
-                                    phi.label2.set(i, renameMap.get(phi.label2.get(i)));
-                                }
-                            }
+                            phis.add(phi);
                         }
                     }
                 }
                 func.entry.statements.addAll(0, newAllocaStmt);
                 func.blockMap.putAll(newBlock);
+                for (Phi phi : phis) {
+                    for (int i = 0; i < phi.label1.size(); i++) {
+                        if (renameMap.containsKey(phi.label1.get(i))) {
+                            phi.label1.set(i, renameMap.get(phi.label1.get(i)));
+                        }
+                    }
+                    for (int i = 0; i < phi.label2.size(); i++) {
+                        if (renameMap.containsKey(phi.label2.get(i))) {
+                            phi.label2.set(i, renameMap.get(phi.label2.get(i)));
+                        }
+                    }
+                }
             }
             curAllocaMap = null;
             newAllocaStmt = null;
@@ -155,7 +159,7 @@ public class FunctionInlining {
                       ListIterator<Stmt> stmtIterator,
                       int num) {
         //entry特殊重命名
-        renameMap.put(src.entry.label + "_" + num, callingBlock.label);
+        renameMap.put(src.entry.label + "_" + tar.funcName + num, callingBlock.label);
         //当前在处理的tar中block
         BasicBlock curBlock = new BasicBlock(callingBlock.label);
         ArrayList<BasicBlock> blocks = new ArrayList<>();
@@ -184,7 +188,7 @@ public class FunctionInlining {
             ListIterator<Stmt> iterator = srcBlock.statements.listIterator();
             //非src的第一个BB
             if (!isFirst) {
-                curBlock = new BasicBlock(srcBlock.label + "_" + num);
+                curBlock = new BasicBlock(srcBlock.label + "_" + tar.funcName + num);
                 newBlock.put(curBlock.label, curBlock);
                 blocks.add(curBlock);
                 iterInCurBlock = curBlock.statements.listIterator();
@@ -226,7 +230,7 @@ public class FunctionInlining {
                             }
                         }
                     }
-                    Pair<Stmt, LocalTmpVar> stmtCopy = stmt.creatCopy("_" + num);
+                    Pair<Stmt, LocalTmpVar> stmtCopy = stmt.creatCopy("_" + tar.funcName + num);
                     LocalTmpVar newDef = stmtCopy.getSecond();
                     if (newDef != null) {
                         LocalTmpVar def = (LocalTmpVar) stmt.getDef();
@@ -268,12 +272,12 @@ public class FunctionInlining {
                 newUse = copyMap.get(localTmpVar);
             }
             newUseList.add(newUse);
-            Pair<Stmt, LocalTmpVar> stmtCopy = tailStmt.creatCopy("_" + num);
+            Pair<Stmt, LocalTmpVar> stmtCopy = tailStmt.creatCopy("_" + tar.funcName + num);
             curBlock.tailStmt = (TerminalStmt) stmtCopy.getFirst();
             terminalStmts.add(curBlock.tailStmt);
         }
         //todo:src.ret != null能保证？
-        curBlock = new BasicBlock(src.ret.label + "_" + num);
+        curBlock = new BasicBlock(src.ret.label + "_" + tar.funcName + num);
         blocks.add(curBlock);
         newBlock.put(curBlock.label, curBlock);
         renameMap.put(callingBlock.label, curBlock.label);
