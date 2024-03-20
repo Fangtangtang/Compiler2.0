@@ -303,6 +303,22 @@ public class FunctionInlining {
             }
         }
         replaceUse(copyMap, blocks);
+        mergePhiResult(src, tar, copyMap, "_" + tar.funcName + num);
+    }
+
+    void mergePhiResult(Function src, Function tar, HashMap<LocalTmpVar, Storage> copyMap, String suffix) {
+        for (Map.Entry<String, Storage> entry : src.phiResult.entrySet()) {
+            tar.phiResult.put(entry.getKey() + suffix, (Storage) replace(entry.getValue(), copyMap, curAllocaMap));
+        }
+    }
+
+    Entity replace(Entity entity, HashMap<LocalTmpVar, Storage> copyMap, HashMap<LocalVar, LocalVar> curAllocaMap) {
+        if (entity instanceof LocalVar && curAllocaMap.containsKey(entity)) {
+            entity = curAllocaMap.get(entity);
+        } else if (entity instanceof LocalTmpVar && copyMap.containsKey(entity)) {
+            entity = copyMap.get(entity);
+        }
+        return entity;
     }
 
     void replaceUse(HashMap<LocalTmpVar, Storage> copyMap, ArrayList<BasicBlock> blocks) {

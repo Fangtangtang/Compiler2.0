@@ -95,7 +95,7 @@ public class Jump extends TerminalStmt {
 
     @Override
     public Pair<Stmt, LocalTmpVar> creatCopy(String suffix) {
-        Stmt stmt = new Jump(targetName + suffix, index, phiLabel, result);
+        Stmt stmt = new Jump(targetName + suffix, index + suffix, phiLabel, result);
         return new Pair<>(stmt, null);
     }
 

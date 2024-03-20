@@ -1048,7 +1048,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         Storage leftResult = toBool(getValue(node.lhs.accept(this)));
         pushBack(
                 new Branch(leftResult, trueBlock, falseBlock,
-                        currentFunction.funcName + String.valueOf(phiLabel), ".left", resultFromLeft)
+                        currentFunction.funcName + phiLabel, ".left", resultFromLeft)
         );
         String labelFromLeft = currentBlock.label;
         //右子树都返回end
@@ -1056,7 +1056,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         currentFunction.blockMap.put(currentBlock.label, currentBlock);
         Storage resultFromRight = toBool(getValue(node.rhs.accept(this)));
         pushBack(
-                new Jump(endBlock, currentFunction.funcName + String.valueOf(phiLabel), ".right", resultFromRight)
+                new Jump(endBlock, currentFunction.funcName + phiLabel, ".right", resultFromRight)
         );
         String labelFromRight = currentBlock.label;
         changeBlock(endBlock);
@@ -1067,9 +1067,9 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 new Phi(result,
                         resultFromLeft, resultFromRight,
                         labelFromLeft, labelFromRight,
-                        currentFunction.funcName + String.valueOf(phiLabel))
+                        currentFunction.funcName + phiLabel)
         );
-        currentFunction.phiResult.put(currentFunction.funcName + String.valueOf(phiLabel), result);
+        currentFunction.phiResult.put(currentFunction.funcName + phiLabel, result);
         return result;
     }
 

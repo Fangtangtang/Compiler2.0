@@ -150,7 +150,7 @@ public class Phi extends Instruction {
         Stmt stmt = new Phi(
                 newResult, ans1, ans2,
                 label1.get(0) + suffix, label2.get(0) + suffix,
-                phiLabel    //todo:what for??
+                phiLabel
         );
         return new Pair<>(stmt, newResult);
     }

@@ -133,7 +133,7 @@ public class Branch extends TerminalStmt {
         Stmt stmt = new Branch(condition,
                 trueBranch.label + suffix,
                 falseBranch.label + suffix,
-                index, phiLabel, result
+                index + suffix, phiLabel, result
         );
         return new Pair<>(stmt, null);
     }
