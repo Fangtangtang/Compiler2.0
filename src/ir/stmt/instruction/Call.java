@@ -170,7 +170,7 @@ public class Call extends Instruction {
         } else {
             newResult = new LocalTmpVar(result.type, result.identity + suffix);
         }
-        Stmt stmt = new Call(function, result, parameterList);
+        Stmt stmt = new Call(function, newResult, parameterList);
         return new Pair<>(stmt, newResult);
     }
 

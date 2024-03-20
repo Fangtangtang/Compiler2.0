@@ -37,7 +37,7 @@ public class FunctionInlining {
 
     public void execute() {
         analysisCalling();
-        int pass = 2;
+        int pass = 1;
         while (pass > 0) {
             if (inliningPass()) {
                 --pass;
@@ -203,7 +203,7 @@ public class FunctionInlining {
                         } else {
                             allocaStmt = new Alloca(
                                     alloca.result.type,
-                                    alloca.result.identity
+                                    src.funcName + "_" + tar.funcName + "_" + alloca.result.identity
                             );
                             tar.addedAlloca.put(alloca.result, allocaStmt);
                             newAllocaStmt.add(allocaStmt);
