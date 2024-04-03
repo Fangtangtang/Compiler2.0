@@ -8,6 +8,7 @@ import ir.stmt.*;
 import ir.stmt.instruction.*;
 import ir.stmt.terminal.*;
 import utility.Pair;
+import utility.error.InternalException;
 
 import java.util.*;
 
@@ -328,11 +329,21 @@ public class FunctionInlining {
         for (Map.Entry<String, BasicBlock> entry : func.blockMap.entrySet()) {
             TerminalStmt tailStmt = entry.getValue().tailStmt;
             if (tailStmt instanceof Jump jump) {
-                jump.target = func.blockMap.get(jump.targetName);
+                jump.target = getTarget(jump.targetName, func);
             } else if (tailStmt instanceof Branch branch) {
-                branch.trueBranch = func.blockMap.get(branch.trueBranchName);
-                branch.falseBranch = func.blockMap.get(branch.falseBranchName);
+                branch.trueBranch = getTarget(branch.trueBranchName, func);
+                branch.falseBranch = getTarget(branch.falseBranchName, func);
             }
+        }
+    }
+
+    BasicBlock getTarget(String name, Function func) {
+        if (func.blockMap.containsKey(name)) {
+            return func.blockMap.get(name);
+        } else if (name.equals(func.ret.label)) {
+            return func.ret;
+        } else {
+            throw new InternalException("jump target not found");
         }
     }
 
@@ -354,6 +365,13 @@ public class FunctionInlining {
         HashMap<String, Function> usedFunctions = new HashMap<>();
         for (String funcName : usedFunc) {
             usedFunctions.put(funcName, irRoot.funcDef.get(funcName));
+        }
+        // TODO: use builtin only
+        for (Map.Entry<String, Function> funcEntry : irRoot.funcDef.entrySet()) {
+            Function func = funcEntry.getValue();
+            if (func.entry == null) {
+                usedFunctions.put(func.funcName, func);
+            }
         }
         irRoot.funcDef = usedFunctions;
     }

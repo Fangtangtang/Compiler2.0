@@ -39,16 +39,6 @@ public class BasicBlockEliminator {
             BasicBlock block = blockEntry.getValue();
 //           TODO:block映射出错
             if (block.tailStmt instanceof Jump jump) {
-                if (jump.target == null) {
-                    jump.target = func.blockMap.get(jump.targetName);
-                }
-//                if (jump.target == null) {
-//                    if (jump.targetName.equals(func.ret.label)) {
-//                        jump.target = func.ret;
-//                    } else {
-//                        throw new InternalException("jump target not found");
-//                    }
-//                }
                 jump.target.prevBasicBlocks.add(block.label);
                 block.subsBasicBlocks.add(jump.targetName);
             } else if (block.tailStmt instanceof Branch branch) {
@@ -77,6 +67,7 @@ public class BasicBlockEliminator {
                 prev.tailStmt = block.tailStmt;
                 blockMap.put(block.label, prevLabel);
                 func.blockMap.remove(block.label);
+                prev.subsBasicBlocks = block.subsBasicBlocks;
             }
         }
     }
