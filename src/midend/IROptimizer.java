@@ -20,6 +20,8 @@ public class IROptimizer {
     public void execute() {
         FunctionInlining functionInlining = new FunctionInlining(irRoot);
         functionInlining.execute();
+        BasicBlockEliminator eliminator = new BasicBlockEliminator(irRoot);
+//        eliminator.execute();
         Global2Local global2Local = new Global2Local(irRoot);
         global2Local.execute();
         LocalTmpVarPropagation localTmpVarPropagation = new LocalTmpVarPropagation(irRoot);

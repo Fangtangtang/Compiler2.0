@@ -41,6 +41,8 @@ public class Branch extends TerminalStmt {
         this.condition = condition;
         this.trueBranch = trueBranch;
         this.falseBranch = falseBranch;
+        this.trueBranchName = trueBranch.label;
+        this.falseBranchName = falseBranch.label;
     }
 
     public Branch(Entity condition,
@@ -56,6 +58,8 @@ public class Branch extends TerminalStmt {
         this.index = index;
         this.phiLabel = phiLabel;
         this.result = result;
+        this.trueBranchName = trueBranch.label;
+        this.falseBranchName = falseBranch.label;
     }
 
     public Branch(Entity condition,

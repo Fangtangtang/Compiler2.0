@@ -1,3 +1,11 @@
+# opt-new
+testcases/optim-new/adce-adv.mx
+2000000
+7211128
+
+
+
+
 # Mx.g4
 Mx语言的grammar，构建parse tree。
 使用antlr生成Visitor接口，遍历parse tree，构建自定义的AST。

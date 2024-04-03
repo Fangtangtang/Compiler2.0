@@ -27,6 +27,7 @@ public class FunctionInlining {
     LinkedList<Stmt> newAllocaStmt = null;
 
     HashMap<String, BasicBlock> newBlock = null;
+    ArrayList<TerminalStmt> terminalStmts = null;
 
     //BB重命名
     HashMap<String, String> renameMap = null;
@@ -37,7 +38,7 @@ public class FunctionInlining {
 
     public void execute() {
         analysisCalling();
-        int pass = 2;
+        int pass = 10;
         while (pass > 0) {
             if (inliningPass()) {
                 --pass;
@@ -45,6 +46,7 @@ public class FunctionInlining {
                 break;
             }
         }
+        removeUnusedFunction();
     }
 
     /**
@@ -89,6 +91,7 @@ public class FunctionInlining {
             curAllocaMap = new HashMap<>();
             newAllocaStmt = new LinkedList<>();
             newBlock = new HashMap<>();
+            terminalStmts = new ArrayList<>();
             renameMap = new HashMap<>();
             ArrayList<Phi> phis = new ArrayList<>();
             //普通local function
@@ -122,6 +125,7 @@ public class FunctionInlining {
                 }
                 func.entry.statements.addAll(0, newAllocaStmt);
                 func.blockMap.putAll(newBlock);
+                targetRedirect(func);
                 for (Phi phi : phis) {
                     for (int i = 0; i < phi.label1.size(); i++) {
                         if (renameMap.containsKey(phi.label1.get(i))) {
@@ -182,7 +186,6 @@ public class FunctionInlining {
         }
         boolean isFirst = true;
         //可能需要bb重定向
-        ArrayList<TerminalStmt> terminalStmts = new ArrayList<>();
         for (Map.Entry<String, BasicBlock> bbEntry : src.blockMap.entrySet()) {
             BasicBlock srcBlock = bbEntry.getValue();
             ListIterator<Stmt> iterator = srcBlock.statements.listIterator();
@@ -293,15 +296,6 @@ public class FunctionInlining {
                         (stmtIterator.nextIndex(), callingBlock.statements.size())
         );
         curBlock.tailStmt = callingBlock.tailStmt;
-        //terminalStmts跳转重定向
-        for (TerminalStmt tailStmt : terminalStmts) {
-            if (tailStmt instanceof Jump jump) {
-                jump.target = newBlock.get(jump.targetName);
-            } else if (tailStmt instanceof Branch branch) {
-                branch.trueBranch = newBlock.get(branch.trueBranchName);
-                branch.falseBranch = newBlock.get(branch.falseBranchName);
-            }
-        }
         replaceUse(copyMap, blocks);
         mergePhiResult(src, tar, copyMap, "_" + tar.funcName + num);
     }
@@ -328,5 +322,39 @@ public class FunctionInlining {
             }
             block.tailStmt.replaceUse(copyMap, curAllocaMap);
         }
+    }
+
+    void targetRedirect(Function func) {
+        for (Map.Entry<String, BasicBlock> entry : func.blockMap.entrySet()) {
+            TerminalStmt tailStmt = entry.getValue().tailStmt;
+            if (tailStmt instanceof Jump jump) {
+                jump.target = func.blockMap.get(jump.targetName);
+            } else if (tailStmt instanceof Branch branch) {
+                branch.trueBranch = func.blockMap.get(branch.trueBranchName);
+                branch.falseBranch = func.blockMap.get(branch.falseBranchName);
+            }
+        }
+    }
+
+    void removeUnusedFunction() {
+        HashSet<String> usedFunc = new HashSet<>();
+        usedFunc.add(irRoot.mainFunc.funcName);
+        Queue<Function> queue = new LinkedList<>();
+        queue.add(irRoot.mainFunc);
+        while (!queue.isEmpty()) {
+            Function func = queue.poll();
+            for (Map.Entry<Function, Integer> entry : func.calleeMap.entrySet()) {
+                Function callee = entry.getKey();
+                if (!usedFunc.contains(callee.funcName)) {
+                    usedFunc.add(callee.funcName);
+                    queue.add(callee);
+                }
+            }
+        }
+        HashMap<String, Function> usedFunctions = new HashMap<>();
+        for (String funcName : usedFunc) {
+            usedFunctions.put(funcName, irRoot.funcDef.get(funcName));
+        }
+        irRoot.funcDef = usedFunctions;
     }
 }
