@@ -177,19 +177,24 @@ public class Binary extends Instruction {
             int num1 = Integer.parseInt(const1.value);
             int num2 = Integer.parseInt(const2.value);
             switch (operator) {
-                case add -> result = num1 + num2;
-                case sub -> result = num1 - num2;
-                case mul -> result = num1 * num2;
-                case sdiv -> result = num1 / num2;
-                case srem -> result = num1 % num2;
-                case shl -> result = num1 << num2;
-                case ashr -> result = num1 >> num2;
-                case and -> result = num1 & num2;
-                case xor -> result = num1 ^ num2;
-                case or -> result = num1 | num2;
+                case add -> ret = new ConstInt(Integer.toString(num1 + num2));
+                case sub -> ret = new ConstInt(Integer.toString(num1 - num2));
+                case mul -> ret = new ConstInt(Integer.toString(num1 * num2));
+                case sdiv -> {
+                    if (num2 == 0) {
+                        ret = new ConstInt(Integer.toString(0));
+                    } else {
+                        ret = new ConstInt(Integer.toString(num1 / num2));
+                    }
+                }
+                case srem -> ret = new ConstInt(Integer.toString(num1 % num2));
+                case shl -> ret = new ConstInt(Integer.toString(num1 << num2));
+                case ashr -> ret = new ConstInt(Integer.toString(num1 >> num2));
+                case and -> ret = new ConstInt(Integer.toString(num1 & num2));
+                case xor -> ret = new ConstInt(Integer.toString(num1 ^ num2));
+                case or -> ret = new ConstInt(Integer.toString(num1 | num2));
                 default -> throw new InternalException("unexpected cond in Binary instruction");
             }
-            ret = new ConstInt(Integer.toString(result));
         } else if (op1 instanceof ConstBool const1 && op2 instanceof ConstBool const2) {
             boolean result;
             switch (operator) {

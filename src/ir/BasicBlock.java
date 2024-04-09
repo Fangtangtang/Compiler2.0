@@ -4,6 +4,7 @@ import ir.entity.Entity;
 import ir.entity.SSAEntity;
 import ir.stmt.Stmt;
 import ir.stmt.terminal.TerminalStmt;
+import midend.optimizer.ConditionalConstantPropagation;
 import utility.Pair;
 import utility.error.InternalException;
 import utility.live.GlobalLiveRange;
@@ -25,6 +26,9 @@ public class BasicBlock {
 
     public ArrayList<String> prevBasicBlocks = new ArrayList<>();
     public ArrayList<String> subsBasicBlocks = new ArrayList<>();
+
+    public ConditionalConstantPropagation.BlockType blockType = ConditionalConstantPropagation.BlockType.unknown;
+
     //CFG上的前驱后继
     public ArrayList<BasicBlock> predecessorList = new ArrayList<>();
     public ArrayList<BasicBlock> successorList = new ArrayList<>();
