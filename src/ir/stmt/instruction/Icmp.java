@@ -179,15 +179,19 @@ public class Icmp extends Instruction {
         op2 = replace(op2, copyMap, curAllocaMap);
     }
 
-    //两个操作数都为常数，直接传播
     @Override
-    public ConstBool getConstResult() {
+    public Constant getConstResult() {
+        return calConstResult(op1, op2, cond);
+    }
+
+    //两个操作数都为常数，直接传播
+    public static ConstBool calConstResult(Entity operand1, Entity operand2, Cond condition) {
         ConstBool ret = null;
-        if (op1 instanceof ConstInt const1 && op2 instanceof ConstInt const2) {
+        if (operand1 instanceof ConstInt const1 && operand2 instanceof ConstInt const2) {
             boolean result;
             int num1 = Integer.parseInt(const1.value);
             int num2 = Integer.parseInt(const2.value);
-            switch (cond) {
+            switch (condition) {
                 case eq -> result = num1 == num2;
                 case ne -> result = num1 != num2;
                 case slt -> result = num1 < num2;
@@ -197,9 +201,9 @@ public class Icmp extends Instruction {
                 default -> throw new InternalException("unexpected cond in Icmp instruction");
             }
             ret = new ConstBool(result);
-        } else if (op1 instanceof ConstBool const1 && op2 instanceof ConstBool const2) {
+        } else if (operand1 instanceof ConstBool const1 && operand2 instanceof ConstBool const2) {
             boolean result;
-            switch (cond) {
+            switch (condition) {
                 case eq -> result = const1.value == const2.value;
                 case ne -> result = const1.value != const2.value;
                 default -> throw new InternalException("unexpected cond in Icmp instruction");

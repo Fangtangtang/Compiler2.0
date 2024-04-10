@@ -176,12 +176,16 @@ public class Binary extends Instruction {
 
     @Override
     public Constant getConstResult() {
+        return calConstResult(op1, op2, operator);
+    }
+
+    public static Constant calConstResult(Entity operand1, Entity operand2, Operator op) {
         Constant ret = null;
-        if (op1 instanceof ConstInt const1 && op2 instanceof ConstInt const2) {
+        if (operand1 instanceof ConstInt const1 && operand2 instanceof ConstInt const2) {
             int result;
             int num1 = Integer.parseInt(const1.value);
             int num2 = Integer.parseInt(const2.value);
-            switch (operator) {
+            switch (op) {
                 case add -> ret = new ConstInt(Integer.toString(num1 + num2));
                 case sub -> ret = new ConstInt(Integer.toString(num1 - num2));
                 case mul -> ret = new ConstInt(Integer.toString(num1 * num2));
@@ -200,9 +204,9 @@ public class Binary extends Instruction {
                 case or -> ret = new ConstInt(Integer.toString(num1 | num2));
                 default -> throw new InternalException("unexpected cond in Binary instruction");
             }
-        } else if (op1 instanceof ConstBool const1 && op2 instanceof ConstBool const2) {
+        } else if (operand1 instanceof ConstBool const1 && operand2 instanceof ConstBool const2) {
             boolean result;
-            switch (operator) {
+            switch (op) {
                 case and -> result = const1.value & const2.value;
                 case xor -> result = const1.value ^ const2.value;
                 case or -> result = const1.value | const2.value;
@@ -211,6 +215,7 @@ public class Binary extends Instruction {
             ret = new ConstBool(result);
         }
         return ret;
+
     }
 
     @Override
