@@ -27,6 +27,8 @@ public abstract class Stmt implements Serializable {
 
     public abstract ArrayList<Entity> getUse();
 
+    public abstract boolean hasDef();
+
     public abstract Entity getDef();
 
     public abstract void promoteGlobalVar();
@@ -40,7 +42,7 @@ public abstract class Stmt implements Serializable {
 
     public abstract void replaceUse(HashMap<LocalTmpVar, Storage> copyMap, HashMap<LocalVar, LocalVar> curAllocaMap);
 
-   public Entity replace(Entity entity, HashMap<LocalTmpVar, Storage> copyMap, HashMap<LocalVar, LocalVar> curAllocaMap) {
+    public Entity replace(Entity entity, HashMap<LocalTmpVar, Storage> copyMap, HashMap<LocalVar, LocalVar> curAllocaMap) {
         if (entity instanceof LocalVar && curAllocaMap.containsKey(entity)) {
             entity = curAllocaMap.get(entity);
         } else if (entity instanceof LocalTmpVar && copyMap.containsKey(entity)) {

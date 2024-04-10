@@ -19,8 +19,6 @@ public class LocalTmpVar extends Storage {
     //在当前BB中的最新赋值（实际仅一次赋值）
     public Storage valueInBasicBlock = null;
 
-    public ConditionalConstantPropagation.VarType varType = ConditionalConstantPropagation.VarType.noDef;
-
     public LocalTmpVar(IRType type, int num, String currentFuncName) {
         super(type);
         identity = currentFuncName + num;

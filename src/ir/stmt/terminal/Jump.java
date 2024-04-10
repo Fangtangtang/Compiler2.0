@@ -75,6 +75,11 @@ public class Jump extends TerminalStmt {
     }
 
     @Override
+    public boolean hasDef() {
+        return false;
+    }
+
+    @Override
     public Entity getDef() {
         return null;
     }

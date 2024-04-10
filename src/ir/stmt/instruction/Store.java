@@ -86,6 +86,11 @@ public class Store extends Instruction {
     }
 
     @Override
+    public boolean hasDef() {
+        return pointer instanceof Ptr;
+    }
+
+    @Override
     public Entity getDef() {
         if (pointer instanceof Ptr) {
             return pointer;

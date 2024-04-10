@@ -125,6 +125,11 @@ public class Binary extends Instruction {
     }
 
     @Override
+    public boolean hasDef() {
+        return true;
+    }
+
+    @Override
     public Entity getDef() {
         return result;
     }
