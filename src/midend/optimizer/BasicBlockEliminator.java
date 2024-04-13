@@ -3,6 +3,8 @@ package midend.optimizer;
 import ir.BasicBlock;
 import ir.IRRoot;
 import ir.function.Function;
+import ir.stmt.Stmt;
+import ir.stmt.instruction.Phi;
 import ir.stmt.terminal.Branch;
 import ir.stmt.terminal.Jump;
 import utility.error.InternalException;
@@ -34,9 +36,16 @@ public class BasicBlockEliminator {
     }
 
     void eliminateOnFunc(Function func) {
+        // collect PhiStmts
+        ArrayList<Phi> phiStmts = new ArrayList<Phi>();
         // collect prev
         for (Map.Entry<String, BasicBlock> blockEntry : func.blockMap.entrySet()) {
             BasicBlock block = blockEntry.getValue();
+            for (Stmt stmt : block.statements) {
+                if (stmt instanceof Phi phi) {
+                    phiStmts.add(phi);
+                }
+            }
 //           TODO:block映射出错
             if (block.tailStmt instanceof Jump jump) {
                 jump.target.prevBasicBlocks.add(block.label);
@@ -69,6 +78,10 @@ public class BasicBlockEliminator {
                 func.blockMap.remove(block.label);
                 prev.subsBasicBlocks = block.subsBasicBlocks;
             }
+        }
+        // rename label in phi
+        for (Phi phiStmt : phiStmts) {
+            phiStmt.remapLabel(blockMap);
         }
     }
 }

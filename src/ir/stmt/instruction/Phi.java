@@ -67,6 +67,25 @@ public class Phi extends Instruction {
         this.phiLabel = phiLabel;
     }
 
+    public void remapLabel(HashMap<String, String> blockMap) {
+        ArrayList<String> newLabel1 = new ArrayList<>();
+        for (String label : label1) {
+            while (blockMap.containsKey(label)) {
+                label = blockMap.get(label);
+            }
+            newLabel1.add(label);
+        }
+        label1 = newLabel1;
+        ArrayList<String> newLabel2 = new ArrayList<>();
+        for (String label : label2) {
+            while (blockMap.containsKey(label)) {
+                label = blockMap.get(label);
+            }
+            newLabel2.add(label);
+        }
+        label2 = newLabel2;
+    }
+
     @Override
     public void print(PrintStream out) {
         String s1, s2;
@@ -163,7 +182,7 @@ public class Phi extends Instruction {
     @Override
     public void replaceUse(HashMap<LocalTmpVar, Constant> constantMap) {
         ans1 = (Storage) replace(ans1, constantMap);
-        ans2 = (Storage) replace(ans2,constantMap);
+        ans2 = (Storage) replace(ans2, constantMap);
     }
 
     @Override
