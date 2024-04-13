@@ -80,15 +80,12 @@ public class ConditionalConstantPropagation {
         Pair<BlockType, Boolean> pair = blockInfo.get(func.entry.label);
         pair.setFirst(BlockType.executable);
         pair.setSecond(true);
-        Iterator<BasicBlock> bbIter;
-        Iterator<LocalTmpVar> varIter;
         // loop until workList cleared
         while ((!bbWorkList.isEmpty()) || (!varWorkList.isEmpty())) {
             // chose a bb from workList
             if (!bbWorkList.isEmpty()) {
-                bbIter = bbWorkList.iterator();
-                BasicBlock bb = bbIter.next();
-                bbIter.remove();
+                BasicBlock bb = bbWorkList.iterator().next();
+                bbWorkList.remove(bb);
                 Pair<BlockType, Boolean> bbInfo = blockInfo.get(bb.label);
                 //executable successor of bb
                 if (bbInfo.getFirst() == BlockType.executable) {
@@ -100,7 +97,7 @@ public class ConditionalConstantPropagation {
                     }
                 }
                 // tailStmt
-                ArrayList<BasicBlock> executableSuccessor = controlFlowUpdate(bb);
+                ArrayList<BasicBlock> executableSuccessor = getExecutableSuccessor(bb);
                 // newly executable
                 // its executable successor may have some update
                 if (bbInfo.getSecond()) {
@@ -110,15 +107,17 @@ public class ConditionalConstantPropagation {
             }
             // chose a var from workList
             if (!varWorkList.isEmpty()) {
-                varIter = varWorkList.iterator();
-                promoteLocalTmpVar(varIter.next());
-                varIter.remove();
+                LocalTmpVar var = varWorkList.iterator().next();
+                promoteLocalTmpVar(var);
+                varWorkList.remove(var);
             }
         }
         // remove dead block
         removeDeadBlock(func);
         // replace var with constant and remove useless assignment
         removeDeadVarDef(func);
+        // update control flow
+        updateControlFlow(func);
     }
 
     /**
@@ -171,13 +170,13 @@ public class ConditionalConstantPropagation {
         }
     }
 
-    ArrayList<BasicBlock> controlFlowUpdate(BasicBlock bb) {
+    ArrayList<BasicBlock> getExecutableSuccessor(BasicBlock bb) {
         ArrayList<BasicBlock> executableSuccessor = new ArrayList<>();
         if (bb.tailStmt instanceof Jump jump) {
             updateBlockInfo(jump.target);
             executableSuccessor.add(jump.target);
         } else if (bb.tailStmt instanceof Branch branch) {
-            boolean convertToJump = true;
+            boolean onlyOneExecutable = true;
             boolean cond = false;
             if (branch.condition instanceof Constant constant) {
                 if (constant instanceof ConstBool constBool) {
@@ -189,28 +188,17 @@ public class ConditionalConstantPropagation {
                     localTmpVarInfo.get(tmpVar).getFirst() == VarType.oneConstDef) {
                 cond = ((ConstBool) localTmpVar2Const.get(tmpVar)).value;
             } else {
-                convertToJump = false;
+                onlyOneExecutable = false;
             }
-            if (convertToJump) {
-                Jump newStmt;
+            if (onlyOneExecutable) {
                 if (cond) {
-                    newStmt = new Jump(branch.trueBranch,
-                            branch.index,
-                            branch.phiLabel,
-                            branch.result
-                    );
+                    updateBlockInfo(branch.trueBranch);
+                    executableSuccessor.add(branch.trueBranch);
                 }
-                // jump to the false block
                 else {
-                    newStmt = new Jump(branch.falseBranch,
-                            branch.index,
-                            branch.phiLabel,
-                            branch.result
-                    );
+                    updateBlockInfo(branch.falseBranch);
+                    executableSuccessor.add(branch.falseBranch);
                 }
-                bb.tailStmt = newStmt;
-                updateBlockInfo(newStmt.target);
-                executableSuccessor.add(newStmt.target);
             } else {
                 updateBlockInfo(branch.trueBranch);
                 executableSuccessor.add(branch.trueBranch);
@@ -498,6 +486,50 @@ public class ConditionalConstantPropagation {
             for (Entity usedEntity : use) {
                 if (usedEntity instanceof LocalTmpVar) {
                     localTmpVarInfo.get(usedEntity).getSecond().add(block.tailStmt);
+                }
+            }
+        }
+    }
+
+    /**
+     * if branch is determined
+     * use jump
+     *
+     * @param func function
+     */
+    void updateControlFlow(Function func) {
+        for (Map.Entry<String, BasicBlock> entry : func.blockMap.entrySet()) {
+            BasicBlock block = entry.getValue();
+            if (block.tailStmt instanceof Branch branch) {
+                boolean convertToJump = true;
+                boolean cond = false;
+                if (branch.condition instanceof Constant constant) {
+                    if (constant instanceof ConstBool constBool) {
+                        cond = constBool.value;
+                    } else {
+                        throw new InternalException("[CCP]:condition in branch should be bool?");
+                    }
+                } else {
+                    convertToJump = false;
+                }
+                if (convertToJump) {
+                    Jump newStmt;
+                    if (cond) {
+                        newStmt = new Jump(branch.trueBranch,
+                                branch.index,
+                                branch.phiLabel,
+                                branch.result
+                        );
+                    }
+                    // jump to the false block
+                    else {
+                        newStmt = new Jump(branch.falseBranch,
+                                branch.index,
+                                branch.phiLabel,
+                                branch.result
+                        );
+                    }
+                    block.tailStmt = newStmt;
                 }
             }
         }

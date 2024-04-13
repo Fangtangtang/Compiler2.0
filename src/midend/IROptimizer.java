@@ -29,7 +29,7 @@ public class IROptimizer {
         LocalTmpVarPropagation localTmpVarPropagation = new LocalTmpVarPropagation(irRoot);
         localTmpVarPropagation.execute();
 
-//        ConditionalConstantPropagation conditionalConstantPropagation = new ConditionalConstantPropagation(irRoot);
-//        conditionalConstantPropagation.execute();
+        ConditionalConstantPropagation conditionalConstantPropagation = new ConditionalConstantPropagation(irRoot);
+        conditionalConstantPropagation.execute();
     }
 }
