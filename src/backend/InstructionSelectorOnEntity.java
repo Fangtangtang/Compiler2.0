@@ -516,7 +516,7 @@ public class InstructionSelectorOnEntity implements IRVisitor {
         }
         //函数调用
         //存返回值
-        if (!(stmt.function.retType instanceof VoidType)) {
+        if (!(stmt.function.retType instanceof VoidType) && stmt.result != null) {
             currentBlock.pushBack(
                     new CallInst(stmt.function.funcName, true)
             );

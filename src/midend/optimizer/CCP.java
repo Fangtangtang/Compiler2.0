@@ -72,9 +72,9 @@ public class CCP {
     }
 
     void propagateOnFunc(Function func) {
-        informationCollect(func);
         varWorkList = new HashSet<>();
         bbWorkList = new HashSet<>();
+        informationCollect(func);
         //initiate
         bbWorkList.add(func.entry);
         Pair<BlockType, Boolean> pair = blockInfo.get(func.entry.label);
@@ -92,7 +92,7 @@ public class CCP {
                     // executable def stmt in bb
                     for (Stmt stmt : bb.statements) {
                         if (stmt.hasDef()) {
-                            propagateOnStmt(stmt);
+                            propagateOnInst((Instruction) stmt);
                         }
                     }
                 }
@@ -136,7 +136,8 @@ public class CCP {
         localTmpVar2Const = new HashMap<>();
         blockInfo = new HashMap<>();
         for (LocalTmpVar para : func.parameterList) {
-            localTmpVarInfo.put(para, new Pair<>(VarType.noExeDef, new ArrayList<>()));
+            localTmpVarInfo.put(para, new Pair<>(VarType.multiExeDef, new ArrayList<>()));
+            varWorkList.add(para);
         }
         for (Map.Entry<String, BasicBlock> blockEntry : func.blockMap.entrySet()) {
             collectDefInBlock(blockEntry.getValue());
@@ -225,7 +226,6 @@ public class CCP {
         if (targetInfo.getFirst() == BlockType.unknown) {
             targetInfo.setFirst(BlockType.executable);
             targetInfo.setSecond(true);
-            bbWorkList.add(block);
         }
     }
 
@@ -236,35 +236,40 @@ public class CCP {
      */
     void promoteLocalTmpVar(LocalTmpVar tmpVar) {
         ArrayList<Stmt> useList = localTmpVarInfo.get(tmpVar).getSecond();
-        for (Stmt inst : useList) {
-            propagateOnStmt(inst);
+        for (Stmt stmt : useList) {
+            if (stmt instanceof Instruction inst) {
+                propagateOnInst(inst);
+            } else {
+                propagateOnTerminal((TerminalStmt) stmt, tmpVar);
+            }
         }
     }
 
-    /**
-     * 处理可执行的def语句
-     *
-     * @param stmt ir stmt
-     */
-    void propagateOnStmt(Stmt stmt) {
-        if (stmt instanceof Branch branch) {
+
+    void propagateOnInst(Instruction inst) {
+        if (inst instanceof Binary binary) {
+            propagateOnBinary(binary);
+        } else if (inst instanceof Icmp icmp) {
+            propagateOnIcmp(icmp);
+        } else if (inst instanceof Phi phi) {
+            propagateOnPhi(phi);
+        } else if (inst instanceof Trunc trunc) {
+            propagateOnTrunc(trunc);
+        } else if (inst instanceof Zext zext) {
+            propagateOnZext(zext);
+        } else {
+            if (inst.getDef() instanceof LocalTmpVar tmpVar) {
+                promoteToMulti(tmpVar);
+            }
+        }
+    }
+
+    void propagateOnTerminal(TerminalStmt stmt, LocalTmpVar var) {
+        if (stmt instanceof Branch branch && branch.condition==var) {
             ArrayList<BasicBlock> executableSuccessor = getExecutableSuccessor(branch);
             for (BasicBlock block : executableSuccessor) {
                 updateBlockInfo(block);
-            }
-        } else if (stmt instanceof Binary binary) {
-            propagateOnBinary(binary);
-        } else if (stmt instanceof Icmp icmp) {
-            propagateOnIcmp(icmp);
-        } else if (stmt instanceof Phi phi) {
-            propagateOnPhi(phi);
-        } else if (stmt instanceof Trunc trunc) {
-            propagateOnTrunc(trunc);
-        } else if (stmt instanceof Zext zext) {
-            propagateOnZext(zext);
-        } else {
-            if (stmt.getDef() instanceof LocalTmpVar tmpVar) {
-                promoteToMulti(tmpVar);
+                bbWorkList.add(block);
             }
         }
     }
@@ -439,7 +444,9 @@ public class CCP {
                 // add to workList
                 varWorkList.add(tmpVar);
             }
-            case multiExeDef -> throw new InternalException("[CCP]:level of local tmp var should increase only");
+            case multiExeDef -> {
+//                throw new InternalException("[CCP]:level of local tmp var should increase only");
+            }
         }
     }
 
