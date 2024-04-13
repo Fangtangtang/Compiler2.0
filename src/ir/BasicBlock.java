@@ -39,22 +39,22 @@ public class BasicBlock {
     public HashMap<String, GlobalLiveRange> def = new HashMap<>();
     public HashMap<String, GlobalLiveRange> liveOut = new HashMap<>();
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(label);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null || getClass() != obj.getClass()) {
-            return false;
-        }
-        BasicBlock other = (BasicBlock) obj;
-        return Objects.equals(label, other.label);
-    }
+//    @Override
+//    public int hashCode() {
+//        return Objects.hash(label);
+//    }
+//
+//    @Override
+//    public boolean equals(Object obj) {
+//        if (this == obj) {
+//            return true;
+//        }
+//        if (obj == null || getClass() != obj.getClass()) {
+//            return false;
+//        }
+//        BasicBlock other = (BasicBlock) obj;
+//        return Objects.equals(label, other.label);
+//    }
 
     public BasicBlock(String label) {
         this.label = label;

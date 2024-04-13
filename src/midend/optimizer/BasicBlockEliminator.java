@@ -7,12 +7,8 @@ import ir.stmt.Stmt;
 import ir.stmt.instruction.Phi;
 import ir.stmt.terminal.Branch;
 import ir.stmt.terminal.Jump;
-import utility.error.InternalException;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author F
@@ -37,7 +33,7 @@ public class BasicBlockEliminator {
 
     void eliminateOnFunc(Function func) {
         // collect PhiStmts
-        ArrayList<Phi> phiStmts = new ArrayList<Phi>();
+        ArrayList<Phi> phiStmts = new ArrayList<>();
         // collect prev
         for (Map.Entry<String, BasicBlock> blockEntry : func.blockMap.entrySet()) {
             BasicBlock block = blockEntry.getValue();

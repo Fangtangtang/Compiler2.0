@@ -4,6 +4,8 @@ import ir.entity.Entity;
 import ir.entity.Storage;
 import ir.irType.PtrType;
 
+import java.util.Objects;
+
 /**
  * @author F
  * alloca变量时得到的指针

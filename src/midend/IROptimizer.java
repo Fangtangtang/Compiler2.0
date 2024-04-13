@@ -26,7 +26,7 @@ public class IROptimizer {
         LocalTmpVarPropagation localTmpVarPropagation = new LocalTmpVarPropagation(irRoot);
         localTmpVarPropagation.execute();
 
-//        CCP ccp = new CCP(irRoot);
-//        ccp.execute();
+        CCP ccp = new CCP(irRoot);
+        ccp.execute();
     }
 }

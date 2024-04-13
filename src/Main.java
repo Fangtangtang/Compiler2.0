@@ -64,13 +64,13 @@ public class Main {
         irBuilder.visit(astRoot);
         //IR OPT
         IROptimizer optimizer = new IROptimizer(irBuilder.irRoot);
-//        optimizer.execute();
+        optimizer.execute();
 
         PrintStream outputStream = System.out;
 
         //IR
-//        IRPrinter printer = new IRPrinter(outputStream);
-//        printer.visit(irBuilder.irRoot);
+        IRPrinter printer = new IRPrinter(outputStream);
+        printer.visit(irBuilder.irRoot);
 
 
 //        Program program = new Program();
@@ -90,15 +90,15 @@ public class Main {
 //        allocator.visit(program);
 //        program.print(outputStream);
 
-        Program program = new Program();
-        // ir -> asm:含“mem2reg”
-        InstructionSelectorOnEntity selector = new InstructionSelectorOnEntity(program);
-        selector.visit(irBuilder.irRoot);
-        // asm上优化
-        ASMOptimizer asmOptimizer = new ASMOptimizer(program.text, selector.registerMap);
-        asmOptimizer.execute();
-
-        program.printRegColoring(outputStream);
+//        Program program = new Program();
+//        // ir -> asm:含“mem2reg”
+//        InstructionSelectorOnEntity selector = new InstructionSelectorOnEntity(program);
+//        selector.visit(irBuilder.irRoot);
+//        // asm上优化
+//        ASMOptimizer asmOptimizer = new ASMOptimizer(program.text, selector.registerMap);
+//        asmOptimizer.execute();
+//
+//        program.printRegColoring(outputStream);
     }
 }
 

@@ -1,7 +1,8 @@
 package ir.entity.var;
 
 import ir.entity.*;
-import ir.irType.PtrType;
+
+import java.util.Objects;
 
 /**
  * @author F

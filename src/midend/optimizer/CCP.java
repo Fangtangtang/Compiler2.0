@@ -177,7 +177,6 @@ public class CCP {
     }
 
     ArrayList<BasicBlock> getExecutableSuccessor(BasicBlock bb) {
-//        System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         ArrayList<BasicBlock> executableSuccessor = new ArrayList<>();
         if (bb.tailStmt instanceof Jump jump) {
             updateBlockInfo(jump.target);
@@ -212,7 +211,6 @@ public class CCP {
                 executableSuccessor.add(branch.falseBranch);
             }
         }
-//        System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         return executableSuccessor;
     }
 
@@ -254,7 +252,7 @@ public class CCP {
             propagateOnZext(zext);
         } else {
             if (instruction.getDef() instanceof LocalTmpVar tmpVar) {
-                localTmpVarInfo.get(tmpVar).setFirst(VarType.multiExeDef);
+                promoteToMulti(tmpVar);
             }
         }
     }
@@ -267,7 +265,7 @@ public class CCP {
         if (op1Type == VarType.multiExeDef ||
                 op2Type == VarType.multiExeDef) {
             if (binaryInst.getDef() instanceof LocalTmpVar tmpVar) {
-                localTmpVarInfo.get(tmpVar).setFirst(VarType.multiExeDef);
+                promoteToMulti(tmpVar);
             }
         } else if (op1Type == VarType.oneConstDef &&
                 op2Type == VarType.oneConstDef &&
@@ -289,7 +287,7 @@ public class CCP {
         if (op1Type == VarType.multiExeDef ||
                 op2Type == VarType.multiExeDef) {
             if (icmpInst.getDef() instanceof LocalTmpVar tmpVar) {
-                localTmpVarInfo.get(tmpVar).setFirst(VarType.multiExeDef);
+                promoteToMulti(tmpVar);
             }
         } else if (op1Type == VarType.oneConstDef &&
                 op2Type == VarType.oneConstDef &&
@@ -316,7 +314,7 @@ public class CCP {
                     ||
                     (ans2Type == VarType.multiExeDef &&
                             label2bbType == BlockType.executable)) {
-                localTmpVarInfo.get(tmpVar).setFirst(VarType.multiExeDef);
+                promoteToMulti(tmpVar);
             } else {
                 int constCnt = 0;
                 Constant constant = null;
@@ -336,7 +334,7 @@ public class CCP {
                 if (constCnt == 1) {
                     assignConstToVar(tmpVar, constant);
                 } else if (constCnt == 2) {
-                    localTmpVarInfo.get(tmpVar).setFirst(VarType.multiExeDef);
+                    promoteToMulti(tmpVar);
                 }
             }
         }
@@ -348,7 +346,7 @@ public class CCP {
         VarType valueType = valueInfo.getSecond();
         if (valueType == VarType.multiExeDef) {
             if (truncInst.getDef() instanceof LocalTmpVar tmpVar) {
-                localTmpVarInfo.get(tmpVar).setFirst(VarType.multiExeDef);
+                promoteToMulti(tmpVar);
             }
         } else if (valueType == VarType.oneConstDef &&
                 truncInst.getDef() instanceof LocalTmpVar tmpVar) {
@@ -361,7 +359,7 @@ public class CCP {
         VarType valueType = valueInfo.getSecond();
         if (valueType == VarType.multiExeDef) {
             if (zextInst.getDef() instanceof LocalTmpVar tmpVar) {
-                localTmpVarInfo.get(tmpVar).setFirst(VarType.multiExeDef);
+                promoteToMulti(tmpVar);
             }
         } else if (valueType == VarType.oneConstDef &&
                 zextInst.getDef() instanceof LocalTmpVar tmpVar) {
@@ -395,6 +393,14 @@ public class CCP {
             }
         }
         throw new InternalException("[CCP]:unexpected entity type");
+    }
+
+    void promoteToMulti(LocalTmpVar tmpVar) {
+        Pair<VarType, ArrayList<Stmt>> tmpInfo = localTmpVarInfo.get(tmpVar);
+        if (tmpInfo.getFirst() != VarType.multiExeDef) {
+            varWorkList.add(tmpVar);
+            tmpInfo.setFirst(VarType.multiExeDef);
+        }
     }
 
     void assignConstToVar(LocalTmpVar tmpVar, Constant constant) {
