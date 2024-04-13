@@ -164,6 +164,12 @@ public class GetElementPtr extends Instruction {
     }
 
     @Override
+    public void replaceUse(HashMap<LocalTmpVar, Constant> constantMap) {
+        idx = replace(idx, constantMap);
+        ptrVal = (Storage) replace(ptrVal, constantMap);
+    }
+
+    @Override
     public void replaceUse(HashMap<LocalTmpVar, Storage> copyMap, HashMap<LocalVar, LocalVar> curAllocaMap) {
         idx = replace(idx, copyMap, curAllocaMap);
         ptrVal = (Storage) replace(ptrVal, copyMap, curAllocaMap);

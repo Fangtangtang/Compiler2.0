@@ -2,14 +2,12 @@ package midend.optimizer;
 
 import ir.*;
 import ir.entity.*;
-import ir.entity.constant.ConstBool;
-import ir.entity.constant.Constant;
+import ir.entity.constant.*;
 import ir.entity.var.*;
 import ir.function.Function;
 import ir.stmt.*;
 import ir.stmt.instruction.*;
-import ir.stmt.terminal.Branch;
-import ir.stmt.terminal.Jump;
+import ir.stmt.terminal.*;
 import utility.Pair;
 import utility.error.InternalException;
 
@@ -46,7 +44,7 @@ public class ConditionalConstantPropagation {
     // (currentVarType,useList)
     HashMap<LocalTmpVar,
             Pair<VarType,
-                    ArrayList<Instruction>
+                    ArrayList<Stmt>
                     >
             > localTmpVarInfo = null;
 
@@ -111,6 +109,10 @@ public class ConditionalConstantPropagation {
                 promoteLocalTmpVar(varWorkList.iterator().next());
             }
         }
+        // remove dead block
+        removeDeadBlock(func);
+        // replace var with constant and remove useless assignment
+        removeDeadVarDef(func);
     }
 
     /**
@@ -218,9 +220,9 @@ public class ConditionalConstantPropagation {
      * @param tmpVar 更新过的var
      */
     void promoteLocalTmpVar(LocalTmpVar tmpVar) {
-        ArrayList<Instruction> useList = localTmpVarInfo.get(tmpVar).getSecond();
-        for (Instruction inst : useList) {
-            propagateOnInst(inst);
+        ArrayList<Stmt> useList = localTmpVarInfo.get(tmpVar).getSecond();
+        for (Stmt inst : useList) {
+            propagateOnInst((Instruction) inst);
         }
     }
 
@@ -386,7 +388,7 @@ public class ConditionalConstantPropagation {
     }
 
     void assignConstToVar(LocalTmpVar tmpVar, Constant constant) {
-        Pair<VarType, ArrayList<Instruction>> tmpInfo = localTmpVarInfo.get(tmpVar);
+        Pair<VarType, ArrayList<Stmt>> tmpInfo = localTmpVarInfo.get(tmpVar);
         switch (tmpInfo.getFirst()) {
             case noExeDef -> {
                 tmpInfo.setFirst(VarType.oneConstDef);
@@ -402,6 +404,81 @@ public class ConditionalConstantPropagation {
             }
             case multiExeDef -> {
                 throw new InternalException("[CCP]:level of local tmp var should increase only");
+            }
+        }
+    }
+
+    void removeDeadBlock(Function func) {
+        LinkedHashMap<String, BasicBlock> newBlockMap = new LinkedHashMap<>();
+        for (Map.Entry<String, BasicBlock> blockEntry : func.blockMap.entrySet()) {
+            String blockName = blockEntry.getKey();
+            if (blockInfo.get(blockName).getFirst() == BlockType.executable) {
+                newBlockMap.put(blockName, blockEntry.getValue());
+            }
+        }
+        func.blockMap = newBlockMap;
+    }
+
+    void removeDeadVarDef(Function func) {
+        // clear use list and recollect
+        for (Map.Entry<LocalTmpVar, Pair<VarType, ArrayList<Stmt>>> entry : localTmpVarInfo.entrySet()) {
+            entry.getValue().setSecond(new ArrayList<>());
+        }
+        HashMap<LocalTmpVar, Pair<BasicBlock, Stmt>> varDef = new HashMap<>();
+        Entity def;
+        ArrayList<Entity> use;
+        for (Map.Entry<String, BasicBlock> blockEntry : func.blockMap.entrySet()) {
+            BasicBlock block = blockEntry.getValue();
+            for (Stmt stmt : block.statements) {
+                if (stmt.hasDef()) {
+                    def = stmt.getDef();
+                    if (def instanceof LocalTmpVar localTmpVar) {
+                        varDef.put(
+                                localTmpVar,
+                                new Pair<>(block, stmt)
+                        );
+                    }
+                }
+                use = stmt.getUse();
+                if (use != null) {
+                    for (Entity usedEntity : use) {
+                        if (usedEntity instanceof LocalTmpVar) {
+                            localTmpVarInfo.get(usedEntity).getSecond().add((Instruction) stmt);
+                        }
+                    }
+                }
+            }
+            use = block.tailStmt.getUse();
+            if (use != null) {
+                for (Entity usedEntity : use) {
+                    if (usedEntity instanceof LocalTmpVar) {
+                        localTmpVarInfo.get(usedEntity).getSecond().add(block.tailStmt);
+                    }
+                }
+            }
+        }
+        for (Map.Entry<LocalTmpVar, Pair<VarType, ArrayList<Stmt>>> entry : localTmpVarInfo.entrySet()) {
+            LocalTmpVar var = entry.getKey();
+            Pair<VarType, ArrayList<Stmt>> varInfo = entry.getValue();
+            // replace constant
+            if (varInfo.getFirst() == VarType.oneConstDef) {
+                ArrayList<Stmt> useList = varInfo.getSecond();
+                for (Stmt stmt : useList) {
+                    stmt.replaceUse(localTmpVar2Const);
+                }
+                // remove def
+                Pair<BasicBlock, Stmt> defStmtInfo = varDef.get(var);
+                defStmtInfo.getFirst().statements.remove(defStmtInfo.getSecond());
+            }
+            // remove not used
+            else if (varInfo.getSecond().size() == 0) {
+                Pair<BasicBlock, Stmt> defStmtInfo = varDef.get(var);
+                Stmt stmt = defStmtInfo.getSecond();
+                if (stmt instanceof Call callStmt) {
+                    callStmt.result = null;
+                } else {
+                    defStmtInfo.getFirst().statements.remove(defStmtInfo.getSecond());
+                }
             }
         }
     }

@@ -124,6 +124,12 @@ public class Store extends Instruction {
     }
 
     @Override
+    public void replaceUse(HashMap<LocalTmpVar, Constant> constantMap) {
+        value = replace(value, constantMap);
+        pointer = replace(pointer, constantMap);
+    }
+
+    @Override
     public void replaceUse(HashMap<LocalTmpVar, Storage> copyMap, HashMap<LocalVar, LocalVar> curAllocaMap) {
         value = replace(value, copyMap, curAllocaMap);
         pointer = replace(pointer, copyMap, curAllocaMap);

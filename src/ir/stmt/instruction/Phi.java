@@ -161,6 +161,12 @@ public class Phi extends Instruction {
     }
 
     @Override
+    public void replaceUse(HashMap<LocalTmpVar, Constant> constantMap) {
+        ans1 = (Storage) replace(ans1, constantMap);
+        ans2 = (Storage) replace(ans2,constantMap);
+    }
+
+    @Override
     public void replaceUse(HashMap<LocalTmpVar, Storage> copyMap, HashMap<LocalVar, LocalVar> curAllocaMap) {
         ans1 = (Storage) replace(ans1, copyMap, curAllocaMap);
         ans2 = (Storage) replace(ans2, copyMap, curAllocaMap);

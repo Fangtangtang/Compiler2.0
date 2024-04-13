@@ -4,6 +4,7 @@ import ir.*;
 import ir.entity.Entity;
 import ir.entity.SSAEntity;
 import ir.entity.Storage;
+import ir.entity.constant.Constant;
 import ir.entity.var.*;
 import ir.stmt.Stmt;
 import utility.Pair;
@@ -71,7 +72,10 @@ public class Jump extends TerminalStmt {
 
     @Override
     public ArrayList<Entity> getUse() {
-        return null;
+        ArrayList<Entity> ret = new ArrayList<>();
+        ret.add(result);
+        return ret;
+//        return null;
     }
 
     @Override
@@ -102,6 +106,11 @@ public class Jump extends TerminalStmt {
     public Pair<Stmt, LocalTmpVar> creatCopy(String suffix) {
         Stmt stmt = new Jump(targetName + suffix, index + suffix, phiLabel, result);
         return new Pair<>(stmt, null);
+    }
+
+    @Override
+    public void replaceUse(HashMap<LocalTmpVar, Constant> constantMap) {
+        result = (Storage) replace(result, constantMap);
     }
 
     @Override

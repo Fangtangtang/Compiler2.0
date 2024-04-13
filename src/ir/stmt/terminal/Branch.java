@@ -5,6 +5,7 @@ import ir.IRVisitor;
 import ir.entity.Entity;
 import ir.entity.SSAEntity;
 import ir.entity.Storage;
+import ir.entity.constant.Constant;
 import ir.entity.var.GlobalVar;
 import ir.entity.var.LocalTmpVar;
 import ir.entity.var.LocalVar;
@@ -103,6 +104,7 @@ public class Branch extends TerminalStmt {
     public ArrayList<Entity> getUse() {
         ArrayList<Entity> ret = new ArrayList<>();
         ret.add(condition);
+        ret.add(result);
         return ret;
     }
 
@@ -145,6 +147,12 @@ public class Branch extends TerminalStmt {
                 index + suffix, phiLabel, result
         );
         return new Pair<>(stmt, null);
+    }
+
+    @Override
+    public void replaceUse(HashMap<LocalTmpVar, Constant> constantMap) {
+        condition = replace(condition, constantMap);
+        result = (Storage) replace(result, constantMap);
     }
 
     @Override

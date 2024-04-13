@@ -4,6 +4,7 @@ import ir.IRVisitor;
 import ir.entity.Entity;
 import ir.entity.SSAEntity;
 import ir.entity.Storage;
+import ir.entity.constant.Constant;
 import ir.entity.var.GlobalVar;
 import ir.entity.var.LocalTmpVar;
 import ir.entity.var.LocalVar;
@@ -108,6 +109,11 @@ public class Return extends TerminalStmt {
     public Pair<Stmt, LocalTmpVar> creatCopy(String suffix) {
         Stmt stmt = new Return(value);
         return new Pair<>(stmt, null);
+    }
+
+    @Override
+    public void replaceUse(HashMap<LocalTmpVar, Constant> constantMap) {
+        value = replace(value, constantMap);
     }
 
     @Override
