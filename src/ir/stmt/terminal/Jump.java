@@ -6,6 +6,7 @@ import ir.entity.SSAEntity;
 import ir.entity.Storage;
 import ir.entity.constant.Constant;
 import ir.entity.var.*;
+import ir.irType.VoidType;
 import ir.stmt.Stmt;
 import utility.Pair;
 
@@ -22,7 +23,7 @@ public class Jump extends TerminalStmt {
     public BasicBlock target = null;
     public String phiLabel = null;
     public String index;
-    public Storage result;
+    public Storage result = null;
     public SSAEntity ssaResult;
 
     public Jump(String targetName) {
@@ -43,7 +44,9 @@ public class Jump extends TerminalStmt {
         this.target = target;
         this.index = index;
         this.phiLabel = phiLabel;
-        this.result = result;
+        if (result != null && (!(result.type instanceof VoidType))) {
+            this.result = result;
+        }
     }
 
     public Jump(String targetName, String index,

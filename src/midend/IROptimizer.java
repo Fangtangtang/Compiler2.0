@@ -1,10 +1,7 @@
 package midend;
 
 import ir.IRRoot;
-import ir.function.Function;
 import midend.optimizer.*;
-
-import java.util.Map;
 
 /**
  * @author F
@@ -29,7 +26,7 @@ public class IROptimizer {
         LocalTmpVarPropagation localTmpVarPropagation = new LocalTmpVarPropagation(irRoot);
         localTmpVarPropagation.execute();
 
-        ConditionalConstantPropagation conditionalConstantPropagation = new ConditionalConstantPropagation(irRoot);
-        conditionalConstantPropagation.execute();
+//        CCP ccp = new CCP(irRoot);
+//        ccp.execute();
     }
 }

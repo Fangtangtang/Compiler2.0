@@ -23,7 +23,7 @@ import java.util.*;
  * promote层数严格受限，算法进行较快
  * -----------------------------------------------------------------
  */
-public class ConditionalConstantPropagation {
+public class CCP {
     IRRoot irRoot;
 
     public enum VarType {
@@ -57,7 +57,7 @@ public class ConditionalConstantPropagation {
                     >
             > blockInfo = null;
 
-    public ConditionalConstantPropagation(IRRoot root) {
+    public CCP(IRRoot root) {
         irRoot = root;
     }
 
@@ -97,6 +97,9 @@ public class ConditionalConstantPropagation {
                     }
                 }
                 // tailStmt
+                if (bb.tailStmt instanceof Jump jump && jump.target == null) {
+                    jump.target = func.blockMap.get(jump.targetName);
+                }
                 ArrayList<BasicBlock> executableSuccessor = getExecutableSuccessor(bb);
                 // newly executable
                 // its executable successor may have some update
@@ -129,6 +132,9 @@ public class ConditionalConstantPropagation {
         localTmpVarInfo = new HashMap<>();
         localTmpVar2Const = new HashMap<>();
         blockInfo = new HashMap<>();
+        for (LocalTmpVar para : func.parameterList) {
+            localTmpVarInfo.put(para, new Pair<>(VarType.noExeDef, new ArrayList<>()));
+        }
         for (Map.Entry<String, BasicBlock> blockEntry : func.blockMap.entrySet()) {
             collectDefInBlock(blockEntry.getValue());
         }
@@ -162,7 +168,7 @@ public class ConditionalConstantPropagation {
                 if (use != null) {
                     for (Entity usedEntity : use) {
                         if (usedEntity instanceof LocalTmpVar) {
-                            localTmpVarInfo.get(usedEntity).getSecond().add((Instruction) stmt);
+                            localTmpVarInfo.get(usedEntity).getSecond().add(stmt);
                         }
                     }
                 }
@@ -171,6 +177,7 @@ public class ConditionalConstantPropagation {
     }
 
     ArrayList<BasicBlock> getExecutableSuccessor(BasicBlock bb) {
+//        System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         ArrayList<BasicBlock> executableSuccessor = new ArrayList<>();
         if (bb.tailStmt instanceof Jump jump) {
             updateBlockInfo(jump.target);
@@ -194,8 +201,7 @@ public class ConditionalConstantPropagation {
                 if (cond) {
                     updateBlockInfo(branch.trueBranch);
                     executableSuccessor.add(branch.trueBranch);
-                }
-                else {
+                } else {
                     updateBlockInfo(branch.falseBranch);
                     executableSuccessor.add(branch.falseBranch);
                 }
@@ -206,6 +212,7 @@ public class ConditionalConstantPropagation {
                 executableSuccessor.add(branch.falseBranch);
             }
         }
+//        System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         return executableSuccessor;
     }
 
@@ -405,9 +412,7 @@ public class ConditionalConstantPropagation {
                 // add to workList
                 varWorkList.add(tmpVar);
             }
-            case multiExeDef -> {
-                throw new InternalException("[CCP]:level of local tmp var should increase only");
-            }
+            case multiExeDef -> throw new InternalException("[CCP]:level of local tmp var should increase only");
         }
     }
 
@@ -428,7 +433,12 @@ public class ConditionalConstantPropagation {
             entry.getValue().setSecond(new ArrayList<>());
         }
         HashMap<LocalTmpVar, Pair<BasicBlock, Stmt>> varDef = new HashMap<>();
-
+        for (LocalTmpVar para : func.parameterList) {
+            varDef.put(
+                    para,
+                    new Pair<>(null, null)
+            );
+        }
         for (Map.Entry<String, BasicBlock> blockEntry : func.blockMap.entrySet()) {
             recollectUseDefInBlock(blockEntry.getValue(), varDef);
         }
@@ -444,7 +454,10 @@ public class ConditionalConstantPropagation {
                 }
                 // remove def
                 Pair<BasicBlock, Stmt> defStmtInfo = varDef.get(var);
-                defStmtInfo.getFirst().statements.remove(defStmtInfo.getSecond());
+                // not param
+                if (defStmtInfo.getFirst() != null) {
+                    defStmtInfo.getFirst().statements.remove(defStmtInfo.getSecond());
+                }
             }
             // remove not used
             else if (varInfo.getSecond().size() == 0 && varDef.containsKey(var)) {
@@ -476,7 +489,7 @@ public class ConditionalConstantPropagation {
             if (use != null) {
                 for (Entity usedEntity : use) {
                     if (usedEntity instanceof LocalTmpVar) {
-                        localTmpVarInfo.get(usedEntity).getSecond().add((Instruction) stmt);
+                        localTmpVarInfo.get(usedEntity).getSecond().add(stmt);
                     }
                 }
             }

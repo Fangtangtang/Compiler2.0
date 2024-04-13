@@ -1,12 +1,10 @@
 package ir;
 
-import ir.entity.Entity;
 import ir.entity.SSAEntity;
+import ir.entity.var.LocalTmpVar;
 import ir.stmt.Stmt;
 import ir.stmt.terminal.TerminalStmt;
-import midend.optimizer.ConditionalConstantPropagation;
 import utility.Pair;
-import utility.error.InternalException;
 import utility.live.GlobalLiveRange;
 
 import java.util.*;
@@ -41,6 +39,23 @@ public class BasicBlock {
     public HashMap<String, GlobalLiveRange> def = new HashMap<>();
     public HashMap<String, GlobalLiveRange> liveOut = new HashMap<>();
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(label);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        BasicBlock other = (BasicBlock) obj;
+        return Objects.equals(label, other.label);
+    }
+
     public BasicBlock(String label) {
         this.label = label;
     }
@@ -59,9 +74,6 @@ public class BasicBlock {
                 tailStmt = terminalStmt;
             }
             return;
-//            } else {
-//                throw new InternalException("basic block " + label + " has multiple exits");
-//            }
         }
         statements.add(stmt);
     }
