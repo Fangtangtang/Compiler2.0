@@ -92,7 +92,7 @@ public class CCP {
                     // executable def stmt in bb
                     for (Stmt stmt : bb.statements) {
                         if (stmt.hasDef()) {
-                            propagateOnInst((Instruction) stmt);
+                            propagateOnStmt(stmt);
                         }
                     }
                 }
@@ -100,7 +100,10 @@ public class CCP {
                 if (bb.tailStmt instanceof Jump jump && jump.target == null) {
                     jump.target = func.blockMap.get(jump.targetName);
                 }
-                ArrayList<BasicBlock> executableSuccessor = getExecutableSuccessor(bb);
+                ArrayList<BasicBlock> executableSuccessor = getExecutableSuccessor(bb.tailStmt);
+                for (BasicBlock block : executableSuccessor) {
+                    updateBlockInfo(block);
+                }
                 // newly executable
                 // its executable successor may have some update
                 if (bbInfo.getSecond()) {
@@ -162,52 +165,55 @@ public class CCP {
     void collectUseInBlock(BasicBlock block) {
         ArrayList<Entity> use;
         for (Stmt stmt : block.statements) {
-            // only def are needed
-            if (stmt.hasDef()) {
-                use = stmt.getUse();
-                if (use != null) {
-                    for (Entity usedEntity : use) {
-                        if (usedEntity instanceof LocalTmpVar) {
-                            localTmpVarInfo.get(usedEntity).getSecond().add(stmt);
-                        }
+            use = stmt.getUse();
+            if (use != null) {
+                for (Entity usedEntity : use) {
+                    if (usedEntity instanceof LocalTmpVar) {
+                        localTmpVarInfo.get(usedEntity).getSecond().add(stmt);
                     }
+                }
+            }
+        }
+        use = block.tailStmt.getUse();
+        if (use != null) {
+            for (Entity usedEntity : use) {
+                if (usedEntity instanceof LocalTmpVar) {
+                    localTmpVarInfo.get(usedEntity).getSecond().add(block.tailStmt);
                 }
             }
         }
     }
 
-    ArrayList<BasicBlock> getExecutableSuccessor(BasicBlock bb) {
+    ArrayList<BasicBlock> getExecutableSuccessor(TerminalStmt stmt) {
         ArrayList<BasicBlock> executableSuccessor = new ArrayList<>();
-        if (bb.tailStmt instanceof Jump jump) {
-            updateBlockInfo(jump.target);
+        if (stmt instanceof Jump jump) {
             executableSuccessor.add(jump.target);
-        } else if (bb.tailStmt instanceof Branch branch) {
-            boolean onlyOneExecutable = true;
+        } else if (stmt instanceof Branch branch) {
+            int executable = 0;
             boolean cond = false;
             if (branch.condition instanceof Constant constant) {
                 if (constant instanceof ConstBool constBool) {
                     cond = constBool.value;
+                    executable = 1;
                 } else {
                     throw new InternalException("[CCP]:condition in branch should be bool?");
                 }
-            } else if (branch.condition instanceof LocalTmpVar tmpVar &&
-                    localTmpVarInfo.get(tmpVar).getFirst() == VarType.oneConstDef) {
-                cond = ((ConstBool) localTmpVar2Const.get(tmpVar)).value;
-            } else {
-                onlyOneExecutable = false;
+            } else if (branch.condition instanceof LocalTmpVar tmpVar) {
+                if (localTmpVarInfo.get(tmpVar).getFirst() == VarType.oneConstDef) {
+                    cond = ((ConstBool) localTmpVar2Const.get(tmpVar)).value;
+                    executable = 1;
+                } else if (localTmpVarInfo.get(tmpVar).getFirst() == VarType.multiExeDef) {
+                    executable = 2;
+                }
             }
-            if (onlyOneExecutable) {
+            if (executable == 1) {
                 if (cond) {
-                    updateBlockInfo(branch.trueBranch);
                     executableSuccessor.add(branch.trueBranch);
                 } else {
-                    updateBlockInfo(branch.falseBranch);
                     executableSuccessor.add(branch.falseBranch);
                 }
-            } else {
-                updateBlockInfo(branch.trueBranch);
+            } else if (executable == 2) {
                 executableSuccessor.add(branch.trueBranch);
-                updateBlockInfo(branch.falseBranch);
                 executableSuccessor.add(branch.falseBranch);
             }
         }
@@ -219,6 +225,7 @@ public class CCP {
         if (targetInfo.getFirst() == BlockType.unknown) {
             targetInfo.setFirst(BlockType.executable);
             targetInfo.setSecond(true);
+            bbWorkList.add(block);
         }
     }
 
@@ -230,28 +237,33 @@ public class CCP {
     void promoteLocalTmpVar(LocalTmpVar tmpVar) {
         ArrayList<Stmt> useList = localTmpVarInfo.get(tmpVar).getSecond();
         for (Stmt inst : useList) {
-            propagateOnInst((Instruction) inst);
+            propagateOnStmt(inst);
         }
     }
 
     /**
      * 处理可执行的def语句
      *
-     * @param instruction stmt that has def
+     * @param stmt ir stmt
      */
-    void propagateOnInst(Instruction instruction) {
-        if (instruction instanceof Binary binary) {
+    void propagateOnStmt(Stmt stmt) {
+        if (stmt instanceof Branch branch) {
+            ArrayList<BasicBlock> executableSuccessor = getExecutableSuccessor(branch);
+            for (BasicBlock block : executableSuccessor) {
+                updateBlockInfo(block);
+            }
+        } else if (stmt instanceof Binary binary) {
             propagateOnBinary(binary);
-        } else if (instruction instanceof Icmp icmp) {
+        } else if (stmt instanceof Icmp icmp) {
             propagateOnIcmp(icmp);
-        } else if (instruction instanceof Phi phi) {
+        } else if (stmt instanceof Phi phi) {
             propagateOnPhi(phi);
-        } else if (instruction instanceof Trunc trunc) {
+        } else if (stmt instanceof Trunc trunc) {
             propagateOnTrunc(trunc);
-        } else if (instruction instanceof Zext zext) {
+        } else if (stmt instanceof Zext zext) {
             propagateOnZext(zext);
         } else {
-            if (instruction.getDef() instanceof LocalTmpVar tmpVar) {
+            if (stmt.getDef() instanceof LocalTmpVar tmpVar) {
                 promoteToMulti(tmpVar);
             }
         }
@@ -397,9 +409,18 @@ public class CCP {
 
     void promoteToMulti(LocalTmpVar tmpVar) {
         Pair<VarType, ArrayList<Stmt>> tmpInfo = localTmpVarInfo.get(tmpVar);
-        if (tmpInfo.getFirst() != VarType.multiExeDef) {
-            varWorkList.add(tmpVar);
-            tmpInfo.setFirst(VarType.multiExeDef);
+        switch (tmpInfo.getFirst()) {
+            case noExeDef -> {
+                varWorkList.add(tmpVar);
+                tmpInfo.setFirst(VarType.multiExeDef);
+            }
+            case oneConstDef -> {
+                varWorkList.add(tmpVar);
+                localTmpVar2Const.remove(tmpVar);
+                tmpInfo.setFirst(VarType.multiExeDef);
+            }
+            case multiExeDef -> {
+            }
         }
     }
 
