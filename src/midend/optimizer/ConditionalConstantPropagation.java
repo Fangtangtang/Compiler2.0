@@ -80,11 +80,15 @@ public class ConditionalConstantPropagation {
         Pair<BlockType, Boolean> pair = blockInfo.get(func.entry.label);
         pair.setFirst(BlockType.executable);
         pair.setSecond(true);
+        Iterator<BasicBlock> bbIter;
+        Iterator<LocalTmpVar> varIter;
         // loop until workList cleared
         while ((!bbWorkList.isEmpty()) || (!varWorkList.isEmpty())) {
             // chose a bb from workList
             if (!bbWorkList.isEmpty()) {
-                BasicBlock bb = bbWorkList.iterator().next();
+                bbIter = bbWorkList.iterator();
+                BasicBlock bb = bbIter.next();
+                bbIter.remove();
                 Pair<BlockType, Boolean> bbInfo = blockInfo.get(bb.label);
                 //executable successor of bb
                 if (bbInfo.getFirst() == BlockType.executable) {
@@ -106,7 +110,9 @@ public class ConditionalConstantPropagation {
             }
             // chose a var from workList
             if (!varWorkList.isEmpty()) {
-                promoteLocalTmpVar(varWorkList.iterator().next());
+                varIter = varWorkList.iterator();
+                promoteLocalTmpVar(varIter.next());
+                varIter.remove();
             }
         }
         // remove dead block
@@ -124,33 +130,40 @@ public class ConditionalConstantPropagation {
         localTmpVarInfo = new HashMap<>();
         localTmpVar2Const = new HashMap<>();
         blockInfo = new HashMap<>();
-        Entity def;
         for (Map.Entry<String, BasicBlock> blockEntry : func.blockMap.entrySet()) {
-            BasicBlock block = blockEntry.getValue();
-            // localTmpVar
-            for (Stmt stmt : block.statements) {
-                if (stmt.hasDef()) {
-                    def = stmt.getDef();
-                    if (def instanceof LocalTmpVar localTmpVar) {
-                        localTmpVarInfo.put(localTmpVar, new Pair<>(VarType.noExeDef, new ArrayList<>()));
-                    }
+            collectDefInBlock(blockEntry.getValue());
+        }
+        collectDefInBlock(func.ret);
+        for (Map.Entry<String, BasicBlock> blockEntry : func.blockMap.entrySet()) {
+            collectUseInBlock(blockEntry.getValue());
+        }
+        collectUseInBlock(func.ret);
+    }
+
+    void collectDefInBlock(BasicBlock block) {
+        Entity def;
+        for (Stmt stmt : block.statements) {
+            if (stmt.hasDef()) {
+                def = stmt.getDef();
+                if (def instanceof LocalTmpVar localTmpVar) {
+                    localTmpVarInfo.put(localTmpVar, new Pair<>(VarType.noExeDef, new ArrayList<>()));
                 }
             }
-            // block
-            blockInfo.put(block.label, new Pair<>(BlockType.unknown, false));
         }
+        // block
+        blockInfo.put(block.label, new Pair<>(BlockType.unknown, false));
+    }
+
+    void collectUseInBlock(BasicBlock block) {
         ArrayList<Entity> use;
-        for (Map.Entry<String, BasicBlock> blockEntry : func.blockMap.entrySet()) {
-            BasicBlock block = blockEntry.getValue();
-            for (Stmt stmt : block.statements) {
-                // only def are needed
-                if (stmt.hasDef()) {
-                    use = stmt.getUse();
-                    if (use != null) {
-                        for (Entity usedEntity : use) {
-                            if (usedEntity instanceof LocalTmpVar) {
-                                localTmpVarInfo.get(usedEntity).getSecond().add((Instruction) stmt);
-                            }
+        for (Stmt stmt : block.statements) {
+            // only def are needed
+            if (stmt.hasDef()) {
+                use = stmt.getUse();
+                if (use != null) {
+                    for (Entity usedEntity : use) {
+                        if (usedEntity instanceof LocalTmpVar) {
+                            localTmpVarInfo.get(usedEntity).getSecond().add((Instruction) stmt);
                         }
                     }
                 }
@@ -201,6 +214,8 @@ public class ConditionalConstantPropagation {
             } else {
                 updateBlockInfo(branch.trueBranch);
                 executableSuccessor.add(branch.trueBranch);
+                updateBlockInfo(branch.falseBranch);
+                executableSuccessor.add(branch.falseBranch);
             }
         }
         return executableSuccessor;
@@ -425,38 +440,11 @@ public class ConditionalConstantPropagation {
             entry.getValue().setSecond(new ArrayList<>());
         }
         HashMap<LocalTmpVar, Pair<BasicBlock, Stmt>> varDef = new HashMap<>();
-        Entity def;
-        ArrayList<Entity> use;
+
         for (Map.Entry<String, BasicBlock> blockEntry : func.blockMap.entrySet()) {
-            BasicBlock block = blockEntry.getValue();
-            for (Stmt stmt : block.statements) {
-                if (stmt.hasDef()) {
-                    def = stmt.getDef();
-                    if (def instanceof LocalTmpVar localTmpVar) {
-                        varDef.put(
-                                localTmpVar,
-                                new Pair<>(block, stmt)
-                        );
-                    }
-                }
-                use = stmt.getUse();
-                if (use != null) {
-                    for (Entity usedEntity : use) {
-                        if (usedEntity instanceof LocalTmpVar) {
-                            localTmpVarInfo.get(usedEntity).getSecond().add((Instruction) stmt);
-                        }
-                    }
-                }
-            }
-            use = block.tailStmt.getUse();
-            if (use != null) {
-                for (Entity usedEntity : use) {
-                    if (usedEntity instanceof LocalTmpVar) {
-                        localTmpVarInfo.get(usedEntity).getSecond().add(block.tailStmt);
-                    }
-                }
-            }
+            recollectUseDefInBlock(blockEntry.getValue(), varDef);
         }
+        recollectUseDefInBlock(func.ret, varDef);
         for (Map.Entry<LocalTmpVar, Pair<VarType, ArrayList<Stmt>>> entry : localTmpVarInfo.entrySet()) {
             LocalTmpVar var = entry.getKey();
             Pair<VarType, ArrayList<Stmt>> varInfo = entry.getValue();
@@ -471,13 +459,45 @@ public class ConditionalConstantPropagation {
                 defStmtInfo.getFirst().statements.remove(defStmtInfo.getSecond());
             }
             // remove not used
-            else if (varInfo.getSecond().size() == 0) {
+            else if (varInfo.getSecond().size() == 0 && varDef.containsKey(var)) {
                 Pair<BasicBlock, Stmt> defStmtInfo = varDef.get(var);
                 Stmt stmt = defStmtInfo.getSecond();
                 if (stmt instanceof Call callStmt) {
                     callStmt.result = null;
                 } else {
                     defStmtInfo.getFirst().statements.remove(defStmtInfo.getSecond());
+                }
+            }
+        }
+    }
+
+    void recollectUseDefInBlock(BasicBlock block, HashMap<LocalTmpVar, Pair<BasicBlock, Stmt>> varDef) {
+        Entity def;
+        ArrayList<Entity> use;
+        for (Stmt stmt : block.statements) {
+            if (stmt.hasDef()) {
+                def = stmt.getDef();
+                if (def instanceof LocalTmpVar localTmpVar) {
+                    varDef.put(
+                            localTmpVar,
+                            new Pair<>(block, stmt)
+                    );
+                }
+            }
+            use = stmt.getUse();
+            if (use != null) {
+                for (Entity usedEntity : use) {
+                    if (usedEntity instanceof LocalTmpVar) {
+                        localTmpVarInfo.get(usedEntity).getSecond().add((Instruction) stmt);
+                    }
+                }
+            }
+        }
+        use = block.tailStmt.getUse();
+        if (use != null) {
+            for (Entity usedEntity : use) {
+                if (usedEntity instanceof LocalTmpVar) {
+                    localTmpVarInfo.get(usedEntity).getSecond().add(block.tailStmt);
                 }
             }
         }
