@@ -17,6 +17,7 @@ import utility.Pair;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Objects;
 
 /**
@@ -67,7 +68,7 @@ public class Phi extends Instruction {
         this.phiLabel = phiLabel;
     }
 
-    public void remapLabel(HashMap<String, String> blockMap) {
+    public void remapLabelS2S(HashMap<String, String> blockMap) {
         ArrayList<String> newLabel1 = new ArrayList<>();
         for (String label : label1) {
             while (blockMap.containsKey(label)) {
@@ -82,6 +83,38 @@ public class Phi extends Instruction {
                 label = blockMap.get(label);
             }
             newLabel2.add(label);
+        }
+        label2 = newLabel2;
+    }
+
+    public void remapLabelS2M(HashMap<String, HashSet<String>> blockMap) {
+        HashSet<String> labelList = new HashSet<>();
+        ArrayList<String> newLabel1 = new ArrayList<>();
+        for (String label : label1) {
+            labelList.add(label);
+            while (!labelList.isEmpty()) {
+                String aLabel = labelList.iterator().next();
+                if (blockMap.containsKey(aLabel)) {
+                    labelList.addAll(blockMap.get(aLabel));
+                } else {
+                    newLabel1.add(aLabel);
+                }
+                labelList.remove(aLabel);
+            }
+        }
+        label1 = newLabel1;
+        ArrayList<String> newLabel2 = new ArrayList<>();
+        for (String label : label2) {
+            labelList.add(label);
+            while (!labelList.isEmpty()) {
+                String aLabel = labelList.iterator().next();
+                if (blockMap.containsKey(aLabel)) {
+                    labelList.addAll(blockMap.get(aLabel));
+                } else {
+                    newLabel2.add(aLabel);
+                }
+                labelList.remove(aLabel);
+            }
         }
         label2 = newLabel2;
     }

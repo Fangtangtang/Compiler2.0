@@ -75,7 +75,7 @@ public class BasicBlockEliminator {
         }
         // rename label in phi
         for (Phi phiStmt : phiStmts) {
-            phiStmt.remapLabel(blockMap);
+            phiStmt.remapLabelS2S(blockMap);
         }
     }
 
@@ -93,9 +93,16 @@ public class BasicBlockEliminator {
         HashSet<String> visitedVBlock = new HashSet<>();
         HashSet<BasicBlock> workList = new HashSet<>();
         HashSet<String> deadBlock = new HashSet<>();
+        ArrayList<Phi> phiStmts = new ArrayList<>();
+        HashMap<String, HashSet<String>> blockMap = new HashMap<>();
         for (Map.Entry<String, BasicBlock> blockEntry : func.blockMap.entrySet()) {
             BasicBlock block = blockEntry.getValue();
             workList.add(block);
+            for (Stmt stmt : block.statements) {
+                if (stmt instanceof Phi phi) {
+                    phiStmts.add(phi);
+                }
+            }
         }
         while (!workList.isEmpty()) {
             BasicBlock block = workList.iterator().next();
@@ -108,6 +115,11 @@ public class BasicBlockEliminator {
                     }
                     deadBlock.add(branch.trueBranch.label);
                     workList.remove(branch.trueBranch);
+                    if (blockMap.containsKey(branch.trueBranch.label)){
+                        blockMap.get(branch.trueBranch.label).add(block.label);
+                    }else {
+                        blockMap.put(branch.trueBranch.label,new HashSet<>(Collections.singleton(block.label)));
+                    }
                     branch.trueBranch = jump.target;
                     branch.trueBranchName = jump.targetName;
                 }
@@ -115,6 +127,11 @@ public class BasicBlockEliminator {
                     replaced = true;
                     if (jump.target == null) {
                         jump.target = func.blockMap.get(jump.targetName);
+                    }
+                    if (blockMap.containsKey(branch.falseBranch.label)){
+                        blockMap.get(branch.falseBranch.label).add(block.label);
+                    }else {
+                        blockMap.put(branch.falseBranch.label,new HashSet<>(Collections.singleton(block.label)));
                     }
                     deadBlock.add(branch.falseBranch.label);
                     workList.remove(branch.falseBranch);
@@ -131,6 +148,11 @@ public class BasicBlockEliminator {
                 }
                 BasicBlock to = jump.target;
                 if (to.statements.size() == 0 && !(to.tailStmt instanceof Return)) {
+                    if (blockMap.containsKey(jump.target.label)){
+                        blockMap.get(jump.target.label).add(block.label);
+                    }else {
+                        blockMap.put(jump.target.label,new HashSet<>(Collections.singleton(block.label)));
+                    }
                     workList.remove(to);
                     block.tailStmt = to.tailStmt;
                     deadBlock.add(to.label);
@@ -141,6 +163,9 @@ public class BasicBlockEliminator {
         }
         for (String dead : deadBlock) {
             func.blockMap.remove(dead);
+        }
+        for (Phi phiStmt : phiStmts) {
+            phiStmt.remapLabelS2M(blockMap);
         }
     }
 }
