@@ -35,6 +35,7 @@ import java.util.Objects;
 public class Phi extends Instruction {
     public LocalTmpVar result;
     public SSAEntity ssaResult;
+    public String inBlockLabel;
     public String phiLabel;
     public Storage ans1, ans2;
     public SSAEntity ssaAns1, ssaAns2;

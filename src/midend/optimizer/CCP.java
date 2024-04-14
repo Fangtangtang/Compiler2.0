@@ -34,7 +34,8 @@ public class CCP {
 
     public enum BlockType {
         executable,
-        unknown//不可达
+        unknown,//未知可达
+        unreachable//不可达
     }
 
     HashSet<LocalTmpVar> varWorkList = null;
@@ -56,6 +57,10 @@ public class CCP {
                     Boolean
                     >
             > blockInfo = null;
+
+    // record dead control information
+    // unreachable branch
+    HashMap<String, HashSet<String>> deadCtr = null;
 
     public CCP(IRRoot root) {
         irRoot = root;
@@ -100,6 +105,39 @@ public class CCP {
                 if (bb.tailStmt instanceof Jump jump && jump.target == null) {
                     jump.target = func.blockMap.get(jump.targetName);
                 }
+                // fake branch?
+                if (bb.tailStmt instanceof Branch branch &&
+                        branch.condition instanceof Constant constant) {
+                    if (constant instanceof ConstBool constBool) {
+                        Jump newStmt;
+                        String unreachableLabel;
+                        if (constBool.value) {
+                            newStmt = new Jump(branch.trueBranch,
+                                    branch.index,
+                                    branch.phiLabel,
+                                    branch.result
+                            );
+                            unreachableLabel = branch.falseBranchName;
+                        }
+                        // jump to the false block
+                        else {
+                            newStmt = new Jump(branch.falseBranch,
+                                    branch.index,
+                                    branch.phiLabel,
+                                    branch.result
+                            );
+                            unreachableLabel = branch.trueBranchName;
+                        }
+                        if (!deadCtr.containsKey(unreachableLabel)) {
+                            deadCtr.put(unreachableLabel, new HashSet<>(Collections.singleton(bb.label)));
+                        } else {
+                            deadCtr.get(unreachableLabel).add(bb.label);
+                        }
+                        bb.tailStmt = newStmt;
+                    } else {
+                        throw new InternalException("[CCP]:condition in branch should be bool?");
+                    }
+                }
                 ArrayList<BasicBlock> executableSuccessor = getExecutableSuccessor(bb.tailStmt);
                 for (BasicBlock block : executableSuccessor) {
                     updateBlockInfo(block);
@@ -135,6 +173,7 @@ public class CCP {
         localTmpVarInfo = new HashMap<>();
         localTmpVar2Const = new HashMap<>();
         blockInfo = new HashMap<>();
+        deadCtr = new HashMap<>();
         for (LocalTmpVar para : func.parameterList) {
             localTmpVarInfo.put(para, new Pair<>(VarType.multiExeDef, new ArrayList<>()));
             varWorkList.add(para);
@@ -152,6 +191,10 @@ public class CCP {
     void collectDefInBlock(BasicBlock block) {
         Entity def;
         for (Stmt stmt : block.statements) {
+            // TODO: put to a better place (control information collect)
+            if (stmt instanceof Phi phi) {
+                phi.inBlockLabel = block.label;
+            }
             if (stmt.hasDef()) {
                 def = stmt.getDef();
                 if (def instanceof LocalTmpVar localTmpVar) {
@@ -192,13 +235,13 @@ public class CCP {
         } else if (stmt instanceof Branch branch) {
             int executable = 0;
             boolean cond = false;
-            if (branch.condition instanceof Constant constant) {
-                if (constant instanceof ConstBool constBool) {
-                    cond = constBool.value;
-                    executable = 1;
-                } else {
-                    throw new InternalException("[CCP]:condition in branch should be bool?");
-                }
+            if (branch.condition instanceof Constant) {
+//                if (constant instanceof ConstBool constBool) {
+//                    cond = constBool.value;
+//                    executable = 1;
+//                } else {
+                throw new InternalException("[CCP]:should have converted to jump?");
+//                }
             } else if (branch.condition instanceof LocalTmpVar tmpVar) {
                 if (localTmpVarInfo.get(tmpVar).getFirst() == VarType.oneConstDef) {
                     cond = ((ConstBool) localTmpVar2Const.get(tmpVar)).value;
@@ -265,7 +308,7 @@ public class CCP {
     }
 
     void propagateOnTerminal(TerminalStmt stmt, LocalTmpVar var) {
-        if (stmt instanceof Branch branch && branch.condition==var) {
+        if (stmt instanceof Branch branch && branch.condition == var) {
             ArrayList<BasicBlock> executableSuccessor = getExecutableSuccessor(branch);
             for (BasicBlock block : executableSuccessor) {
                 updateBlockInfo(block);
@@ -319,12 +362,27 @@ public class CCP {
     }
 
     void propagateOnPhi(Phi phiInst) {
+        HashSet<String> deadPrev = deadCtr.get(phiInst.inBlockLabel);
+        if (deadPrev == null) {
+            deadPrev = new HashSet<>();
+        }
         Pair<Constant, VarType> ans1Info = entity2Constant(phiInst.ans1);
         Pair<Constant, VarType> ans2Info = entity2Constant(phiInst.ans2);
         VarType ans1Type = ans1Info.getSecond();
         VarType ans2Type = ans2Info.getSecond();
         BlockType label1bbType = blockInfo.get(phiInst.label1.get(0)).getFirst();
+        // TODO: Too Ugly!!!!!
+        if (deadPrev.contains(phiInst.label1.get(0))) {
+            label1bbType = BlockType.unreachable;
+            phiInst.label1.set(0, phiInst.label2.get(0));
+            phiInst.ans1 = phiInst.ans2;
+        }
         BlockType label2bbType = blockInfo.get(phiInst.label2.get(0)).getFirst();
+        if (deadPrev.contains(phiInst.label2.get(0))) {
+            label2bbType = BlockType.unreachable;
+            phiInst.label2.set(0, phiInst.label1.get(0));
+            phiInst.ans2 = phiInst.ans1;
+        }
         if (phiInst.getDef() instanceof LocalTmpVar tmpVar) {
             if ((ans1Type == VarType.multiExeDef &&
                     label1bbType == BlockType.executable)
@@ -344,9 +402,9 @@ public class CCP {
                         label2bbType == BlockType.executable) {
                     Constant constant2 = ans2Info.getFirst();
                     if (constant == null || Constant.equalInValue(constant, constant2)) {
-                        constCnt += 1;
                         constant = constant2;
                     }
+                    constCnt += 1;
                 }
                 if (constCnt == 1) {
                     assignConstToVar(tmpVar, constant);

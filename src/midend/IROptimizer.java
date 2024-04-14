@@ -27,8 +27,8 @@ public class IROptimizer {
         localTmpVarPropagation.execute();
 
         CCP ccp = new CCP(irRoot);
-//        ccp.execute();
+        ccp.execute();
 
-//        eliminator.simplifyCtlFlow();
+        eliminator.simplifyCtlFlow();
     }
 }

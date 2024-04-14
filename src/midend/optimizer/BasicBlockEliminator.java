@@ -90,17 +90,20 @@ public class BasicBlockEliminator {
     }
 
     void simplifyCtlFlowOnFunc(Function func) {
-        HashSet<String> visitedVBlock = new HashSet<>();
         HashSet<BasicBlock> workList = new HashSet<>();
         HashSet<String> deadBlock = new HashSet<>();
-        ArrayList<Phi> phiStmts = new ArrayList<>();
-        HashMap<String, HashSet<String>> blockMap = new HashMap<>();
+        HashSet<String> labelInPhi = new HashSet<>();
         for (Map.Entry<String, BasicBlock> blockEntry : func.blockMap.entrySet()) {
             BasicBlock block = blockEntry.getValue();
             workList.add(block);
             for (Stmt stmt : block.statements) {
                 if (stmt instanceof Phi phi) {
-                    phiStmts.add(phi);
+                    for (String l : phi.label1) {
+                        labelInPhi.add(l);
+                    }
+                    for (String l : phi.label2) {
+                        labelInPhi.add(l);
+                    }
                 }
             }
         }
@@ -108,30 +111,24 @@ public class BasicBlockEliminator {
             BasicBlock block = workList.iterator().next();
             if (block.tailStmt instanceof Branch branch) {
                 boolean replaced = false;
-                if (branch.trueBranch.statements.size() == 0 && branch.trueBranch.tailStmt instanceof Jump jump) {
+                if (branch.trueBranch.statements.size() == 0 &&
+                        branch.trueBranch.tailStmt instanceof Jump jump &&
+                        !labelInPhi.contains(branch.trueBranchName)) {
                     replaced = true;
                     if (jump.target == null) {
                         jump.target = func.blockMap.get(jump.targetName);
                     }
                     deadBlock.add(branch.trueBranch.label);
                     workList.remove(branch.trueBranch);
-                    if (blockMap.containsKey(branch.trueBranch.label)){
-                        blockMap.get(branch.trueBranch.label).add(block.label);
-                    }else {
-                        blockMap.put(branch.trueBranch.label,new HashSet<>(Collections.singleton(block.label)));
-                    }
                     branch.trueBranch = jump.target;
                     branch.trueBranchName = jump.targetName;
                 }
-                if (branch.falseBranch.statements.size() == 0 && branch.falseBranch.tailStmt instanceof Jump jump) {
+                if (branch.falseBranch.statements.size() == 0 &&
+                        branch.falseBranch.tailStmt instanceof Jump jump &&
+                        !labelInPhi.contains(branch.falseBranchName)) {
                     replaced = true;
                     if (jump.target == null) {
                         jump.target = func.blockMap.get(jump.targetName);
-                    }
-                    if (blockMap.containsKey(branch.falseBranch.label)){
-                        blockMap.get(branch.falseBranch.label).add(block.label);
-                    }else {
-                        blockMap.put(branch.falseBranch.label,new HashSet<>(Collections.singleton(block.label)));
                     }
                     deadBlock.add(branch.falseBranch.label);
                     workList.remove(branch.falseBranch);
@@ -147,12 +144,9 @@ public class BasicBlockEliminator {
                     jump.target = func.blockMap.get(jump.targetName);
                 }
                 BasicBlock to = jump.target;
-                if (to.statements.size() == 0 && !(to.tailStmt instanceof Return)) {
-                    if (blockMap.containsKey(jump.target.label)){
-                        blockMap.get(jump.target.label).add(block.label);
-                    }else {
-                        blockMap.put(jump.target.label,new HashSet<>(Collections.singleton(block.label)));
-                    }
+                if (to.statements.size() == 0 &&
+                        !labelInPhi.contains(jump.targetName) &&
+                        !(to.tailStmt instanceof Return)) {
                     workList.remove(to);
                     block.tailStmt = to.tailStmt;
                     deadBlock.add(to.label);
@@ -163,9 +157,6 @@ public class BasicBlockEliminator {
         }
         for (String dead : deadBlock) {
             func.blockMap.remove(dead);
-        }
-        for (Phi phiStmt : phiStmts) {
-            phiStmt.remapLabelS2M(blockMap);
         }
     }
 }
