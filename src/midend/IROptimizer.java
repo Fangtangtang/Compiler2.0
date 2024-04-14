@@ -18,7 +18,7 @@ public class IROptimizer {
         FunctionInlining functionInlining = new FunctionInlining(irRoot);
         functionInlining.execute();
         BasicBlockEliminator eliminator = new BasicBlockEliminator(irRoot);
-        eliminator.execute();
+        eliminator.simplifyBlock();
 
         Global2Local global2Local = new Global2Local(irRoot);
         global2Local.execute();
@@ -28,5 +28,7 @@ public class IROptimizer {
 
         CCP ccp = new CCP(irRoot);
         ccp.execute();
+
+        eliminator.simplifyCtlFlow();
     }
 }

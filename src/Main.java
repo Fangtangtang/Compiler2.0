@@ -78,7 +78,7 @@ public class Main {
 //        selector.visit(irBuilder.irRoot);
 //
 //        ASMOptimizer asmOptimizer = new ASMOptimizer(program.text, selector.registerMap);
-//        asmOptimizer.execute();
+//        asmOptimizer.simplifyBlock();
 //
 //        program.printRegColoring(outputStream);
 

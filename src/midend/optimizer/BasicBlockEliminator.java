@@ -1,12 +1,10 @@
 package midend.optimizer;
 
-import ir.BasicBlock;
-import ir.IRRoot;
+import ir.*;
 import ir.function.Function;
-import ir.stmt.Stmt;
-import ir.stmt.instruction.Phi;
-import ir.stmt.terminal.Branch;
-import ir.stmt.terminal.Jump;
+import ir.stmt.*;
+import ir.stmt.instruction.*;
+import ir.stmt.terminal.*;
 
 import java.util.*;
 
@@ -21,17 +19,17 @@ public class BasicBlockEliminator {
         irRoot = root;
     }
 
-    public void execute() {
+    public void simplifyBlock() {
         for (Map.Entry<String, Function> funcEntry : irRoot.funcDef.entrySet()) {
             Function func = funcEntry.getValue();
             //普通local function
             if (func.entry != null) {
-                eliminateOnFunc(func);
+                simplifyBlockOnFunc(func);
             }
         }
     }
 
-    void eliminateOnFunc(Function func) {
+    void simplifyBlockOnFunc(Function func) {
         // collect PhiStmts
         ArrayList<Phi> phiStmts = new ArrayList<>();
         // collect prev
@@ -78,6 +76,71 @@ public class BasicBlockEliminator {
         // rename label in phi
         for (Phi phiStmt : phiStmts) {
             phiStmt.remapLabel(blockMap);
+        }
+    }
+
+    public void simplifyCtlFlow() {
+        for (Map.Entry<String, Function> funcEntry : irRoot.funcDef.entrySet()) {
+            Function func = funcEntry.getValue();
+            //普通local function
+            if (func.entry != null) {
+                simplifyCtlFlowOnFunc(func);
+            }
+        }
+    }
+
+    void simplifyCtlFlowOnFunc(Function func) {
+        HashSet<String> visitedVBlock = new HashSet<>();
+        HashSet<BasicBlock> workList = new HashSet<>();
+        HashSet<String> deadBlock = new HashSet<>();
+        for (Map.Entry<String, BasicBlock> blockEntry : func.blockMap.entrySet()) {
+            BasicBlock block = blockEntry.getValue();
+            workList.add(block);
+        }
+        while (!workList.isEmpty()) {
+            BasicBlock block = workList.iterator().next();
+            if (block.tailStmt instanceof Branch branch) {
+                boolean replaced = false;
+                if (branch.trueBranch.statements.size() == 0 && branch.trueBranch.tailStmt instanceof Jump jump) {
+                    replaced = true;
+                    if (jump.target == null) {
+                        jump.target = func.blockMap.get(jump.targetName);
+                    }
+                    deadBlock.add(branch.trueBranch.label);
+                    workList.remove(branch.trueBranch);
+                    branch.trueBranch = jump.target;
+                    branch.trueBranchName = jump.targetName;
+                }
+                if (branch.falseBranch.statements.size() == 0 && branch.falseBranch.tailStmt instanceof Jump jump) {
+                    replaced = true;
+                    if (jump.target == null) {
+                        jump.target = func.blockMap.get(jump.targetName);
+                    }
+                    deadBlock.add(branch.falseBranch.label);
+                    workList.remove(branch.falseBranch);
+                    branch.falseBranch = jump.target;
+                    branch.falseBranchName = jump.targetName;
+                }
+                if (replaced) {
+                    continue;
+                }
+            }
+            if (block.tailStmt instanceof Jump jump) {
+                if (jump.target == null) {
+                    jump.target = func.blockMap.get(jump.targetName);
+                }
+                BasicBlock to = jump.target;
+                if (to.statements.size() == 0 && !(to.tailStmt instanceof Return)) {
+                    workList.remove(to);
+                    block.tailStmt = to.tailStmt;
+                    deadBlock.add(to.label);
+                    continue;
+                }
+            }
+            workList.remove(block);
+        }
+        for (String dead : deadBlock) {
+            func.blockMap.remove(dead);
         }
     }
 }
