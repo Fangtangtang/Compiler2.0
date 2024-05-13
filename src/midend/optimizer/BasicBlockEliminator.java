@@ -32,6 +32,13 @@ public class BasicBlockEliminator {
     }
 
     void simplifyBlockOnFunc(Function func) {
+        // init
+        for (Map.Entry<String, BasicBlock> blockEntry : func.blockMap.entrySet()) {
+            BasicBlock block = blockEntry.getValue();
+            block.prevBasicBlocks = new ArrayList<>();
+            block.subsBasicBlocks = new ArrayList<>();
+        }
+        func.ret.prevBasicBlocks = new ArrayList<>();
         // collect PhiStmts
         ArrayList<Phi> phiStmts = new ArrayList<>();
         // collect prev
@@ -86,7 +93,6 @@ public class BasicBlockEliminator {
             Function func = funcEntry.getValue();
             //普通local function
             if (func.entry != null) {
-//                simplifyCtlFlowOnFunc2(func);
                 simplifyCtlFlowOnFunc(func);
             }
         }
@@ -161,93 +167,6 @@ public class BasicBlockEliminator {
         }
         for (String dead : deadBlock) {
             func.blockMap.remove(dead);
-        }
-    }
-
-    // todo
-    void simplifyCtlFlowOnFunc2(Function func) {
-//        HashSet<BasicBlock> workList = new HashSet<>();
-//        HashSet<String> deadBlock = new HashSet<>();
-        HashSet<String> labelInPhi = new HashSet<>();
-        HashMap<String, String> ctlFlowLabelMap = new HashMap<>();
-        HashMap<String, String> reverseCtlFlowLabelMap = new HashMap<>();
-        for (Map.Entry<String, BasicBlock> blockEntry : func.blockMap.entrySet()) {
-            BasicBlock block = blockEntry.getValue();
-//            workList.add(block);
-            for (Stmt stmt : block.statements) {
-                if (stmt instanceof Phi phi) {
-                    HashSet<String> tmp = new HashSet<>();
-                    tmp.addAll(phi.label1);
-                    tmp.addAll(phi.label2);
-                    // size<=1 fake phi
-                    if (tmp.size() > 1) {
-                        labelInPhi.addAll(tmp);
-                    }
-                }
-            }
-            if (block.statements.size() == 0) {
-                if (block.tailStmt instanceof Jump jump) {
-                    ctlFlowLabelMap.put(block.label, jump.targetName);
-                    reverseCtlFlowLabelMap.put(jump.targetName, block.label);
-                } else if (block.tailStmt instanceof Branch branch) {
-                    if (branch.condition instanceof ConstBool constBool) {
-                        if (constBool.value) {
-                            ctlFlowLabelMap.put(block.label, branch.trueBranchName);
-                            reverseCtlFlowLabelMap.put(branch.trueBranchName, block.label);
-                        } else {
-                            ctlFlowLabelMap.put(block.label, branch.falseBranchName);
-                            reverseCtlFlowLabelMap.put(branch.falseBranchName, block.label);
-                        }
-                    }
-                }
-            }
-        }
-        for (Map.Entry<String, BasicBlock> blockEntry : func.blockMap.entrySet()) {
-            BasicBlock block = blockEntry.getValue();
-            for (Stmt stmt : block.statements) {
-                if (stmt instanceof Phi phi) {
-                    phi.remapLabelS2M(reverseCtlFlowLabelMap);
-                }
-            }
-            if (block.tailStmt instanceof Jump jump) {
-                String label = jump.targetName;
-                while (ctlFlowLabelMap.containsKey(label)) {
-                    label = ctlFlowLabelMap.get(label);
-                }
-                if (!label.equals(jump.targetName)) {
-                    jump.targetName = label;
-                    if (label.equals(func.ret.label)) {
-                        jump.target = func.ret;
-                    } else {
-                        jump.target = func.blockMap.get(label);
-                    }
-                }
-            } else if (block.tailStmt instanceof Branch branch) {
-                String label = branch.trueBranchName;
-                while (ctlFlowLabelMap.containsKey(label)) {
-                    label = ctlFlowLabelMap.get(label);
-                }
-                if (!label.equals(branch.trueBranchName)) {
-                    branch.trueBranchName = label;
-                    if (label.equals(func.ret.label)) {
-                        branch.trueBranch = func.ret;
-                    } else {
-                        branch.trueBranch = func.blockMap.get(label);
-                    }
-                }
-                label = branch.falseBranchName;
-                while (ctlFlowLabelMap.containsKey(label)) {
-                    label = ctlFlowLabelMap.get(label);
-                }
-                if (!label.equals(branch.falseBranchName)) {
-                    branch.falseBranchName = label;
-                    if (label.equals(func.ret.label)) {
-                        branch.falseBranch = func.ret;
-                    } else {
-                        branch.falseBranch = func.blockMap.get(label);
-                    }
-                }
-            }
         }
     }
 

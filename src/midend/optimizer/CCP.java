@@ -115,15 +115,12 @@ public class CCP {
                     if (branch.condition instanceof Constant constant) {
                         if (constant instanceof ConstBool constBool) {
                             Jump newStmt;
-                            String unreachableLabel;
                             if (constBool.value) {
                                 newStmt = new Jump(branch.trueBranch,
                                         branch.index,
                                         branch.phiLabel,
                                         branch.result
                                 );
-                                unreachableLabel = branch.falseBranchName;
-//                                reachableLabel.add(branch.trueBranchName);
                             }
                             // jump to the false block
                             else {
@@ -132,26 +129,13 @@ public class CCP {
                                         branch.phiLabel,
                                         branch.result
                                 );
-                                unreachableLabel = branch.trueBranchName;
-//                                reachableLabel.add(branch.falseBranchName);
                             }
                             bb.tailStmt = newStmt;
                         } else {
                             throw new InternalException("[CCP]:condition in branch should be bool?");
                         }
                     }
-//                    else {
-//                        reachableLabel.add(branch.trueBranchName);
-//                        reachableLabel.add(branch.falseBranchName);
-//                    }
                 }
-//                for (String label : reachableLabel) {
-//                    if (!liveCtr.containsKey(label)) {
-//                        liveCtr.put(label, new HashSet<>(Collections.singleton(bb.label)));
-//                    } else {
-//                        liveCtr.get(label).add(bb.label);
-//                    }
-//                }
                 ArrayList<BasicBlock> executableSuccessor = getExecutableSuccessor(bb.tailStmt);
                 for (BasicBlock block : executableSuccessor) {
                     updateBlockInfo(block);

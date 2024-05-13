@@ -22,8 +22,8 @@ public class BasicBlock {
     public LinkedList<Stmt> statements = new LinkedList<>();
     public TerminalStmt tailStmt = null;
 
-    public ArrayList<String> prevBasicBlocks = new ArrayList<>();
-    public ArrayList<String> subsBasicBlocks = new ArrayList<>();
+    public ArrayList<String> prevBasicBlocks = null;
+    public ArrayList<String> subsBasicBlocks = null;
 
     //CFG上的前驱后继
     public ArrayList<BasicBlock> predecessorList = new ArrayList<>();
