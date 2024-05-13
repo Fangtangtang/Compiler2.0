@@ -98,11 +98,12 @@ public class BasicBlockEliminator {
             workList.add(block);
             for (Stmt stmt : block.statements) {
                 if (stmt instanceof Phi phi) {
-                    for (String l : phi.label1) {
-                        labelInPhi.add(l);
-                    }
-                    for (String l : phi.label2) {
-                        labelInPhi.add(l);
+                    HashSet<String> tmp = new HashSet<>();
+                    tmp.addAll(phi.label1);
+                    tmp.addAll(phi.label2);
+                    // size<=1 fake phi
+                    if (tmp.size()>1){
+                        labelInPhi.addAll(tmp);
                     }
                 }
             }
