@@ -7,4 +7,5 @@ import ir.stmt.*;
  * 终结语句的抽象类
  */
 public abstract class TerminalStmt extends Stmt {
+    public String inBlockLabel;
 }

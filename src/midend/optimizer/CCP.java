@@ -1,5 +1,6 @@
 package midend.optimizer;
 
+import asm.Block;
 import ir.*;
 import ir.entity.*;
 import ir.entity.constant.*;
@@ -62,7 +63,7 @@ public class CCP {
 
     // record dead control information
     // unreachable branch
-    HashMap<String, HashSet<String>> deadCtr = null;
+    HashMap<String, HashSet<String>> liveCtr = null;
 
     public CCP(IRRoot root) {
         irRoot = root;
@@ -104,45 +105,61 @@ public class CCP {
                     }
                 }
                 // tailStmt
+//                HashSet<String> reachableLabel = new HashSet<>();
                 if (bb.tailStmt instanceof Jump jump && jump.target == null) {
                     jump.target = func.blockMap.get(jump.targetName);
+//                    reachableLabel.add(jump.targetName);
                 }
                 // fake branch?
-                if (bb.tailStmt instanceof Branch branch &&
-                        branch.condition instanceof Constant constant) {
-                    if (constant instanceof ConstBool constBool) {
-                        Jump newStmt;
-                        String unreachableLabel;
-                        if (constBool.value) {
-                            newStmt = new Jump(branch.trueBranch,
-                                    branch.index,
-                                    branch.phiLabel,
-                                    branch.result
-                            );
-                            unreachableLabel = branch.falseBranchName;
-                        }
-                        // jump to the false block
-                        else {
-                            newStmt = new Jump(branch.falseBranch,
-                                    branch.index,
-                                    branch.phiLabel,
-                                    branch.result
-                            );
-                            unreachableLabel = branch.trueBranchName;
-                        }
-                        if (!deadCtr.containsKey(unreachableLabel)) {
-                            deadCtr.put(unreachableLabel, new HashSet<>(Collections.singleton(bb.label)));
+                if (bb.tailStmt instanceof Branch branch) {
+                    if (branch.condition instanceof Constant constant) {
+                        if (constant instanceof ConstBool constBool) {
+                            Jump newStmt;
+                            String unreachableLabel;
+                            if (constBool.value) {
+                                newStmt = new Jump(branch.trueBranch,
+                                        branch.index,
+                                        branch.phiLabel,
+                                        branch.result
+                                );
+                                unreachableLabel = branch.falseBranchName;
+//                                reachableLabel.add(branch.trueBranchName);
+                            }
+                            // jump to the false block
+                            else {
+                                newStmt = new Jump(branch.falseBranch,
+                                        branch.index,
+                                        branch.phiLabel,
+                                        branch.result
+                                );
+                                unreachableLabel = branch.trueBranchName;
+//                                reachableLabel.add(branch.falseBranchName);
+                            }
+                            bb.tailStmt = newStmt;
                         } else {
-                            deadCtr.get(unreachableLabel).add(bb.label);
+                            throw new InternalException("[CCP]:condition in branch should be bool?");
                         }
-                        bb.tailStmt = newStmt;
-                    } else {
-                        throw new InternalException("[CCP]:condition in branch should be bool?");
                     }
+//                    else {
+//                        reachableLabel.add(branch.trueBranchName);
+//                        reachableLabel.add(branch.falseBranchName);
+//                    }
                 }
+//                for (String label : reachableLabel) {
+//                    if (!liveCtr.containsKey(label)) {
+//                        liveCtr.put(label, new HashSet<>(Collections.singleton(bb.label)));
+//                    } else {
+//                        liveCtr.get(label).add(bb.label);
+//                    }
+//                }
                 ArrayList<BasicBlock> executableSuccessor = getExecutableSuccessor(bb.tailStmt);
                 for (BasicBlock block : executableSuccessor) {
                     updateBlockInfo(block);
+                    if (!liveCtr.containsKey(block.label)) {
+                        liveCtr.put(block.label, new HashSet<>(Collections.singleton(bb.label)));
+                    } else {
+                        liveCtr.get(block.label).add(bb.label);
+                    }
                 }
                 // newly executable
                 // its executable successor may have some update
@@ -175,13 +192,15 @@ public class CCP {
         localTmpVarInfo = new HashMap<>();
         localTmpVar2Const = new HashMap<>();
         blockInfo = new HashMap<>();
-        deadCtr = new HashMap<>();
+        liveCtr = new HashMap<>();
         for (LocalTmpVar para : func.parameterList) {
             localTmpVarInfo.put(para, new Pair<>(VarType.multiExeDef, new ArrayList<>()));
             varWorkList.add(para);
         }
         for (Map.Entry<String, BasicBlock> blockEntry : func.blockMap.entrySet()) {
-            collectDefInBlock(blockEntry.getValue());
+            BasicBlock block = blockEntry.getValue();
+            collectDefInBlock(block);
+            block.tailStmt.inBlockLabel = block.label;
         }
         collectDefInBlock(func.ret);
         for (Map.Entry<String, BasicBlock> blockEntry : func.blockMap.entrySet()) {
@@ -310,6 +329,11 @@ public class CCP {
             for (BasicBlock block : executableSuccessor) {
                 updateBlockInfo(block);
                 bbWorkList.add(block);
+                if (!liveCtr.containsKey(block.label)) {
+                    liveCtr.put(block.label, new HashSet<>(Collections.singleton(branch.inBlockLabel)));
+                } else {
+                    liveCtr.get(block.label).add(branch.inBlockLabel);
+                }
             }
         }
     }
@@ -359,26 +383,20 @@ public class CCP {
     }
 
     void propagateOnPhi(Phi phiInst) {
-        HashSet<String> deadPrev = deadCtr.get(phiInst.inBlockLabel);
-        if (deadPrev == null) {
-            deadPrev = new HashSet<>();
+        HashSet<String> livePrev = liveCtr.get(phiInst.inBlockLabel);
+        if (livePrev == null) {
+            livePrev = new HashSet<>();
         }
         Pair<Constant, VarType> ans1Info = entity2Constant(phiInst.ans1);
         Pair<Constant, VarType> ans2Info = entity2Constant(phiInst.ans2);
         VarType ans1Type = ans1Info.getSecond();
         VarType ans2Type = ans2Info.getSecond();
-        BlockType label1bbType = blockInfo.get(phiInst.label1.get(0)).getFirst();
-        // TODO: Too Ugly!!!!!
-        if (deadPrev.contains(phiInst.label1.get(0))) {
-            label1bbType = BlockType.unreachable;
-            phiInst.label1.set(0, phiInst.label2.get(0));
-            phiInst.ans1 = phiInst.ans2;
+        BlockType label1bbType = BlockType.unknown, label2bbType = BlockType.unknown;
+        if (livePrev.contains(phiInst.label1.get(0))) {
+            label1bbType = BlockType.executable;
         }
-        BlockType label2bbType = blockInfo.get(phiInst.label2.get(0)).getFirst();
-        if (deadPrev.contains(phiInst.label2.get(0))) {
-            label2bbType = BlockType.unreachable;
-            phiInst.label2.set(0, phiInst.label1.get(0));
-            phiInst.ans2 = phiInst.ans1;
+        if (livePrev.contains(phiInst.label2.get(0))) {
+            label2bbType = BlockType.executable;
         }
         if (phiInst.getDef() instanceof LocalTmpVar tmpVar) {
             if ((ans1Type == VarType.multiExeDef &&

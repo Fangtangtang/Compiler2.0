@@ -28,8 +28,8 @@ public class IROptimizer {
 
          eliminator.simplifyCtlFlow();
 //
-//        CCP ccp = new CCP(irRoot);
-//        ccp.execute();
+        CCP ccp = new CCP(irRoot);
+        ccp.execute();
 
 
        // eliminator.simplifyCtlFlow();
