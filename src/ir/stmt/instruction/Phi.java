@@ -88,35 +88,28 @@ public class Phi extends Instruction {
         label2 = newLabel2;
     }
 
-    public void remapLabelS2M(HashMap<String, HashSet<String>> blockMap) {
+    public void remapLabelS2M(HashMap<String, String> blockMap) {
         HashSet<String> labelList = new HashSet<>();
-        ArrayList<String> newLabel1 = new ArrayList<>();
         for (String label : label1) {
             labelList.add(label);
-            while (!labelList.isEmpty()) {
-                String aLabel = labelList.iterator().next();
-                if (blockMap.containsKey(aLabel)) {
-                    labelList.addAll(blockMap.get(aLabel));
-                } else {
-                    newLabel1.add(aLabel);
-                }
-                labelList.remove(aLabel);
+            while (blockMap.containsKey(label)) {
+                label=blockMap.get(label);
+                labelList.add(label);
             }
         }
+        ArrayList<String> newLabel1 = new ArrayList<>();
+        newLabel1.addAll(labelList);
         label1 = newLabel1;
-        ArrayList<String> newLabel2 = new ArrayList<>();
+        labelList = new HashSet<>();
         for (String label : label2) {
             labelList.add(label);
-            while (!labelList.isEmpty()) {
-                String aLabel = labelList.iterator().next();
-                if (blockMap.containsKey(aLabel)) {
-                    labelList.addAll(blockMap.get(aLabel));
-                } else {
-                    newLabel2.add(aLabel);
-                }
-                labelList.remove(aLabel);
+            while (blockMap.containsKey(label)) {
+                label=blockMap.get(label);
+                labelList.add(label);
             }
         }
+        ArrayList<String> newLabel2 = new ArrayList<>();
+        newLabel2.addAll(labelList);
         label2 = newLabel2;
     }
 

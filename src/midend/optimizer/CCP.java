@@ -13,6 +13,8 @@ import utility.error.InternalException;
 
 import java.util.*;
 
+import static ir.entity.constant.Constant.equalInValue;
+
 /**
  * @author F
  * 条件常量传播
@@ -236,12 +238,7 @@ public class CCP {
             int executable = 0;
             boolean cond = false;
             if (branch.condition instanceof Constant) {
-//                if (constant instanceof ConstBool constBool) {
-//                    cond = constBool.value;
-//                    executable = 1;
-//                } else {
                 throw new InternalException("[CCP]:should have converted to jump?");
-//                }
             } else if (branch.condition instanceof LocalTmpVar tmpVar) {
                 if (localTmpVarInfo.get(tmpVar).getFirst() == VarType.oneConstDef) {
                     cond = ((ConstBool) localTmpVar2Const.get(tmpVar)).value;
@@ -401,7 +398,7 @@ public class CCP {
                 if (ans2Type == VarType.oneConstDef &&
                         label2bbType == BlockType.executable) {
                     Constant constant2 = ans2Info.getFirst();
-                    if (constant == null || Constant.equalInValue(constant, constant2)) {
+                    if (constant == null || equalInValue(constant, constant2)) {
                         constant = constant2;
                     }
                     constCnt += 1;
@@ -496,11 +493,12 @@ public class CCP {
                 varWorkList.add(tmpVar);
             }
             case oneConstDef -> {
-                // promote to multi
-                tmpInfo.setFirst(VarType.multiExeDef);
-                localTmpVar2Const.remove(tmpVar);
-                // add to workList
-                varWorkList.add(tmpVar);
+                if (!equalInValue(constant, localTmpVar2Const.get(tmpVar))) {// promote to multi
+                    tmpInfo.setFirst(VarType.multiExeDef);
+                    localTmpVar2Const.remove(tmpVar);
+                    // add to workList
+                    varWorkList.add(tmpVar);
+                }
             }
             case multiExeDef -> {
 //                throw new InternalException("[CCP]:level of local tmp var should increase only");
@@ -614,6 +612,9 @@ public class CCP {
                     } else {
                         throw new InternalException("[CCP]:condition in branch should be bool?");
                     }
+                } else if (branch.condition instanceof LocalTmpVar tmpVar &&
+                        localTmpVarInfo.get(tmpVar).getFirst() == VarType.oneConstDef) {
+                    cond = ((ConstBool) localTmpVar2Const.get(tmpVar)).value;
                 } else {
                     convertToJump = false;
                 }
