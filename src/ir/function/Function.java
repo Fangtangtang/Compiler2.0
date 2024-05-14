@@ -36,7 +36,7 @@ public class Function {
     public HashMap<String, Storage> phiResult = new HashMap<>();
 
     public HashMap<Function, Integer> calleeMap = null;
-
+//    public HashSet<Function> calleeSet = null;
     public HashMap<LocalVar, Alloca> addedAlloca = new HashMap<>();
 
     public Function(IRType retType,

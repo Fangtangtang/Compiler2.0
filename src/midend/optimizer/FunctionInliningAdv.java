@@ -15,13 +15,9 @@ import java.util.*;
 /**
  * @author F
  * 函数内联
- * - 暂不处理递归函数
- * - 函数调用关系成图，尝试将tail全缩掉？
- * TODO: 选择哪些做 inlining
  */
-public class FunctionInlining {
+public class FunctionInliningAdv {
     IRRoot irRoot;
-
     //记录局部变量在target中的alloca
     HashMap<LocalVar, LocalVar> curAllocaMap = null;
 
@@ -33,12 +29,14 @@ public class FunctionInlining {
     //BB重命名
     HashMap<String, String> renameMap = null;
 
-    public FunctionInlining(IRRoot root) {
+    public FunctionInliningAdv(IRRoot root) {
         this.irRoot = root;
     }
 
     public void execute() {
-        analysisCalling();
+        buildCallingGraph();
+        removeUnusedFunction();
+
         int pass = 5;
         while (pass > 0) {
             if (inliningPass()) {
@@ -47,13 +45,12 @@ public class FunctionInlining {
                 break;
             }
         }
+
         removeUnusedFunction();
     }
 
-    /**
-     * 分析（自定义）函数调用关系
-     */
-    public void analysisCalling() {
+    // simplify functions by the way
+    public void buildCallingGraph() {
         for (Map.Entry<String, Function> funcEntry : irRoot.funcDef.entrySet()) {
             Function func = funcEntry.getValue();
             //普通local function
@@ -80,12 +77,8 @@ public class FunctionInlining {
         }
     }
 
-    /**
-     * 执行一轮inlining
-     *
-     * @return true if updated
-     */
-    public boolean inliningPass() {
+    // todo:call的返回值？？
+    boolean inliningPass() {
         boolean flag = false;
         for (Map.Entry<String, Function> funcEntry : irRoot.funcDef.entrySet()) {
             Function func = funcEntry.getValue();
@@ -95,37 +88,45 @@ public class FunctionInlining {
             terminalStmts = new ArrayList<>();
             renameMap = new HashMap<>();
             ArrayList<Phi> phis = new ArrayList<>();
-            //普通local function
             if (func.entry != null) {
                 for (Map.Entry<String, BasicBlock> bbEntry : func.blockMap.entrySet()) {
                     BasicBlock block = bbEntry.getValue();
-                    ListIterator<Stmt> stmtIterator = block.statements.listIterator();
-                    while (stmtIterator.hasNext()) {
-                        Stmt stmt = stmtIterator.next();
+                    BasicBlock replaceBlock = new BasicBlock(block.label);
+                    int prevInstIdx = 0;
+                    for (int i = 0; i < block.statements.size(); i++) {
+                        Stmt stmt = block.statements.get(i);
                         if (stmt instanceof Call callStmt &&
                                 callStmt.function.calleeMap != null &&
                                 callStmt.function.calleeMap.isEmpty()) {
                             flag = true;
                             int num = func.calleeMap.get(callStmt.function);
-                            inlineToFunc(callStmt.function, func,
+                            replaceBlock = inlineToFunc(callStmt.function, func,
                                     block,
+                                    replaceBlock,
                                     callStmt,
-                                    stmtIterator,
+                                    prevInstIdx,
+                                    i,
                                     num
                             );
+                            prevInstIdx = i + 1;
                             if (num == 1) {
                                 func.calleeMap.remove(callStmt.function);
                             } else {
                                 func.calleeMap.put(callStmt.function, num - 1);
                             }
-                            break;// todo: more inlining
                         } else if (stmt instanceof Phi phi) {
                             phis.add(phi);
                         }
                     }
+                    // todo:range
+                    replaceBlock.statements.addAll(block.statements.subList(prevInstIdx, block.statements.size()));
+                    replaceBlock.tailStmt = block.tailStmt;
                 }
                 func.entry.statements.addAll(0, newAllocaStmt);
                 func.blockMap.putAll(newBlock);
+                if (newBlock.containsKey(func.entry.label)) {
+                    func.entry = newBlock.get(func.entry.label);
+                }
                 targetRedirect(func);
                 for (Phi phi : phis) {
                     for (int i = 0; i < phi.label1.size(); i++) {
@@ -148,33 +149,25 @@ public class FunctionInlining {
         return flag;
     }
 
-    /**
-     * case1：已经被inline到该函数中过
-     * case2：从未被inline到该函数中
-     *
-     * @param src          callee
-     * @param tar          caller
-     * @param callingBlock 发起call的block
-     * @param stmtIterator 指向call后的位置的迭代器
-     * @param num          在函数中调用次数的标记
-     */
-    void inlineToFunc(Function src, Function tar,
-                      BasicBlock callingBlock,
-                      Call call,
-                      ListIterator<Stmt> stmtIterator,
-                      int num) {
+    BasicBlock inlineToFunc(Function src, Function tar,
+                            BasicBlock callingBlock,
+                            BasicBlock replaceBlock,
+                            Call call,
+                            int prevInstIdx,
+                            int callInstIdx,
+                            int num) {
         //entry特殊重命名
         renameMap.put(src.entry.label + "_" + tar.funcName + num, callingBlock.label);
         //当前在处理的tar中block
-        BasicBlock curBlock = new BasicBlock(callingBlock.label);
+        BasicBlock curBlock = replaceBlock;
         ArrayList<BasicBlock> blocks = new ArrayList<>();
         blocks.add(curBlock);
         newBlock.put(curBlock.label, curBlock);
-        if (callingBlock == tar.entry) {
-            tar.entry = curBlock;
-        }
         //call前的不变
-        curBlock.statements.addAll(callingBlock.statements.subList(0, stmtIterator.previousIndex()));
+        if (prevInstIdx < callInstIdx) {
+            curBlock.statements.addAll(callingBlock.statements.subList(prevInstIdx, callInstIdx));
+        }
+
         ListIterator<Stmt> iterInCurBlock = curBlock.statements.listIterator(
                 curBlock.statements.size()
         );
@@ -292,13 +285,14 @@ public class FunctionInlining {
                     new Load(call.result, curAllocaMap.get((LocalVar) loadStmt.pointer))
             );
         }
-        curBlock.statements.addAll(
-                callingBlock.statements.subList
-                        (stmtIterator.nextIndex(), callingBlock.statements.size())
-        );
-        curBlock.tailStmt = callingBlock.tailStmt;
+//        curBlock.statements.addAll(
+//                callingBlock.statements.subList
+//                        (stmtIterator.nextIndex(), callingBlock.statements.size())
+//        );
+//        curBlock.tailStmt = callingBlock.tailStmt;
         replaceUse(copyMap, blocks);
         mergePhiResult(src, tar, copyMap, "_" + tar.funcName + num);
+        return curBlock;
     }
 
     void mergePhiResult(Function src, Function tar, HashMap<LocalTmpVar, Storage> copyMap, String suffix) {
@@ -321,7 +315,9 @@ public class FunctionInlining {
             for (Stmt stmt : block.statements) {
                 stmt.replaceUse(copyMap, curAllocaMap);
             }
-            block.tailStmt.replaceUse(copyMap, curAllocaMap);
+            if (block.tailStmt != null) {
+                block.tailStmt.replaceUse(copyMap, curAllocaMap);
+            }
         }
     }
 
@@ -366,7 +362,6 @@ public class FunctionInlining {
         for (String funcName : usedFunc) {
             usedFunctions.put(funcName, irRoot.funcDef.get(funcName));
         }
-        // TODO: use builtin only
         for (Map.Entry<String, Function> funcEntry : irRoot.funcDef.entrySet()) {
             Function func = funcEntry.getValue();
             if (func.entry == null) {
