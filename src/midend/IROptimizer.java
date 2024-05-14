@@ -23,8 +23,9 @@ public class IROptimizer {
         Global2Local global2Local = new Global2Local(irRoot);
         global2Local.execute();
 
-//        LocalTmpVarPropagation localTmpVarPropagation = new LocalTmpVarPropagation(irRoot);
-//        localTmpVarPropagation.execute();
+        LocalTmpVarPropagation localTmpVarPropagation = new LocalTmpVarPropagation(irRoot);
+        localTmpVarPropagation.execute();
+
 
         eliminator.simplifyCtlFlow();
 
@@ -32,6 +33,8 @@ public class IROptimizer {
         ccp.execute();
 
         eliminator.simplifyBlock();
+
+
         eliminator.simplifyCtlFlow();
     }
 }
