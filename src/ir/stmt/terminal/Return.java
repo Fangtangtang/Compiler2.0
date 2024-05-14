@@ -2,7 +2,6 @@ package ir.stmt.terminal;
 
 import ir.IRVisitor;
 import ir.entity.Entity;
-import ir.entity.SSAEntity;
 import ir.entity.Storage;
 import ir.entity.constant.Constant;
 import ir.entity.var.GlobalVar;
@@ -27,11 +26,8 @@ public class Return extends TerminalStmt {
 
     public Entity value;
 
-    public SSAEntity ssaEntity;
-
     public Return() {
         super();
-//        this.value = new Storage(new VoidType());
     }
 
     public Return(Entity value) {
@@ -47,18 +43,6 @@ public class Return extends TerminalStmt {
             str.append(" void");
         } else {
             str.append(" ").append(value.type.toString()).append(" ").append(value.toString());
-        }
-        out.println(str.toString());
-    }
-
-    @Override
-    public void printSSA(PrintStream out) {
-        StringBuilder str = new StringBuilder("\tret");
-//        if (value.type instanceof VoidType) {
-        if (value == null) {
-            str.append(" void");
-        } else {
-            str.append(" ").append(value.type.toString()).append(" ").append(ssaEntity.toString());
         }
         out.println(str.toString());
     }
@@ -119,28 +103,5 @@ public class Return extends TerminalStmt {
     @Override
     public void replaceUse(HashMap<LocalTmpVar, Storage> copyMap, HashMap<LocalVar, LocalVar> curAllocaMap) {
         value = replace(value, copyMap, curAllocaMap);
-    }
-
-
-    @Override
-    public void setUse(ArrayList<SSAEntity> list) {
-        ssaEntity = list.get(0);
-    }
-
-    @Override
-    public void setDef(SSAEntity entity) {
-        return;
-    }
-
-    @Override
-    public ArrayList<SSAEntity> getSSAUse() {
-        ArrayList<SSAEntity> ret = new ArrayList<>();
-        ret.add(ssaEntity);
-        return ret;
-    }
-
-    @Override
-    public SSAEntity getSSADef() {
-        return null;
     }
 }

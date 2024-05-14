@@ -2,7 +2,6 @@ package ir.stmt.instruction;
 
 import ir.IRVisitor;
 import ir.entity.Entity;
-import ir.entity.SSAEntity;
 import ir.entity.Storage;
 import ir.entity.constant.Constant;
 import ir.entity.var.GlobalVar;
@@ -32,7 +31,6 @@ import java.util.HashMap;
 public class Global extends Instruction {
 
     public GlobalVar result;
-    public SSAEntity ssaResult;
 
     //若用字面量初始化，直接初始化
     //否则，用0或null
@@ -55,22 +53,6 @@ public class Global extends Instruction {
             str = result.storage.type + " 0";
         }
         out.println("\t" + result.toString() + " = global " + str);
-    }
-
-    @Override
-    public void printSSA(PrintStream out) {
-        String str;
-        if (result.storage instanceof Constant) {
-            str = result.storage.toString();
-        } else if (result.storage.type instanceof PtrType) {
-            str = "ptr null";
-        } else if (result.storage.type instanceof StructType
-                || result.storage.type instanceof ArrayType) {
-            str = result.storage.type + " zeroinitializer";
-        } else {
-            str = result.storage.type + " 0";
-        }
-        out.println("\t" + ssaResult.toString() + " = global " + str);
     }
 
     @Override
@@ -120,26 +102,6 @@ public class Global extends Instruction {
     @Override
     public Constant getConstResult() {
         return null;
-    }
-
-    @Override
-    public void setUse(ArrayList<SSAEntity> list) {
-        return;
-    }
-
-    @Override
-    public void setDef(SSAEntity entity) {
-        ssaResult = entity;
-    }
-
-    @Override
-    public ArrayList<SSAEntity> getSSAUse() {
-        return null;
-    }
-
-    @Override
-    public SSAEntity getSSADef() {
-        return ssaResult;
     }
 
 }

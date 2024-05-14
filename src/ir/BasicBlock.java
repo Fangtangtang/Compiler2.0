@@ -1,11 +1,9 @@
 package ir;
 
-import ir.entity.SSAEntity;
 import ir.entity.var.LocalTmpVar;
 import ir.stmt.Stmt;
 import ir.stmt.terminal.TerminalStmt;
 import utility.Pair;
-import utility.live.GlobalLiveRange;
 
 import java.util.*;
 
@@ -29,15 +27,6 @@ public class BasicBlock {
     public ArrayList<BasicBlock> predecessorList = new ArrayList<>();
     public ArrayList<BasicBlock> successorList = new ArrayList<>();
     public int reversePostorder;
-    //所有mem2reg生成的phi
-    //name -> <rename,<blockLabel,phi>List>
-    public HashMap<
-            String, Pair<SSAEntity, Pair<String[], SSAEntity[]>>
-            >
-            phiMap = new HashMap<>();
-    public HashMap<String, GlobalLiveRange> use = new HashMap<>();
-    public HashMap<String, GlobalLiveRange> def = new HashMap<>();
-    public HashMap<String, GlobalLiveRange> liveOut = new HashMap<>();
 
     public BasicBlock(String label) {
         this.label = label;

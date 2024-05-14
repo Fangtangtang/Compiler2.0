@@ -2,7 +2,6 @@ package ir.stmt.instruction;
 
 import ir.IRVisitor;
 import ir.entity.Entity;
-import ir.entity.SSAEntity;
 import ir.entity.Storage;
 import ir.entity.constant.Constant;
 import ir.entity.var.*;
@@ -35,9 +34,7 @@ import java.util.HashMap;
  */
 public class Load extends Instruction {
     public LocalTmpVar result;
-    public SSAEntity ssaResult;
     public Entity pointer;
-    public SSAEntity ssaPtr;
     public boolean loadRet = false;
 
     public Load(LocalTmpVar result,
@@ -50,12 +47,6 @@ public class Load extends Instruction {
     public void print(PrintStream out) {
         out.println("\t" + result.toString() + " = load "
                 + result.type.toString() + ", ptr " + pointer.toString());
-    }
-
-    @Override
-    public void printSSA(PrintStream out) {
-        out.println("\t" + ssaResult.toString() + " = load "
-                + result.type.toString() + ", ptr " + ssaPtr.toString());
     }
 
     @Override
@@ -112,28 +103,6 @@ public class Load extends Instruction {
     @Override
     public Constant getConstResult() {
         return null;
-    }
-
-    @Override
-    public void setUse(ArrayList<SSAEntity> list) {
-        ssaPtr = list.get(0);
-    }
-
-    @Override
-    public void setDef(SSAEntity entity) {
-        ssaResult = entity;
-    }
-
-    @Override
-    public ArrayList<SSAEntity> getSSAUse() {
-        ArrayList<SSAEntity> ret = new ArrayList<>();
-        ret.add(ssaPtr);
-        return ret;
-    }
-
-    @Override
-    public SSAEntity getSSADef() {
-        return ssaResult;
     }
 
 }

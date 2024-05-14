@@ -2,7 +2,6 @@ package ir.stmt;
 
 import ir.IRVisitor;
 import ir.entity.Entity;
-import ir.entity.SSAEntity;
 import ir.entity.Storage;
 import ir.entity.constant.Constant;
 import ir.entity.var.LocalTmpVar;
@@ -25,8 +24,6 @@ public abstract class Stmt implements Serializable {
     public boolean isDead = false;
 
     public abstract void print(PrintStream out);
-
-    public abstract void printSSA(PrintStream out);
 
     public abstract void accept(IRVisitor irVisitor);
 
@@ -65,11 +62,4 @@ public abstract class Stmt implements Serializable {
         return entity;
     }
 
-    public abstract void setUse(ArrayList<SSAEntity> list);
-
-    public abstract void setDef(SSAEntity entity);
-
-    public abstract ArrayList<SSAEntity> getSSAUse();
-
-    public abstract SSAEntity getSSADef();
 }

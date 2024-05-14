@@ -2,7 +2,6 @@ package ir.stmt.instruction;
 
 import ir.IRVisitor;
 import ir.entity.Entity;
-import ir.entity.SSAEntity;
 import ir.entity.Storage;
 import ir.entity.constant.ConstBool;
 import ir.entity.constant.ConstInt;
@@ -34,11 +33,9 @@ import java.util.Objects;
  */
 public class Phi extends Instruction {
     public LocalTmpVar result;
-    public SSAEntity ssaResult;
     public String inBlockLabel;
     public String phiLabel;
     public Storage ans1, ans2;
-    public SSAEntity ssaAns1, ssaAns2;
     public ArrayList<String> label1 = new ArrayList<>(), label2 = new ArrayList<>();
 
     public Phi(LocalTmpVar result,
@@ -127,11 +124,6 @@ public class Phi extends Instruction {
             s2 = ans2.toString();
         }
         printFormat(out, s1, s2, result.toString());
-    }
-
-    @Override
-    public void printSSA(PrintStream out) {
-        printFormat(out, ssaAns1.toString(), ssaAns2.toString(), ssaResult.toString());
     }
 
     private void printFormat(PrintStream out, String string, String string2, String string3) {
@@ -234,29 +226,5 @@ public class Phi extends Instruction {
             }
         }
         return null;
-    }
-
-    @Override
-    public void setUse(ArrayList<SSAEntity> list) {
-        ssaAns1 = list.get(0);
-        ssaAns2 = list.get(1);
-    }
-
-    @Override
-    public void setDef(SSAEntity entity) {
-        ssaResult = entity;
-    }
-
-    @Override
-    public ArrayList<SSAEntity> getSSAUse() {
-        ArrayList<SSAEntity> ret = new ArrayList<>();
-        ret.add(ssaAns1);
-        ret.add(ssaAns2);
-        return ret;
-    }
-
-    @Override
-    public SSAEntity getSSADef() {
-        return ssaResult;
     }
 }

@@ -2,7 +2,6 @@ package ir.stmt.instruction;
 
 import ir.IRVisitor;
 import ir.entity.Entity;
-import ir.entity.SSAEntity;
 import ir.entity.Storage;
 import ir.entity.constant.Constant;
 import ir.entity.var.GlobalVar;
@@ -31,9 +30,7 @@ import java.util.HashMap;
 public class Trunc extends Instruction {
 
     public LocalTmpVar result;
-    public SSAEntity ssaResult;
     public Storage value;
-    public SSAEntity ssaValue;
 
     public Trunc(LocalTmpVar result,
                  Storage value) {
@@ -46,15 +43,6 @@ public class Trunc extends Instruction {
         out.println(
                 "\t" + result.toString() + " = trunc "
                         + value.type + " " + value.toString()
-                        + " to " + result.type
-        );
-    }
-
-    @Override
-    public void printSSA(PrintStream out) {
-        out.println(
-                "\t" + ssaResult.toString() + " = trunc "
-                        + value.type + " " + ssaValue.toString()
                         + " to " + result.type
         );
     }
@@ -120,27 +108,5 @@ public class Trunc extends Instruction {
             return constant;
         }
         return null;
-    }
-
-    @Override
-    public void setUse(ArrayList<SSAEntity> list) {
-        ssaValue = list.get(0);
-    }
-
-    @Override
-    public void setDef(SSAEntity entity) {
-        ssaResult = entity;
-    }
-
-    @Override
-    public ArrayList<SSAEntity> getSSAUse() {
-        ArrayList<SSAEntity> ret = new ArrayList<>();
-        ret.add(ssaValue);
-        return ret;
-    }
-
-    @Override
-    public SSAEntity getSSADef() {
-        return ssaResult;
     }
 }

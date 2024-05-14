@@ -2,7 +2,6 @@ package ir.stmt.terminal;
 
 import ir.*;
 import ir.entity.Entity;
-import ir.entity.SSAEntity;
 import ir.entity.Storage;
 import ir.entity.constant.Constant;
 import ir.entity.var.*;
@@ -24,7 +23,6 @@ public class Jump extends TerminalStmt {
     public String phiLabel = null;
     public String index;
     public Storage result = null;
-    public SSAEntity ssaResult;
 
     public Jump(String targetName) {
         super();
@@ -60,11 +58,6 @@ public class Jump extends TerminalStmt {
 
     @Override
     public void print(PrintStream out) {
-        out.println("\tbr label %" + targetName);
-    }
-
-    @Override
-    public void printSSA(PrintStream out) {
         out.println("\tbr label %" + targetName);
     }
 
@@ -119,25 +112,5 @@ public class Jump extends TerminalStmt {
     @Override
     public void replaceUse(HashMap<LocalTmpVar, Storage> copyMap, HashMap<LocalVar, LocalVar> curAllocaMap) {
         result = (Storage) replace(result, copyMap, curAllocaMap);
-    }
-
-    @Override
-    public void setUse(ArrayList<SSAEntity> list) {
-        return;
-    }
-
-    @Override
-    public void setDef(SSAEntity entity) {
-        return;
-    }
-
-    @Override
-    public ArrayList<SSAEntity> getSSAUse() {
-        return null;
-    }
-
-    @Override
-    public SSAEntity getSSADef() {
-        return null;
     }
 }

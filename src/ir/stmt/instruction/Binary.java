@@ -34,9 +34,7 @@ public class Binary extends Instruction {
     }
 
     public LocalTmpVar result;
-    public SSAEntity ssaResult;
     public Entity op1, op2;
-    public SSAEntity ssaOp1, ssaOp2;
     public Operator operator;
 
     public Binary(BinaryExprNode.BinaryOperator operator,
@@ -85,26 +83,6 @@ public class Binary extends Instruction {
             s2 = op2.toString();
         }
         out.println("\t" + result.toString()
-                + " = " + operator.name()
-                + " " + result.type.toString() + ' '
-                + s1 + ", " + s2
-        );
-    }
-
-    @Override
-    public void printSSA(PrintStream out) {
-        String s1, s2;
-        if (op1 instanceof ConstInt constant) {
-            s1 = constant.printValue();
-        } else {
-            s1 = ssaOp1.toString();
-        }
-        if (op2 instanceof ConstInt constant) {
-            s2 = constant.printValue();
-        } else {
-            s2 = ssaOp2.toString();
-        }
-        out.println("\t" + ssaResult.toString()
                 + " = " + operator.name()
                 + " " + result.type.toString() + ' '
                 + s1 + ", " + s2
@@ -221,29 +199,5 @@ public class Binary extends Instruction {
         }
         return ret;
 
-    }
-
-    @Override
-    public void setUse(ArrayList<SSAEntity> list) {
-        ssaOp1 = list.get(0);
-        ssaOp2 = list.get(1);
-    }
-
-    @Override
-    public void setDef(SSAEntity entity) {
-        ssaResult = entity;
-    }
-
-    @Override
-    public ArrayList<SSAEntity> getSSAUse() {
-        ArrayList<SSAEntity> ret = new ArrayList<>();
-        ret.add(ssaOp1);
-        ret.add(ssaOp2);
-        return ret;
-    }
-
-    @Override
-    public SSAEntity getSSADef() {
-        return ssaResult;
     }
 }

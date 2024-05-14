@@ -35,11 +35,8 @@ import java.util.HashMap;
 public class GetElementPtr extends Instruction {
 
     public LocalTmpVar result;
-    public SSAEntity ssaResult;
     public Storage ptrVal;//指针类型
-    public SSAEntity ssaPtrVal;
     public Entity idx;
-    public SSAEntity ssaIdx;
 
     public GetElementPtr(LocalTmpVar result,
                          Storage ptrVal,
@@ -74,35 +71,6 @@ public class GetElementPtr extends Instruction {
         out.println("\t" + result.toString() + " = getelementptr " +
                 ptrType + ", ptr " +
                 ptrVal.toString() +
-                ", " + str
-        );
-    }
-
-    @Override
-    public void printSSA(PrintStream out) {
-        String ptrType;
-        if (ptrVal.type instanceof ArrayType arrayType) {
-            if (arrayType.dimension == 1) {
-                ptrType = arrayType.type.toString();
-            } else {
-                ptrType = "ptr";
-            }
-        } else if (ptrVal.type instanceof StructType structType) {
-            ptrType = structType.toString();
-        } else if (ptrVal instanceof Ptr || ptrVal instanceof LocalTmpVar) {
-            ptrType = "ptr";
-        } else {
-            throw new InternalException("unexpected type in GetElementPtr");
-        }
-        String str;
-        if (idx instanceof Constant) {
-            str = ssaIdx.toString();
-        } else {
-            str = idx.type + " " + idx;
-        }
-        out.println("\t" + ssaResult.toString() + " = getelementptr " +
-                ptrType + ", ptr " +
-                ssaPtrVal.toString() +
                 ", " + str
         );
     }
@@ -179,30 +147,5 @@ public class GetElementPtr extends Instruction {
     public Constant getConstResult() {
         return null;
     }
-
-    @Override
-    public void setUse(ArrayList<SSAEntity> list) {
-        ssaIdx = list.get(0);
-        ssaPtrVal = list.get(1);
-    }
-
-    @Override
-    public void setDef(SSAEntity entity) {
-        ssaResult = entity;
-    }
-
-    @Override
-    public ArrayList<SSAEntity> getSSAUse() {
-        ArrayList<SSAEntity> ret = new ArrayList<>();
-        ret.add(ssaIdx);
-        ret.add(ssaPtrVal);
-        return ret;
-    }
-
-    @Override
-    public SSAEntity getSSADef() {
-        return ssaResult;
-    }
-
 
 }

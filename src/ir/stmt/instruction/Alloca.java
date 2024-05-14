@@ -28,7 +28,6 @@ import java.util.HashMap;
  */
 public class Alloca extends Instruction {
     public LocalVar result;
-    public SSAEntity ssaResult;
 
     public Alloca(IRType irType,
                   String identifier) {
@@ -38,11 +37,6 @@ public class Alloca extends Instruction {
     @Override
     public void print(PrintStream out) {
         out.println("\t" + result.toString() + " = alloca " + result.storage.toString());
-    }
-
-    @Override
-    public void printSSA(PrintStream out) {
-        out.println("\t" + ssaResult.toString() + " = alloca " + result.storage.toString());
     }
 
     @Override
@@ -94,26 +88,4 @@ public class Alloca extends Instruction {
     public Constant getConstResult() {
         return null;
     }
-
-    @Override
-    public void setUse(ArrayList<SSAEntity> list) {
-        return;
-    }
-
-    @Override
-    public void setDef(SSAEntity entity) {
-        ssaResult = entity;
-    }
-
-    @Override
-    public ArrayList<SSAEntity> getSSAUse() {
-        return null;
-    }
-
-    @Override
-    public SSAEntity getSSADef() {
-        return ssaResult;
-    }
-
-
 }
