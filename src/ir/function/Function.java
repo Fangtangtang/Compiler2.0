@@ -9,7 +9,6 @@ import ir.stmt.instruction.Alloca;
 import utility.dominance.DomTree;
 import utility.dominance.DomTreeNode;
 
-import java.io.PrintStream;
 import java.util.*;
 
 /**
@@ -30,13 +29,14 @@ public class Function {
     //每个函数以自己的return块结尾
     public BasicBlock ret;
     public LinkedHashMap<String, BasicBlock> blockMap = new LinkedHashMap<>();
+    public boolean effectual = true;
     //按照RPO序排列的basic block
     public ArrayList<DomTreeNode> reorderedBlock = new ArrayList<>();
     public DomTree domTree;
     public HashMap<String, Storage> phiResult = new HashMap<>();
 
     public HashMap<Function, Integer> calleeMap = null;
-//    public HashSet<Function> calleeSet = null;
+    //    public HashSet<Function> calleeSet = null;
     public HashMap<LocalVar, Alloca> addedAlloca = new HashMap<>();
 
     public Function(IRType retType,

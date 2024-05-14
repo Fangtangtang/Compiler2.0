@@ -92,9 +92,6 @@ public class Store extends Instruction {
 
     @Override
     public Entity getDef() {
-        if (pointer instanceof Ptr) {
-            return pointer;
-        }
         return null;
     }
 

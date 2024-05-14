@@ -50,11 +50,11 @@ public class FunctionInliningAdv {
     }
 
     // simplify functions by the way
-    public void buildCallingGraph() {
+    void buildCallingGraph() {
         for (Map.Entry<String, Function> funcEntry : irRoot.funcDef.entrySet()) {
             Function func = funcEntry.getValue();
             //普通local function
-            if (func.entry != null) {
+            if (func.entry != null ) {
                 func.calleeMap = new HashMap<>();
                 for (Map.Entry<String, BasicBlock> bbEntry : func.blockMap.entrySet()) {
                     BasicBlock block = bbEntry.getValue();
@@ -285,11 +285,6 @@ public class FunctionInliningAdv {
                     new Load(call.result, curAllocaMap.get((LocalVar) loadStmt.pointer))
             );
         }
-//        curBlock.statements.addAll(
-//                callingBlock.statements.subList
-//                        (stmtIterator.nextIndex(), callingBlock.statements.size())
-//        );
-//        curBlock.tailStmt = callingBlock.tailStmt;
         replaceUse(copyMap, blocks);
         mergePhiResult(src, tar, copyMap, "_" + tar.funcName + num);
         return curBlock;

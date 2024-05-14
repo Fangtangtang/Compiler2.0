@@ -20,6 +20,10 @@ import java.util.HashMap;
  * 派生出instruction（IR指令）、terminalStmt（终结语句）
  */
 public abstract class Stmt implements Serializable {
+    public String inBlockLabel;
+
+    public boolean isDead = false;
+
     public abstract void print(PrintStream out);
 
     public abstract void printSSA(PrintStream out);
