@@ -287,7 +287,6 @@ public class SemanticChecker implements ASTVisitor<Type> {
      * 检查返回的表达式类型和函数返回类型是否相符
      * - 自定义类类名
      * - 数组维度
-     * TODO:构造函数允许return？
      * (暂认为不允许构造函数用return)
      *
      * @param node return表达式

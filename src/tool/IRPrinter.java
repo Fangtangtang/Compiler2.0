@@ -146,5 +146,8 @@ public class IRPrinter implements IRVisitor {
         stmt.print(output);
     }
 
-
+    @Override
+    public void visit(DomPhi stmt) {
+        stmt.print(output);
+    }
 }

@@ -10,7 +10,6 @@ import java.util.ArrayList;
  * 函数调用表达式
  * 返回右值，不可赋值
  * func:函数名、类函数名……
- * TODO:表达式类型同函数返回值
  */
 public class FuncCallExprNode extends ExprNode {
     public ExprNode func;

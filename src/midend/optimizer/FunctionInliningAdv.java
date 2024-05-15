@@ -77,7 +77,6 @@ public class FunctionInliningAdv {
         }
     }
 
-    // todo:call的返回值？？
     boolean inliningPass() {
         boolean flag = false;
         for (Map.Entry<String, Function> funcEntry : irRoot.funcDef.entrySet()) {

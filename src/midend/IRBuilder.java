@@ -371,7 +371,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
      * 唯一的参数：this
      * 函数的入口为var_def，var_def跳转到start
      * 返回void
-     * TODO:构造函数新建变量和类成员变量（可以同名）
      *
      * @param node ConstructorDefStmtNode
      * @return null
@@ -603,8 +602,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
      * ReturnStmtNode
      * 函数的return
      * - 有无返回值
-     * //TODO：优化，不借助retVal、提前退出函数
-     * //TODO:同一个block中return后的部分失效，如何处理
      * 初步处理方式
      * 如果有返回值，进入函数时分配retVal空间，
      * return语句给retVal赋值，br return
@@ -699,7 +696,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
      * ArrayVisExprNode
      * 数组下标访问，层层嵌套
      * 对每一层[]调用getelementptr
-     * TODO:返回值是指针，注意是否需要取值
      *
      * @param node ArrayVisExprNode
      * @return result
@@ -749,7 +745,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 pushBack(
                         new GetElementPtr(result, prev, idx)
                 );
-                //TODO:load?
                 return result;
             }
             //仍然访问到数组
@@ -1640,7 +1635,6 @@ public class IRBuilder implements ASTVisitor<Entity> {
      * ClassDefNode
      * 类定义
      * 进入类的作用域
-     * TODO：进入类定义时构建构造函数，为类分配空间（应该需要考虑调用内建函数？）
      *
      * @param node ClassDefNode
      * @return null

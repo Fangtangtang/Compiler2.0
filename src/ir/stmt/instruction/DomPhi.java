@@ -1,26 +1,19 @@
 package ir.stmt.instruction;
 
-import ir.BasicBlock;
 import ir.IRVisitor;
-import ir.entity.Entity;
-import ir.entity.Storage;
-import ir.entity.constant.ConstBool;
-import ir.entity.constant.ConstInt;
-import ir.entity.constant.Constant;
-import ir.entity.var.LocalTmpVar;
-import ir.entity.var.LocalVar;
-import ir.entity.var.Ptr;
+import ir.entity.*;
+import ir.entity.constant.*;
+import ir.entity.var.*;
 import ir.stmt.Stmt;
 import utility.Pair;
 import utility.error.InternalException;
 
 import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.*;
 
 /**
  * @author F
- * 在 dom frountier插入的phi指令
+ * 在 dom frountier（除了我，还有别人会对这里赋值）插入的phi指令
  * 多个label，在转asm时消去
  */
 public class DomPhi extends Instruction {

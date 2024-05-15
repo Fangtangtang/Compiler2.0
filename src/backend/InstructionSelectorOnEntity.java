@@ -378,7 +378,6 @@ public class InstructionSelectorOnEntity implements IRVisitor {
             return;
         }
         Operand operand1 = toOperand(stmt.op1), operand2 = toOperand(stmt.op2);
-//        t1.size = 4;//暂存整数
         PhysicalRegister t1 = new PhysicalRegister("t1", 4);
         if (operand1 instanceof Imm imm) {
             if (stmt.operator.equals(Binary.Operator.sub) ||
@@ -401,10 +400,16 @@ public class InstructionSelectorOnEntity implements IRVisitor {
             return;
         } else if (operand2 instanceof Imm imm) {
             if (stmt.operator.equals(Binary.Operator.sub)) {
-                imm = new Imm(-imm.value);
-                currentBlock.pushBack(
-                        new ImmBinaryInst((Register) operand1, imm, resultReg, ImmBinaryInst.Opcode.addi)
-                );
+                if (imm.value == 0) {
+                    currentBlock.pushBack(
+                            new MoveInst(resultReg, (Register) operand1)
+                    );
+                } else {
+                    imm = new Imm(-imm.value);
+                    currentBlock.pushBack(
+                            new ImmBinaryInst((Register) operand1, imm, resultReg, ImmBinaryInst.Opcode.addi)
+                    );
+                }
                 return;
             }
             if (stmt.operator.equals(Binary.Operator.mul) ||
@@ -418,9 +423,15 @@ public class InstructionSelectorOnEntity implements IRVisitor {
                         new BinaryInst(operand1, t1, resultReg, stmt.operator)
                 );
             } else {
-                currentBlock.pushBack(
-                        new ImmBinaryInst((Register) operand1, imm, resultReg, stmt.operator)
-                );
+                if (stmt.operator.equals(Binary.Operator.add) && imm.value == 0) {
+                    currentBlock.pushBack(
+                            new MoveInst(resultReg, (Register) operand1)
+                    );
+                } else {
+                    currentBlock.pushBack(
+                            new ImmBinaryInst((Register) operand1, imm, resultReg, stmt.operator)
+                    );
+                }
             }
             return;
         } else {
@@ -569,9 +580,15 @@ public class InstructionSelectorOnEntity implements IRVisitor {
             if (baseSize == 4) {
                 imm.value <<= 2;
             }
-            currentBlock.pushBack(
-                    new ImmBinaryInst((Register) ptr, imm, getVirtualRegister(stmt.result), Binary.Operator.add)
-            );
+            if (imm.value == 0) {
+                currentBlock.pushBack(
+                        new MoveInst(getVirtualRegister(stmt.result), (Register) ptr)
+                );
+            } else {
+                currentBlock.pushBack(
+                        new ImmBinaryInst((Register) ptr, imm, getVirtualRegister(stmt.result), Binary.Operator.add)
+                );
+            }
         } else {
             if (baseSize == 4) {
                 PhysicalRegister t2 = new PhysicalRegister("t2");
@@ -712,13 +729,25 @@ public class InstructionSelectorOnEntity implements IRVisitor {
             }
         } else {
             if (op1 instanceof Imm imm) {
-                currentBlock.pushBack(
-                        new ImmBinaryInst((Register) op2, new Imm(-imm.value), t1, ImmBinaryInst.Opcode.addi)
-                );
+                if (imm.value == 0) {
+                    currentBlock.pushBack(
+                            new MoveInst(t1, (Register) op2)
+                    );
+                } else {
+                    currentBlock.pushBack(
+                            new ImmBinaryInst((Register) op2, new Imm(-imm.value), t1, ImmBinaryInst.Opcode.addi)
+                    );
+                }
             } else if (op2 instanceof Imm imm) {
-                currentBlock.pushBack(
-                        new ImmBinaryInst((Register) op1, new Imm(-imm.value), t1, ImmBinaryInst.Opcode.addi)
-                );
+                if (imm.value == 0) {
+                    currentBlock.pushBack(
+                            new MoveInst(t1, (Register) op1)
+                    );
+                } else {
+                    currentBlock.pushBack(
+                            new ImmBinaryInst((Register) op1, new Imm(-imm.value), t1, ImmBinaryInst.Opcode.addi)
+                    );
+                }
             } else {
                 currentBlock.pushBack(
                         new BinaryInst((Register) op1, (Register) op2, t1, BinaryInst.Opcode.sub)
@@ -1012,6 +1041,7 @@ public class InstructionSelectorOnEntity implements IRVisitor {
 
     /**
      * DomPhi
+     *
      * @param stmt domPhi
      */
     @Override

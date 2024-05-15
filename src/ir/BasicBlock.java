@@ -2,6 +2,7 @@ package ir;
 
 import ir.entity.var.LocalTmpVar;
 import ir.stmt.Stmt;
+import ir.stmt.instruction.DomPhi;
 import ir.stmt.terminal.TerminalStmt;
 import utility.Pair;
 
@@ -22,6 +23,10 @@ public class BasicBlock {
 
     public ArrayList<String> prevBasicBlocks = null;
     public ArrayList<String> subsBasicBlocks = null;
+
+    // 在bb头部需要插入的phi指令
+    // localVarName -> DomPhi Stmt
+    public HashMap<String, DomPhi> domPhiMap = new HashMap<>();
 
     //CFG上的前驱后继
     public ArrayList<BasicBlock> predecessorList = new ArrayList<>();

@@ -71,4 +71,14 @@ IRBuilder irBuilder = new IRBuilder(Scope.symbolTable);
 irBuilder.visit(astRoot);
 ```
 
-## 
+## ASM Build
+
+## Optimize
+### IR
+- inlining
+- Mem2Reg
+- DCE
+- CCP
+
+### ASM
+- 图染色

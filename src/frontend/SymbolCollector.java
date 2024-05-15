@@ -42,7 +42,6 @@ public class SymbolCollector extends ASTBaseVisitor<Type> {
             }
         }
         //第二趟，访问所有函数、类的成员，并检查函数的返回类型、参数类型
-        //TODO:类成员中的构造函数怎么处理
         for (ASTNode childNode : node.declarations) {
             if (childNode instanceof ClassDefNode tmp) {
                 visit(tmp);
