@@ -1004,10 +1004,19 @@ public class InstructionSelectorOnEntity implements IRVisitor {
      * branch、jump在跳转前由phiMap中取值存到result
      * 后进入的子跳转语句可以覆盖前面的
      *
-     * @param stmt phi
+     * @param stmt dualPhi
      */
     @Override
     public void visit(DualPhi stmt) {
+    }
+
+    /**
+     * DomPhi
+     * @param stmt domPhi
+     */
+    @Override
+    public void visit(DomPhi stmt) {
+        // todo
     }
 
 }

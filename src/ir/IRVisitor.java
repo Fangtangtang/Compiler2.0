@@ -41,4 +41,5 @@ public interface IRVisitor {
 
     void visit(DualPhi stmt);
 
+    void visit(DomPhi domPhi);
 }

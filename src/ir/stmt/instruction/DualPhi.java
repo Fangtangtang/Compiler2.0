@@ -20,8 +20,8 @@ import java.util.Objects;
 
 /**
  * @author F
+ * 仅两个label的phi指令
  * 通过跳转来源给变量赋值
- * 暂存前驱基本块，用于后继判断来源
  * <result> = phi <ty> [ <val0>, <label0>], ...
  * +------------------------------------------------
  * |
@@ -50,7 +50,7 @@ public class DualPhi extends Instruction {
         this.phiLabel = phiLabel;
     }
 
-    public void remapLabelS2S(HashMap<String, String> blockMap) {
+    public void remapLabel(HashMap<String, String> blockMap) {
         String label = label1;
         while (blockMap.containsKey(label)) {
             label = blockMap.get(label);
@@ -76,14 +76,10 @@ public class DualPhi extends Instruction {
         } else {
             s2 = ans2.toString();
         }
-        printFormat(out, s1, s2, result.toString());
-    }
-
-    private void printFormat(PrintStream out, String string, String string2, String string3) {
         out.println(
-                "\t" + string3 + " = phi " + ans1.type
-                        + " [ " + string + ", %" + label1 + " ]" + ","
-                        + " [ " + string2 + ", %" + label2 + " ]"
+                "\t" + result.toString() + " = phi " + ans1.type
+                        + " [ " + s1 + ", %" + label1 + " ]" + ","
+                        + " [ " + s2 + ", %" + label2 + " ]"
         );
     }
 

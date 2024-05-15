@@ -82,7 +82,7 @@ public class BasicBlockEliminator {
         }
         // rename label in phi
         for (DualPhi dualPhiStmt : dualPhiStmts) {
-            dualPhiStmt.remapLabelS2S(blockMap);
+            dualPhiStmt.remapLabel(blockMap);
         }
     }
 
