@@ -31,10 +31,10 @@ public class IROptimizer {
         cfgBuilder.build();
         DomTreeBuilder domTreeBuilder = new DomTreeBuilder(irRoot);
         domTreeBuilder.build();
-//        Mem2Reg mem2Reg = new Mem2Reg();
-//        for (Map.Entry<String, Function> entry : irRoot.funcDef.entrySet()) {
-//            mem2Reg.execute(entry.getValue());
-//        }
+        Mem2Reg mem2Reg = new Mem2Reg();
+        for (Map.Entry<String, Function> entry : irRoot.funcDef.entrySet()) {
+            mem2Reg.execute(entry.getValue());
+        }
         // todo =============================================
 
         LocalTmpVarPropagation localTmpVarPropagation = new LocalTmpVarPropagation(irRoot);

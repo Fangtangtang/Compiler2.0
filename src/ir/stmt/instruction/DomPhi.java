@@ -21,6 +21,10 @@ public class DomPhi extends Instruction {
 
     public HashMap<String, Storage> phiList = new HashMap<>();
 
+    public DomPhi(LocalTmpVar result) {
+        this.result = result;
+    }
+
     public DomPhi(LocalTmpVar result, String label, Storage ans) {
         this.result = result;
         phiList.put(label, ans);
