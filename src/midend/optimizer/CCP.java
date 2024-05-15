@@ -1,6 +1,5 @@
 package midend.optimizer;
 
-import asm.Block;
 import ir.*;
 import ir.entity.*;
 import ir.entity.constant.*;
@@ -197,8 +196,8 @@ public class CCP {
         Entity def;
         for (Stmt stmt : block.statements) {
             // TODO: put to a better place (control information collect)
-            if (stmt instanceof Phi phi) {
-                phi.inBlockLabel = block.label;
+            if (stmt instanceof DualPhi dualPhi) {
+                dualPhi.inBlockLabel = block.label;
             }
             if (stmt.hasDef()) {
                 def = stmt.getDef();
@@ -294,8 +293,8 @@ public class CCP {
             propagateOnBinary(binary);
         } else if (inst instanceof Icmp icmp) {
             propagateOnIcmp(icmp);
-        } else if (inst instanceof Phi phi) {
-            propagateOnPhi(phi);
+        } else if (inst instanceof DualPhi dualPhi) {
+            propagateOnPhi(dualPhi);
         } else if (inst instanceof Trunc trunc) {
             propagateOnTrunc(trunc);
         } else if (inst instanceof Zext zext) {
@@ -366,23 +365,23 @@ public class CCP {
         }
     }
 
-    void propagateOnPhi(Phi phiInst) {
-        HashSet<String> livePrev = liveCtr.get(phiInst.inBlockLabel);
+    void propagateOnPhi(DualPhi dualPhiInst) {
+        HashSet<String> livePrev = liveCtr.get(dualPhiInst.inBlockLabel);
         if (livePrev == null) {
             livePrev = new HashSet<>();
         }
-        Pair<Constant, VarType> ans1Info = entity2Constant(phiInst.ans1);
-        Pair<Constant, VarType> ans2Info = entity2Constant(phiInst.ans2);
+        Pair<Constant, VarType> ans1Info = entity2Constant(dualPhiInst.ans1);
+        Pair<Constant, VarType> ans2Info = entity2Constant(dualPhiInst.ans2);
         VarType ans1Type = ans1Info.getSecond();
         VarType ans2Type = ans2Info.getSecond();
         BlockType label1bbType = BlockType.unknown, label2bbType = BlockType.unknown;
-        if (livePrev.contains(phiInst.label1.get(0))) {
+        if (livePrev.contains(dualPhiInst.label1)) {
             label1bbType = BlockType.executable;
         }
-        if (livePrev.contains(phiInst.label2.get(0))) {
+        if (livePrev.contains(dualPhiInst.label2)) {
             label2bbType = BlockType.executable;
         }
-        if (phiInst.getDef() instanceof LocalTmpVar tmpVar) {
+        if (dualPhiInst.getDef() instanceof LocalTmpVar tmpVar) {
             if ((ans1Type == VarType.multiExeDef &&
                     label1bbType == BlockType.executable)
                     ||

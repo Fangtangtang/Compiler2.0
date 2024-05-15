@@ -4,7 +4,6 @@ import asm.*;
 import asm.instruction.*;
 import asm.operand.*;
 import asm.section.*;
-import backend.optimizer.interferenceGraph.Colors;
 import ir.*;
 import ir.entity.*;
 import ir.entity.constant.*;
@@ -1001,14 +1000,14 @@ public class InstructionSelectorOnEntity implements IRVisitor {
     }
 
     /**
-     * Phi
+     * DualPhi
      * branch、jump在跳转前由phiMap中取值存到result
      * 后进入的子跳转语句可以覆盖前面的
      *
      * @param stmt phi
      */
     @Override
-    public void visit(Phi stmt) {
+    public void visit(DualPhi stmt) {
     }
 
 }

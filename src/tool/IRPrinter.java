@@ -142,7 +142,7 @@ public class IRPrinter implements IRVisitor {
     }
 
     @Override
-    public void visit(Phi stmt) {
+    public void visit(DualPhi stmt) {
         stmt.print(output);
     }
 

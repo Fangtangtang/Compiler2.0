@@ -1,8 +1,6 @@
 package midend.optimizer;
 
 import ir.*;
-import ir.entity.constant.ConstBool;
-import ir.entity.constant.Constant;
 import ir.function.Function;
 import ir.stmt.*;
 import ir.stmt.instruction.*;
@@ -40,13 +38,13 @@ public class BasicBlockEliminator {
         }
         func.ret.prevBasicBlocks = new ArrayList<>();
         // collect PhiStmts
-        ArrayList<Phi> phiStmts = new ArrayList<>();
+        ArrayList<DualPhi> dualPhiStmts = new ArrayList<>();
         // collect prev
         for (Map.Entry<String, BasicBlock> blockEntry : func.blockMap.entrySet()) {
             BasicBlock block = blockEntry.getValue();
             for (Stmt stmt : block.statements) {
-                if (stmt instanceof Phi phi) {
-                    phiStmts.add(phi);
+                if (stmt instanceof DualPhi dualPhi) {
+                    dualPhiStmts.add(dualPhi);
                 }
             }
 //           TODO:block映射出错
@@ -83,8 +81,8 @@ public class BasicBlockEliminator {
             }
         }
         // rename label in phi
-        for (Phi phiStmt : phiStmts) {
-            phiStmt.remapLabelS2S(blockMap);
+        for (DualPhi dualPhiStmt : dualPhiStmts) {
+            dualPhiStmt.remapLabelS2S(blockMap);
         }
     }
 
@@ -106,11 +104,11 @@ public class BasicBlockEliminator {
             BasicBlock block = blockEntry.getValue();
             workList.add(block);
             for (Stmt stmt : block.statements) {
-                if (stmt instanceof Phi phi) {
+                if (stmt instanceof DualPhi dualPhi) {
                     HashSet<String> tmp = new HashSet<>();
-                    tmp.addAll(phi.label1);
-                    tmp.addAll(phi.label2);
-                    // size<=1 fake phi
+                    tmp.add(dualPhi.label1);
+                    tmp.add(dualPhi.label2);
+                    // size<=1 fake dualPhi
                     if (tmp.size() > 1) {
                         labelInPhi.addAll(tmp);
                     }

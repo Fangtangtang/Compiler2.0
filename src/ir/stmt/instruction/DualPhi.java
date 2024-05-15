@@ -16,7 +16,6 @@ import utility.Pair;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Objects;
 
 /**
@@ -31,83 +30,37 @@ import java.util.Objects;
  * |
  * +------------------------------------------------
  */
-public class Phi extends Instruction {
+public class DualPhi extends Instruction {
     public LocalTmpVar result;
-    public String inBlockLabel;
     public String phiLabel;
     public Storage ans1, ans2;
-    public ArrayList<String> label1 = new ArrayList<>(), label2 = new ArrayList<>();
+    public String label1, label2;
 
-    public Phi(LocalTmpVar result,
-               Storage ans1,
-               Storage ans2,
-               String label1,
-               String label2,
-               String phiLabel) {
-        this.result = result;
-        this.ans1 = ans1;
-        this.ans2 = ans2;
-        this.label1.add(label1);
-        this.label2.add(label2);
-        this.phiLabel = phiLabel;
-    }
-
-    public Phi(LocalTmpVar result,
-               Storage ans1,
-               Storage ans2,
-               ArrayList<String> label1,
-               String label2,
-               String phiLabel) {
+    public DualPhi(LocalTmpVar result,
+                   Storage ans1,
+                   Storage ans2,
+                   String label1,
+                   String label2,
+                   String phiLabel) {
         this.result = result;
         this.ans1 = ans1;
         this.ans2 = ans2;
         this.label1 = label1;
-        this.label2.add(label2);
+        this.label2 = label2;
         this.phiLabel = phiLabel;
     }
 
     public void remapLabelS2S(HashMap<String, String> blockMap) {
-        ArrayList<String> newLabel1 = new ArrayList<>();
-        for (String label : label1) {
-            while (blockMap.containsKey(label)) {
-                label = blockMap.get(label);
-            }
-            newLabel1.add(label);
+        String label = label1;
+        while (blockMap.containsKey(label)) {
+            label = blockMap.get(label);
         }
-        label1 = newLabel1;
-        ArrayList<String> newLabel2 = new ArrayList<>();
-        for (String label : label2) {
-            while (blockMap.containsKey(label)) {
-                label = blockMap.get(label);
-            }
-            newLabel2.add(label);
+        label1 = label;
+        label = label2;
+        while (blockMap.containsKey(label)) {
+            label = blockMap.get(label);
         }
-        label2 = newLabel2;
-    }
-
-    public void remapLabelS2M(HashMap<String, String> blockMap) {
-        HashSet<String> labelList = new HashSet<>();
-        for (String label : label1) {
-            labelList.add(label);
-            while (blockMap.containsKey(label)) {
-                label=blockMap.get(label);
-                labelList.add(label);
-            }
-        }
-        ArrayList<String> newLabel1 = new ArrayList<>();
-        newLabel1.addAll(labelList);
-        label1 = newLabel1;
-        labelList = new HashSet<>();
-        for (String label : label2) {
-            labelList.add(label);
-            while (blockMap.containsKey(label)) {
-                label=blockMap.get(label);
-                labelList.add(label);
-            }
-        }
-        ArrayList<String> newLabel2 = new ArrayList<>();
-        newLabel2.addAll(labelList);
-        label2 = newLabel2;
+        label2 = label;
     }
 
     @Override
@@ -127,16 +80,10 @@ public class Phi extends Instruction {
     }
 
     private void printFormat(PrintStream out, String string, String string2, String string3) {
-        StringBuilder l1 = new StringBuilder(" [ " + string + ", %" + label1.get(0) + " ]");
-        StringBuilder l2 = new StringBuilder(" [ " + string2 + ", %" + label2.get(0) + " ]");
-        for (int i = 1; i < label1.size(); ++i) {
-            l1.append(", [ ").append(string).append(", %").append(label1.get(i)).append(" ]");
-        }
-        for (int i = 1; i < label2.size(); ++i) {
-            l2.append(", [ ").append(string2).append(", %").append(label2.get(i)).append(" ]");
-        }
         out.println(
-                "\t" + string3 + " = phi " + ans1.type + l1 + "," + l2
+                "\t" + string3 + " = phi " + ans1.type
+                        + " [ " + string + ", %" + label1 + " ]" + ","
+                        + " [ " + string2 + ", %" + label2 + " ]"
         );
     }
 
@@ -190,9 +137,9 @@ public class Phi extends Instruction {
     @Override
     public Pair<Stmt, LocalTmpVar> creatCopy(String suffix) {
         LocalTmpVar newResult = new LocalTmpVar(result.type, result.identity + suffix);
-        Stmt stmt = new Phi(
+        Stmt stmt = new DualPhi(
                 newResult, ans1, ans2,
-                label1.get(0) + suffix, label2.get(0) + suffix,
+                label1 + suffix, label2 + suffix,
                 phiLabel
         );
         return new Pair<>(stmt, newResult);

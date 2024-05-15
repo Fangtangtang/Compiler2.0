@@ -54,7 +54,7 @@ public class FunctionInliningAdv {
         for (Map.Entry<String, Function> funcEntry : irRoot.funcDef.entrySet()) {
             Function func = funcEntry.getValue();
             //普通local function
-            if (func.entry != null ) {
+            if (func.entry != null) {
                 func.calleeMap = new HashMap<>();
                 for (Map.Entry<String, BasicBlock> bbEntry : func.blockMap.entrySet()) {
                     BasicBlock block = bbEntry.getValue();
@@ -87,7 +87,7 @@ public class FunctionInliningAdv {
             newBlock = new HashMap<>();
             terminalStmts = new ArrayList<>();
             renameMap = new HashMap<>();
-            ArrayList<Phi> phis = new ArrayList<>();
+            ArrayList<DualPhi> dualPhis = new ArrayList<>();
             if (func.entry != null) {
                 for (Map.Entry<String, BasicBlock> bbEntry : func.blockMap.entrySet()) {
                     BasicBlock block = bbEntry.getValue();
@@ -114,8 +114,8 @@ public class FunctionInliningAdv {
                             } else {
                                 func.calleeMap.put(callStmt.function, num - 1);
                             }
-                        } else if (stmt instanceof Phi phi) {
-                            phis.add(phi);
+                        } else if (stmt instanceof DualPhi dualPhi) {
+                            dualPhis.add(dualPhi);
                         }
                     }
                     // todo:range
@@ -128,16 +128,12 @@ public class FunctionInliningAdv {
                     func.entry = newBlock.get(func.entry.label);
                 }
                 targetRedirect(func);
-                for (Phi phi : phis) {
-                    for (int i = 0; i < phi.label1.size(); i++) {
-                        if (renameMap.containsKey(phi.label1.get(i))) {
-                            phi.label1.set(i, renameMap.get(phi.label1.get(i)));
-                        }
+                for (DualPhi dualPhi : dualPhis) {
+                    if (renameMap.containsKey(dualPhi.label1)) {
+                        dualPhi.label1 = renameMap.get(dualPhi.label1);
                     }
-                    for (int i = 0; i < phi.label2.size(); i++) {
-                        if (renameMap.containsKey(phi.label2.get(i))) {
-                            phi.label2.set(i, renameMap.get(phi.label2.get(i)));
-                        }
+                    if (renameMap.containsKey(dualPhi.label2)) {
+                        dualPhi.label2 = renameMap.get(dualPhi.label2);
                     }
                 }
             }
@@ -235,16 +231,12 @@ public class FunctionInliningAdv {
                     }
                     //insert stmt
                     Stmt newStmt = stmtCopy.getFirst();
-                    if (newStmt instanceof Phi phi) {
-                        for (int i = 0; i < phi.label1.size(); i++) {
-                            if (renameMap.containsKey(phi.label1.get(i))) {
-                                phi.label1.set(i, renameMap.get(phi.label1.get(i)));
-                            }
+                    if (newStmt instanceof DualPhi dualPhi) {
+                        if (renameMap.containsKey(dualPhi.label1)) {
+                            dualPhi.label1 = renameMap.get(dualPhi.label1);
                         }
-                        for (int i = 0; i < phi.label2.size(); i++) {
-                            if (renameMap.containsKey(phi.label2.get(i))) {
-                                phi.label2.set(i, renameMap.get(phi.label2.get(i)));
-                            }
+                        if (renameMap.containsKey(dualPhi.label2)) {
+                            dualPhi.label2 = renameMap.get(dualPhi.label2);
                         }
                     }
                     iterInCurBlock.add(newStmt);

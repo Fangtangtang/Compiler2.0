@@ -11,7 +11,6 @@ import ir.*;
 import ir.entity.var.*;
 import ir.function.Function;
 import ir.function.GlobalVarInitFunction;
-import ir.function.MainFunc;
 import ir.irType.*;
 import ir.stmt.Stmt;
 import ir.stmt.instruction.*;
@@ -1064,7 +1063,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         //取值
         LocalTmpVar result = new LocalTmpVar(tmpBoolType, ++tmpCounter.cnt, currentFunction.funcName);
         pushBack(
-                new Phi(result,
+                new DualPhi(result,
                         resultFromLeft, resultFromRight,
                         labelFromLeft, labelFromRight,
                         currentFunction.funcName + phiLabel)
@@ -1473,7 +1472,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         if (!(trueAns.type instanceof VoidType)) {
             result = new LocalTmpVar(trueAns.type, ++tmpCounter.cnt, currentFunction.funcName);
             pushBack(
-                    new Phi(result, trueAns, falseAns,
+                    new DualPhi(result, trueAns, falseAns,
                             trueBlock.label, falseBlock.label,
                             currentFunction.funcName + String.valueOf(phiLabel))
             );

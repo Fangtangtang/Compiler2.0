@@ -1,6 +1,5 @@
 package ir;
 
-import ir.entity.Storage;
 import ir.function.Function;
 import ir.stmt.instruction.*;
 import ir.stmt.terminal.*;
@@ -40,6 +39,6 @@ public interface IRVisitor {
 
     void visit(Zext stmt);
 
-    void visit(Phi stmt);
+    void visit(DualPhi stmt);
 
 }
