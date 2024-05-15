@@ -206,7 +206,7 @@ public class FunctionInlining {
                             allocaStmt = tar.addedAlloca.get(alloca.result);
                         } else {
                             allocaStmt = new Alloca(
-                                    alloca.result.type,
+                                    alloca.result.storage.type,
                                     src.funcName + "_" + tar.funcName + "_" + alloca.result.identity
                             );
                             tar.addedAlloca.put(alloca.result, allocaStmt);

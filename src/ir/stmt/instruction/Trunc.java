@@ -8,6 +8,7 @@ import ir.entity.var.GlobalVar;
 import ir.entity.var.LocalTmpVar;
 import ir.entity.var.LocalVar;
 import ir.entity.var.Ptr;
+import ir.irType.IntType;
 import ir.stmt.Stmt;
 import utility.Pair;
 

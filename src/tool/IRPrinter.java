@@ -30,6 +30,10 @@ public class IRPrinter implements IRVisitor {
             Function func = entry.getValue();
             visit(func);
         }
+        for (Map.Entry<String, Function> entry : root.builtinFuncDef.entrySet()) {
+            Function func = entry.getValue();
+            visit(func);
+        }
     }
 
     /**

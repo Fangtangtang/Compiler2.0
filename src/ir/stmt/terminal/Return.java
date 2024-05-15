@@ -3,6 +3,7 @@ package ir.stmt.terminal;
 import ir.IRVisitor;
 import ir.entity.Entity;
 import ir.entity.Storage;
+import ir.entity.constant.ConstInt;
 import ir.entity.constant.Constant;
 import ir.entity.var.GlobalVar;
 import ir.entity.var.LocalTmpVar;
@@ -42,7 +43,11 @@ public class Return extends TerminalStmt {
         if (value == null) {
             str.append(" void");
         } else {
-            str.append(" ").append(value.type.toString()).append(" ").append(value.toString());
+            if (value instanceof ConstInt constant) {
+                str.append(" ").append(value.type.toString()).append(" ").append(((ConstInt) value).printValue());
+            } else {
+                str.append(" ").append(value.type.toString()).append(" ").append(value.toString());
+            }
         }
         out.println(str.toString());
     }

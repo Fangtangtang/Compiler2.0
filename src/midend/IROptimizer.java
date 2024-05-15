@@ -33,7 +33,11 @@ public class IROptimizer {
         domTreeBuilder.build();
         Mem2Reg mem2Reg = new Mem2Reg();
         for (Map.Entry<String, Function> entry : irRoot.funcDef.entrySet()) {
-            mem2Reg.execute(entry.getValue());
+            Function func = entry.getValue();
+            //普通local function
+            if (func.entry != null) {
+                mem2Reg.execute(func);
+            }
         }
         // todo =============================================
 

@@ -65,11 +65,11 @@ public class Mem2Reg {
                 // alloca def
                 if (stmt instanceof Store store &&
                         store.pointer instanceof LocalVar localVar) {
-                    String localVarName = localVar.toString();
+                    String localVarName = localVar.identity;
                     if (!allocaDefMap.containsKey(localVarName)) {
                         allocaDefMap.put(localVarName, new Stack<>());
                     }
-                    defList.add(new Pair<>(localVarName, localVar.type));
+                    defList.add(new Pair<>(localVarName, localVar.storage.type));
                 }
             }
             for (Pair<String, IRType> pair : defList) {
@@ -124,25 +124,28 @@ public class Mem2Reg {
             // use of localVar
             if (stmt instanceof Load load &&
                     load.pointer instanceof LocalVar localVar) {
-                newStatements.add(
-                        new Binary(
-                                Binary.Operator.add,
-                                load.result,
-                                allocaDefInBlock.get(localVar.toString()),
-                                zero
-                        )
-                );
+//                newStatements.add(
+//                        new Binary(
+//                                Binary.Operator.add,
+//                                load.result,
+//                                allocaDefInBlock.get(localVar.identity),
+//                                zero
+//                        )
+//                );
+                load.result.valueInBasicBlock = allocaDefInBlock.get(localVar.identity);
             }
             // def of localVar
             else if (stmt instanceof Store store &&
                     store.pointer instanceof LocalVar localVar) {
-                allocaDefInBlock.put(localVar.toString(), (Storage) store.value);
-                newDef.add(localVar.toString());
-            } else {
+                allocaDefInBlock.put(localVar.identity, (Storage) store.value);
+                newDef.add(localVar.identity);
+            } else if (!(stmt instanceof Alloca)) {
+                stmt.propagateLocalTmpVar();
                 newStatements.add(stmt);
             }
         }
         block.statements = newStatements;
+        block.tailStmt.propagateLocalTmpVar();
         // update allocaDefMap: push
         for (String newVar : newDef) {
             allocaDefMap.get(newVar).push(allocaDefInBlock.get(newVar));
