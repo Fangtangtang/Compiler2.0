@@ -92,21 +92,12 @@ public class DomTree {
         for (int i = 1; i < size; ++i) {
             iDomArray[i] = -1;
         }
-        boolean[] fullyUpdated = new boolean[size];
-        fullyUpdated[0] = true;
-        for (int i = 1; i < size; ++i) {
-            fullyUpdated[i] = false;
-        }
         //迭代至收敛
         boolean changed = true;
         DomTreeNode currentNode;
         while (changed) {
             changed = false;
             for (int i = 1; i < size; ++i) {
-                //不需要在迭代中更新
-                if (fullyUpdated[i]) {
-                    continue;
-                }
                 currentNode = reorderedBlock.get(i);
                 int predecessorSize = currentNode.block.predecessorList.size();
                 if (predecessorSize == 0) {
@@ -124,14 +115,12 @@ public class DomTree {
                     throw new InternalException("unexpected CFG: no predecessor updated");
                 }
                 newImmDom = pred1 = index;
-                fullyUpdated[i] = fullyUpdated[index];
                 ++index;
                 for (; index < predecessorSize; ++index) {
                     if (iDomArray[currentNode.block.predecessorList.get(index).reversePostorder] == -1) {
                         continue;
                     }
                     pred2 = index;
-                    fullyUpdated[i] = fullyUpdated[i] && fullyUpdated[index];
                     newImmDom = intersect(pred1, pred2);
                 }
                 if (iDomArray[i] != newImmDom) {

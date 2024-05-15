@@ -27,10 +27,10 @@ public class IROptimizer {
         global2Local.execute();
 
         // todo =============================================
-//        CFGBuilder cfgBuilder = new CFGBuilder(irRoot);
-//        cfgBuilder.build();
-//        DomTreeBuilder domTreeBuilder = new DomTreeBuilder(irRoot);
-//        domTreeBuilder.build();
+        CFGBuilder cfgBuilder = new CFGBuilder(irRoot);
+        cfgBuilder.build();
+        DomTreeBuilder domTreeBuilder = new DomTreeBuilder(irRoot);
+        domTreeBuilder.build();
 //        Mem2Reg mem2Reg = new Mem2Reg();
 //        for (Map.Entry<String, Function> entry : irRoot.funcDef.entrySet()) {
 //            mem2Reg.execute(entry.getValue());
