@@ -43,6 +43,7 @@ public class Mem2Reg {
         visited = new HashSet<>();
         insertDomPhi();
         rename();
+        addDomPhi();
     }
 
     /**
@@ -162,4 +163,20 @@ public class Mem2Reg {
             allocaDefMap.get(newVar).pop();
         }
     }
+
+    /**
+     * add DomPhi it statements
+     */
+    void addDomPhi() {
+        for (Map.Entry<String, BasicBlock> entry : function.blockMap.entrySet()) {
+            BasicBlock block = entry.getValue();
+            for (Map.Entry<String, DomPhi> phiEntry : block.domPhiMap.entrySet()) {
+                block.statements.addFirst(phiEntry.getValue());
+            }
+        }
+        for (Map.Entry<String, DomPhi> phiEntry : function.ret.domPhiMap.entrySet()) {
+            function.ret.statements.addFirst(phiEntry.getValue());
+        }
+    }
+
 }

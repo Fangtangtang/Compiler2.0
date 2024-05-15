@@ -212,6 +212,7 @@ public class CCP {
 
     void collectUseInBlock(BasicBlock block) {
         ArrayList<Entity> use;
+        // in statements
         for (Stmt stmt : block.statements) {
             use = stmt.getUse();
             if (use != null) {
