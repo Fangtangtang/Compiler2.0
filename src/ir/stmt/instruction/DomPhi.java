@@ -25,11 +25,6 @@ public class DomPhi extends Instruction {
         this.result = result;
     }
 
-    public DomPhi(LocalTmpVar result, String label, Storage ans) {
-        this.result = result;
-        phiList.put(label, ans);
-    }
-
     public DomPhi(LocalTmpVar result, HashMap<String, Storage> phiList) {
         this.result = result;
         this.phiList = phiList;
@@ -37,6 +32,18 @@ public class DomPhi extends Instruction {
 
     public void put(String label, Storage value) {
         phiList.put(label, value);
+    }
+
+    public void remapLabel(HashMap<String, String> blockMap) {
+        HashMap<String, Storage> newMap = new HashMap<>();
+        for (Map.Entry<String, Storage> entry : phiList.entrySet()) {
+            String label = entry.getKey();
+            while (blockMap.containsKey(label)) {
+                label = blockMap.get(label);
+            }
+            newMap.put(label, entry.getValue());
+        }
+        phiList = newMap;
     }
 
     @Override

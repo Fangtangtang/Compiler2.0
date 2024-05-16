@@ -54,9 +54,9 @@ public abstract class Stmt implements Serializable {
     }
 
     public Entity replace(Entity entity, HashMap<LocalTmpVar, Storage> copyMap, HashMap<LocalVar, LocalVar> curAllocaMap) {
-        if (entity instanceof LocalVar && curAllocaMap.containsKey(entity)) {
+        if (entity instanceof LocalVar && curAllocaMap != null && curAllocaMap.containsKey(entity)) {
             entity = curAllocaMap.get(entity);
-        } else if (entity instanceof LocalTmpVar && copyMap.containsKey(entity)) {
+        } else if (entity instanceof LocalTmpVar && copyMap != null && copyMap.containsKey(entity)) {
             entity = copyMap.get(entity);
         }
         return entity;

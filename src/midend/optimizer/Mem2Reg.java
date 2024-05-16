@@ -8,7 +8,6 @@ import ir.function.Function;
 import ir.irType.IRType;
 import ir.stmt.*;
 import ir.stmt.instruction.*;
-import ir.stmt.terminal.Branch;
 import utility.Pair;
 import utility.dominance.*;
 
@@ -26,7 +25,7 @@ public class Mem2Reg {
     Function function;
     ConstInt zero = new ConstInt("0");
     HashMap<String, Stack<Storage>> allocaDefMap = null;
-
+    HashMap<LocalTmpVar, Storage> loads = null;
     HashSet<String> visited = null;
 
     /**
@@ -40,10 +39,11 @@ public class Mem2Reg {
     public void execute(Function func) {
         function = func;
         allocaDefMap = new HashMap<>();
+        loads = new HashMap<>();
         visited = new HashSet<>();
         insertDomPhi();
         rename();
-        addDomPhi();
+        updateStmts();
     }
 
     /**
@@ -124,15 +124,12 @@ public class Mem2Reg {
             // use of localVar
             if (stmt instanceof Load load &&
                     load.pointer instanceof LocalVar localVar) {
-//                newStatements.add(
-//                        new Binary(
-//                                Binary.Operator.add,
-//                                load.result,
-//                                allocaDefInBlock.get(localVar.identity),
-//                                zero
-//                        )
-//                );
-                load.result.valueInBasicBlock = allocaDefInBlock.get(localVar.identity);
+                Storage replace = allocaDefInBlock.get(localVar.identity);
+                while (replace instanceof LocalTmpVar var &&
+                        loads.containsKey(var)) {
+                    replace = loads.get(var);
+                }
+                loads.put(load.result, replace);
             }
             // def of localVar
             else if (stmt instanceof Store store &&
@@ -140,12 +137,10 @@ public class Mem2Reg {
                 allocaDefInBlock.put(localVar.identity, (Storage) store.value);
                 newDef.add(localVar.identity);
             } else if (!(stmt instanceof Alloca)) {
-                stmt.propagateLocalTmpVar();
                 newStatements.add(stmt);
             }
         }
         block.statements = newStatements;
-        block.tailStmt.propagateLocalTmpVar();
         // update allocaDefMap: push
         for (String newVar : newDef) {
             allocaDefMap.get(newVar).push(allocaDefInBlock.get(newVar));
@@ -170,16 +165,24 @@ public class Mem2Reg {
     /**
      * add DomPhi it statements
      */
-    void addDomPhi() {
+    void updateStmts() {
         for (Map.Entry<String, BasicBlock> entry : function.blockMap.entrySet()) {
             BasicBlock block = entry.getValue();
             for (Map.Entry<String, DomPhi> phiEntry : block.domPhiMap.entrySet()) {
                 block.statements.addFirst(phiEntry.getValue());
             }
+            for (Stmt stmt : block.statements) {
+                stmt.replaceUse(loads, null);
+            }
+            block.tailStmt.replaceUse(loads, null);
         }
         for (Map.Entry<String, DomPhi> phiEntry : function.ret.domPhiMap.entrySet()) {
             function.ret.statements.addFirst(phiEntry.getValue());
         }
+        for (Stmt stmt : function.ret.statements) {
+            stmt.replaceUse(loads, null);
+        }
+        function.ret.tailStmt.replaceUse(loads, null);
     }
 
 }

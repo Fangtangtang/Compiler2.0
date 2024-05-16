@@ -1,6 +1,7 @@
 package midend.optimizer;
 
 import ir.*;
+import ir.entity.Storage;
 import ir.function.Function;
 import ir.stmt.*;
 import ir.stmt.instruction.*;
@@ -39,12 +40,15 @@ public class BasicBlockEliminator {
         func.ret.prevBasicBlocks = new ArrayList<>();
         // collect PhiStmts
         ArrayList<DualPhi> dualPhiStmts = new ArrayList<>();
+        ArrayList<DomPhi> domPhiStmts = new ArrayList<>();
         // collect prev
         for (Map.Entry<String, BasicBlock> blockEntry : func.blockMap.entrySet()) {
             BasicBlock block = blockEntry.getValue();
             for (Stmt stmt : block.statements) {
                 if (stmt instanceof DualPhi dualPhi) {
                     dualPhiStmts.add(dualPhi);
+                } else if (stmt instanceof DomPhi domPhi) {
+                    domPhiStmts.add(domPhi);
                 }
             }
 //           TODO:block映射出错
@@ -84,6 +88,9 @@ public class BasicBlockEliminator {
         for (DualPhi dualPhiStmt : dualPhiStmts) {
             dualPhiStmt.remapLabel(blockMap);
         }
+        for (DomPhi domPhiStmt : domPhiStmts) {
+            domPhiStmt.remapLabel(blockMap);
+        }
     }
 
     public void simplifyCtlFlow() {
@@ -109,6 +116,15 @@ public class BasicBlockEliminator {
                     tmp.add(dualPhi.label1);
                     tmp.add(dualPhi.label2);
                     // size<=1 fake dualPhi
+                    if (tmp.size() > 1) {
+                        labelInPhi.addAll(tmp);
+                    }
+                }
+                if (stmt instanceof DomPhi domPhi) {
+                    HashSet<String> tmp = new HashSet<>();
+                    for (Map.Entry<String, Storage> entry : domPhi.phiList.entrySet()) {
+                        tmp.add(entry.getKey());
+                    }
                     if (tmp.size() > 1) {
                         labelInPhi.addAll(tmp);
                     }
