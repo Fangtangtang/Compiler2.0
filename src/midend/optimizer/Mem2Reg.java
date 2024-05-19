@@ -10,6 +10,7 @@ import ir.stmt.*;
 import ir.stmt.instruction.*;
 import utility.Pair;
 import utility.dominance.*;
+import utility.error.InternalException;
 
 import java.util.*;
 
@@ -58,6 +59,7 @@ public class Mem2Reg {
             DomTreeNode node = workList.iterator().next();
             workList.remove(node);
             ArrayList<Pair<String, IRType>> defList = new ArrayList<>();
+            // phi
             for (Map.Entry<String, DomPhi> entry : node.block.domPhiMap.entrySet()) {
                 defList.add(new Pair<>(entry.getKey(), entry.getValue().result.type));
             }
@@ -148,7 +150,15 @@ public class Mem2Reg {
         for (BasicBlock successor : block.successorList) {
             // insert phi
             for (Map.Entry<String, DomPhi> entry : successor.domPhiMap.entrySet()) {
-                entry.getValue().put(block.label, allocaDefInBlock.get(entry.getKey()));
+                if (allocaDefInBlock.containsKey(entry.getKey())) {
+                    entry.getValue().put(block.label, allocaDefInBlock.get(entry.getKey()));
+                } else if (allocaDefMap.containsKey(entry.getKey()) &&
+                        !allocaDefMap.get(entry.getKey()).isEmpty()) {
+                    entry.getValue().put(
+                            block.label,
+                            allocaDefMap.get(entry.getKey()).peek()
+                    );
+                }
             }
             // dfs
             if (!visited.contains(successor.label)) {
