@@ -37,6 +37,7 @@ public class DomTree {
         calDomFrontier();
     }
 
+    // 计算 post order
     HashSet<String> vis = new HashSet<>();
     ArrayList<BasicBlock> postorder = new ArrayList<>();
 
@@ -85,6 +86,7 @@ public class DomTree {
         return b1;
     }
 
+    // todo:incorrect
     private void buildDomTree() {
         int size = reorderedBlock.size();
         //初始化
@@ -105,7 +107,7 @@ public class DomTree {
                 }
                 int pred1, pred2;
                 int newImmDom;
-                int index = 0;
+                int index = 0;// index of the first processed predecessor in predecessorList
                 //the first processed predecessor
                 while (index < predecessorSize
                         && iDomArray[currentNode.block.predecessorList.get(index).reversePostorder] == -1) {
@@ -114,14 +116,14 @@ public class DomTree {
                 if (index == predecessorSize) {
                     throw new InternalException("unexpected CFG: no predecessor updated");
                 }
-                newImmDom = pred1 = index;
+                newImmDom = pred1 = currentNode.block.predecessorList.get(index).reversePostorder;
                 ++index;
                 for (; index < predecessorSize; ++index) {
                     if (iDomArray[currentNode.block.predecessorList.get(index).reversePostorder] == -1) {
                         continue;
                     }
-                    pred2 = index;
-                    newImmDom = intersect(pred1, pred2);
+                    pred2 = currentNode.block.predecessorList.get(index).reversePostorder;
+                    newImmDom = intersect(newImmDom, pred2);
                 }
                 if (iDomArray[i] != newImmDom) {
                     iDomArray[i] = newImmDom;

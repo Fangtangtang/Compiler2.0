@@ -27,6 +27,8 @@ public class Mem2Reg {
     ConstInt zero = new ConstInt("0");
     HashMap<String, Stack<Storage>> allocaDefMap = null;
     HashMap<LocalTmpVar, Storage> loads = null;
+    // BlockName -> < LocalVarNAme , newLiveOutDef >
+    HashMap<String, HashMap<String, Storage>> newDefInBlock = null;
     HashSet<String> visited = null;
 
     /**
@@ -41,7 +43,7 @@ public class Mem2Reg {
         function = func;
         allocaDefMap = new HashMap<>();
         loads = new HashMap<>();
-        visited = new HashSet<>();
+        newDefInBlock = new HashMap<>();
         insertDomPhi();
         rename();
         updateStmts();
@@ -78,7 +80,7 @@ public class Mem2Reg {
                 for (DomTreeNode dfNode : node.domFrontier) {
                     BasicBlock dfBlock = dfNode.block;
                     String varName = pair.getFirst() + "_" + dfBlock.label;
-                    if (!dfBlock.domPhiMap.containsKey(varName)) {
+                    if (!dfBlock.domPhiMap.containsKey(pair.getFirst())) {
                         // insert new phi (new def added to dfBlock)
                         DomPhi domPhi = new DomPhi(new LocalTmpVar(pair.getSecond(), varName));
                         dfBlock.domPhiMap.put(pair.getFirst(), domPhi);
@@ -98,13 +100,18 @@ public class Mem2Reg {
      * |    + 新的 phiDef
      */
     void rename() {
-        renameDfs(function.entry);
+        for (Map.Entry<String, BasicBlock> entry : function.blockMap.entrySet()) {
+            visited = new HashSet<>();
+            BasicBlock block = entry.getValue();
+            renameDfs(block);
+        }
     }
 
     /**
      * dfs on CFG
      * - rename name in use(若visited，不用再做)
      * - insert phi [value,label]
+     * todo: dfs from each node instead of the root of the domTree
      *
      * @param block node in CFG
      */
@@ -144,32 +151,52 @@ public class Mem2Reg {
         }
         block.statements = newStatements;
         // update allocaDefMap: push
-        for (String newVar : newDef) {
-            allocaDefMap.get(newVar).push(allocaDefInBlock.get(newVar));
+        HashMap<String, Storage> map;
+        if (!newDefInBlock.containsKey(block.label)) {
+            map = new HashMap<>();
+            for (String newVar : newDef) {
+                allocaDefMap.get(newVar).push(allocaDefInBlock.get(newVar));
+                map.put(newVar, allocaDefInBlock.get(newVar));
+            }
+            newDefInBlock.put(block.label, map);
+        } else {
+            map = newDefInBlock.get(block.label);
+            for (Map.Entry<String, Storage> defEntry : map.entrySet()) {
+                newDef.add(defEntry.getKey());
+                allocaDefMap.get(defEntry.getKey()).push(defEntry.getValue());
+            }
         }
         for (BasicBlock successor : block.successorList) {
-            // insert phi
-            for (Map.Entry<String, DomPhi> entry : successor.domPhiMap.entrySet()) {
-                if (allocaDefInBlock.containsKey(entry.getKey())) {
-                    entry.getValue().put(block.label, allocaDefInBlock.get(entry.getKey()));
-                } else if (allocaDefMap.containsKey(entry.getKey()) &&
-                        !allocaDefMap.get(entry.getKey()).isEmpty()) {
-                    entry.getValue().put(
-                            block.label,
-                            allocaDefMap.get(entry.getKey()).peek()
-                    );
-                }
-            }
             // dfs
             if (!visited.contains(successor.label)) {
+                // insert phi
+                for (Map.Entry<String, DomPhi> entry : successor.domPhiMap.entrySet()) {
+//                    if (newDef.contains(entry.getKey())) {
+//                        entry.getValue().put(block.label, allocaDefInBlock.get(entry.getKey()));
+//                    }
+                    if (allocaDefInBlock.containsKey(entry.getKey())) {
+                        entry.getValue().put(block.label, allocaDefInBlock.get(entry.getKey()));
+                    } else if (allocaDefMap.containsKey(entry.getKey()) &&
+                            !allocaDefMap.get(entry.getKey()).isEmpty()) {
+                        entry.getValue().put(
+                                block.label,
+                                allocaDefMap.get(entry.getKey()).peek()
+                        );
+                    }
+                }
                 visited.add(successor.label);
                 renameDfs(successor);
             }
         }
         // update allocaDefMap: pop
-        for (String newVar : newDef) {
-            allocaDefMap.get(newVar).pop();
+        if (!newDefInBlock.containsKey(block.label)) {
+            throw new InternalException("unexpected block rename visit!");
+        } else {
+            for (String newVar : newDef) {
+                allocaDefMap.get(newVar).pop();
+            }
         }
+
     }
 
     /**
