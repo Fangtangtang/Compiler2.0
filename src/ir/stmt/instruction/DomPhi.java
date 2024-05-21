@@ -4,6 +4,8 @@ import ir.IRVisitor;
 import ir.entity.*;
 import ir.entity.constant.*;
 import ir.entity.var.*;
+import ir.irType.IRType;
+import ir.irType.IntType;
 import ir.stmt.Stmt;
 import utility.Pair;
 import utility.error.InternalException;
@@ -50,22 +52,39 @@ public class DomPhi extends Instruction {
     public void print(PrintStream out) {
         StringBuilder str = new StringBuilder("\t" + result.toString() + " = phi ");
         boolean isFirst = true;
+        IRType type = null;
+        StringBuilder varStr = new StringBuilder();
+        for (Map.Entry<String, Storage> entry : phiList.entrySet()) {
+            Storage ans = entry.getValue();
+            if (!(ans instanceof Null)) {
+                type = ans.type;
+            }
+        }
+        if (type == null) {
+            throw new InternalException("[DomPhi]: unexpected phi value");
+        }
         for (Map.Entry<String, Storage> entry : phiList.entrySet()) {
             Storage ans = entry.getValue();
             String s;
-            if (ans instanceof ConstInt constInt) {
+            if (ans instanceof Null) {
+                if (type instanceof IntType) {
+                    s = "0";
+                } else {
+                    s = "null";
+                }
+            } else if (ans instanceof ConstInt constInt) {
                 s = constInt.value;
             } else {
                 s = ans.toString();
             }
-            if (isFirst) {
-                isFirst = false;
-                str.append(ans.type);
-                str.append(" [ ").append(s).append(", %").append(entry.getKey()).append(" ]");
+            if (!isFirst) {
+                varStr.append(",");
             } else {
-                str.append(", [ ").append(s).append(", %").append(entry.getKey()).append(" ]");
+                isFirst = false;
             }
+            varStr.append(" [ ").append(s).append(", %").append(entry.getKey()).append(" ]");
         }
+        str.append(type.toString()).append(varStr);
         out.println(str);
     }
 

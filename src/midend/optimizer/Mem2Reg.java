@@ -3,6 +3,7 @@ package midend.optimizer;
 import ir.BasicBlock;
 import ir.entity.Storage;
 import ir.entity.constant.ConstInt;
+import ir.entity.constant.Null;
 import ir.entity.var.*;
 import ir.function.Function;
 import ir.irType.IRType;
@@ -30,11 +31,14 @@ public class Mem2Reg {
     // BlockName -> < LocalVarNAme , newLiveOutDef >
     HashMap<String, HashMap<String, Storage>> newDefInBlock = null;
     HashSet<String> visited = null;
+    Storage undefinedVar = new Null();
 
     /**
      * 以函数为单位做操作
      * - collectAlloca：不额外做，所有LocalVar类型的
      * - insertDomPhi
+     * |    + store: localVar的真赋值
+     * |    + alloca: localVar的null赋值
      * - rename
      *
      * @param func local function
@@ -145,7 +149,10 @@ public class Mem2Reg {
                     store.pointer instanceof LocalVar localVar) {
                 allocaDefInBlock.put(localVar.identity, (Storage) store.value);
                 newDef.add(localVar.identity);
-            } else if (!(stmt instanceof Alloca)) {
+            } else if (stmt instanceof Alloca alloca) {
+                allocaDefInBlock.put(alloca.result.identity, undefinedVar);
+                newDef.add(alloca.result.identity);
+            } else {
                 newStatements.add(stmt);
             }
         }
@@ -163,27 +170,28 @@ public class Mem2Reg {
             map = newDefInBlock.get(block.label);
             for (Map.Entry<String, Storage> defEntry : map.entrySet()) {
                 newDef.add(defEntry.getKey());
+                allocaDefInBlock.put(defEntry.getKey(), defEntry.getValue());
                 allocaDefMap.get(defEntry.getKey()).push(defEntry.getValue());
             }
         }
         for (BasicBlock successor : block.successorList) {
-            // dfs
-            if (!visited.contains(successor.label)) {
-                // insert phi
-                for (Map.Entry<String, DomPhi> entry : successor.domPhiMap.entrySet()) {
+            // insert phi
+            for (Map.Entry<String, DomPhi> entry : successor.domPhiMap.entrySet()) {
 //                    if (newDef.contains(entry.getKey())) {
 //                        entry.getValue().put(block.label, allocaDefInBlock.get(entry.getKey()));
 //                    }
-                    if (allocaDefInBlock.containsKey(entry.getKey())) {
-                        entry.getValue().put(block.label, allocaDefInBlock.get(entry.getKey()));
-                    } else if (allocaDefMap.containsKey(entry.getKey()) &&
-                            !allocaDefMap.get(entry.getKey()).isEmpty()) {
-                        entry.getValue().put(
-                                block.label,
-                                allocaDefMap.get(entry.getKey()).peek()
-                        );
-                    }
+                if (allocaDefInBlock.containsKey(entry.getKey())) {
+                    entry.getValue().put(block.label, allocaDefInBlock.get(entry.getKey()));
+                } else if (allocaDefMap.containsKey(entry.getKey()) &&
+                        !allocaDefMap.get(entry.getKey()).isEmpty()) {
+                    entry.getValue().put(
+                            block.label,
+                            allocaDefMap.get(entry.getKey()).peek()
+                    );
                 }
+            }
+            // dfs
+            if (!visited.contains(successor.label)) {
                 visited.add(successor.label);
                 renameDfs(successor);
             }
