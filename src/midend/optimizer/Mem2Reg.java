@@ -162,8 +162,11 @@ public class Mem2Reg {
         if (!newDefInBlock.containsKey(block.label)) {
             map = new HashMap<>();
             for (String newVar : newDef) {
-                allocaDefMap.get(newVar).push(allocaDefInBlock.get(newVar));
-                map.put(newVar, allocaDefInBlock.get(newVar));
+                // only care about used localVar
+                if (allocaDefMap.containsKey(newVar)) {
+                    allocaDefMap.get(newVar).push(allocaDefInBlock.get(newVar));
+                    map.put(newVar, allocaDefInBlock.get(newVar));
+                }
             }
             newDefInBlock.put(block.label, map);
         } else {
@@ -181,12 +184,20 @@ public class Mem2Reg {
 //                        entry.getValue().put(block.label, allocaDefInBlock.get(entry.getKey()));
 //                    }
                 if (allocaDefInBlock.containsKey(entry.getKey())) {
-                    entry.getValue().put(block.label, allocaDefInBlock.get(entry.getKey()));
+                    entry.getValue().put(
+                            block.label,
+                            allocaDefInBlock.get(entry.getKey())
+                    );
                 } else if (allocaDefMap.containsKey(entry.getKey()) &&
                         !allocaDefMap.get(entry.getKey()).isEmpty()) {
                     entry.getValue().put(
                             block.label,
                             allocaDefMap.get(entry.getKey()).peek()
+                    );
+                } else {
+                    entry.getValue().put(
+                            block.label,
+                            undefinedVar
                     );
                 }
             }
@@ -201,7 +212,9 @@ public class Mem2Reg {
             throw new InternalException("unexpected block rename visit!");
         } else {
             for (String newVar : newDef) {
-                allocaDefMap.get(newVar).pop();
+                if (allocaDefMap.containsKey(newVar)) {
+                    allocaDefMap.get(newVar).pop();
+                }
             }
         }
 

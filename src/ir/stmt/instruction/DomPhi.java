@@ -33,6 +33,9 @@ public class DomPhi extends Instruction {
     }
 
     public void put(String label, Storage value) {
+        if (value instanceof Null && phiList.containsKey(label)) {
+            return;
+        }
         phiList.put(label, value);
     }
 
@@ -61,6 +64,7 @@ public class DomPhi extends Instruction {
             }
         }
         if (type == null) {
+//            return;
             throw new InternalException("[DomPhi]: unexpected phi value");
         }
         for (Map.Entry<String, Storage> entry : phiList.entrySet()) {
