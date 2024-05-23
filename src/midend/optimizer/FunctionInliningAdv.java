@@ -19,9 +19,6 @@ import java.util.*;
 public class FunctionInliningAdv {
     IRRoot irRoot;
 
-    //记录局部变量在target中的alloca
-    HashMap<LocalVar, LocalVar> curAllocaMap = null;
-
     LinkedList<Stmt> newAllocaStmt = null;
 
     HashMap<String, BasicBlock> newBlock = null;
@@ -78,16 +75,18 @@ public class FunctionInliningAdv {
         }
     }
 
+    ArrayList<DualPhi> dualPhis = null;
+
     boolean inliningPass() {
         boolean flag = false;
         for (Map.Entry<String, Function> funcEntry : irRoot.funcDef.entrySet()) {
             Function func = funcEntry.getValue();
-            curAllocaMap = new HashMap<>();
             newAllocaStmt = new LinkedList<>();
             newBlock = new HashMap<>();
             terminalStmts = new ArrayList<>();
             renameMap = new HashMap<>();
-            ArrayList<DualPhi> dualPhis = new ArrayList<>();
+//            ArrayList<DualPhi>
+            dualPhis = new ArrayList<>();
             if (func.entry != null) {
                 for (Map.Entry<String, BasicBlock> bbEntry : func.blockMap.entrySet()) {
                     BasicBlock block = bbEntry.getValue();
@@ -123,11 +122,11 @@ public class FunctionInliningAdv {
                     replaceBlock.statements.addAll(block.statements.subList(prevInstIdx, block.statements.size()));
                     replaceBlock.tailStmt = block.tailStmt;
                 }
-                func.entry.statements.addAll(0, newAllocaStmt);
                 func.blockMap.putAll(newBlock);
                 if (newBlock.containsKey(func.entry.label)) {
                     func.entry = newBlock.get(func.entry.label);
                 }
+                func.entry.statements.addAll(0, newAllocaStmt);
                 targetRedirect(func);
                 for (DualPhi dualPhi : dualPhis) {
                     if (renameMap.containsKey(dualPhi.label1)) {
@@ -138,7 +137,6 @@ public class FunctionInliningAdv {
                     }
                 }
             }
-            curAllocaMap = null;
             newAllocaStmt = null;
             newBlock = null;
             renameMap = null;
@@ -158,22 +156,22 @@ public class FunctionInliningAdv {
         //当前在处理的tar中block
         BasicBlock curBlock = replaceBlock;
         ArrayList<BasicBlock> blocks = new ArrayList<>();
-        blocks.add(curBlock);
+//        blocks.add(curBlock);
         newBlock.put(curBlock.label, curBlock);
         //call前的不变
         if (prevInstIdx < callInstIdx) {
             curBlock.statements.addAll(callingBlock.statements.subList(prevInstIdx, callInstIdx));
         }
-
+        int barrierIdx = curBlock.statements.size();
         ListIterator<Stmt> iterInCurBlock = curBlock.statements.listIterator(
                 curBlock.statements.size()
         );
-        //内联的localTmpVar需要创建副本
-        HashMap<LocalTmpVar, Storage> copyMap = new HashMap<>();
+        // 副本
+        HashMap<String, Storage> copyMap = new HashMap<>();
         //函数入参
         for (int i = 0; i < src.parameterList.size(); i++) {
             LocalTmpVar param = src.parameterList.get(i);
-            copyMap.put(param, call.parameterList.get(i));
+            copyMap.put(param.toString(), call.parameterList.get(i));
         }
         boolean isFirst = true;
         //可能需要bb重定向
@@ -193,38 +191,20 @@ public class FunctionInliningAdv {
             while (iterator.hasNext()) {
                 Stmt stmt = iterator.next();
                 if (stmt instanceof Alloca alloca) {
-                    //第一次inline到该函数中
-                    if (!curAllocaMap.containsKey(alloca.result)) {
-                        Alloca allocaStmt;
-                        if (tar.addedAlloca.containsKey(alloca.result)) {
-                            allocaStmt = tar.addedAlloca.get(alloca.result);
-                        } else {
-                            allocaStmt = new Alloca(
-                                    alloca.result.storage.type,
-                                    src.funcName + "_" + tar.funcName + "_" + alloca.result.identity
-                            );
-                            tar.addedAlloca.put(alloca.result, allocaStmt);
-                            newAllocaStmt.add(allocaStmt);
-                        }
-                        //转移localVar
-                        curAllocaMap.put(alloca.result, allocaStmt.result);
-                    }
+                    Alloca allocaStmt = (Alloca) alloca.creatCopy("_" + tar.funcName + num).getFirst();
+                    newAllocaStmt.add(allocaStmt);
+                    copyMap.put(alloca.result.toString(), allocaStmt.result);
                 } else {
                     Pair<Stmt, LocalTmpVar> stmtCopy = stmt.creatCopy("_" + tar.funcName + num);
                     LocalTmpVar newDef = stmtCopy.getSecond();
                     if (newDef != null) {
                         LocalTmpVar def = (LocalTmpVar) stmt.getDef();
-                        copyMap.put(def, newDef);
+                        copyMap.put(def.toString(), newDef);
                     }
                     //insert stmt
                     Stmt newStmt = stmtCopy.getFirst();
                     if (newStmt instanceof DualPhi dualPhi) {
-                        if (renameMap.containsKey(dualPhi.label1)) {
-                            dualPhi.label1 = renameMap.get(dualPhi.label1);
-                        }
-                        if (renameMap.containsKey(dualPhi.label2)) {
-                            dualPhi.label2 = renameMap.get(dualPhi.label2);
-                        }
+                        dualPhis.add(dualPhi);
                     }
                     iterInCurBlock.add(newStmt);
                 }
@@ -234,7 +214,6 @@ public class FunctionInliningAdv {
             curBlock.tailStmt = (TerminalStmt) stmtCopy.getFirst();
             terminalStmts.add(curBlock.tailStmt);
         }
-        //todo:src.ret != null能保证？
         curBlock = new BasicBlock(src.ret.label + "_" + tar.funcName + num);
         blocks.add(curBlock);
         newBlock.put(curBlock.label, curBlock);
@@ -243,36 +222,43 @@ public class FunctionInliningAdv {
         if (call.result != null) {
             Load loadStmt = (Load) src.ret.statements.get(0);
             iterInCurBlock.add(
-                    new Load(call.result, curAllocaMap.get((LocalVar) loadStmt.pointer))
+                    new Load(call.result, copyMap.get(loadStmt.pointer.toString()))
             );
+        }
+        // replace use
+        // for the first one, start from barrier
+        for (int i = barrierIdx; i < replaceBlock.statements.size(); i++) {
+            Stmt stmt = replaceBlock.statements.get(i);
+            stmt.replaceUse(copyMap);
+        }
+        if (replaceBlock.tailStmt != null) {
+            replaceBlock.tailStmt.replaceUse(copyMap);
         }
         replaceUse(copyMap, blocks);
         mergePhiResult(src, tar, copyMap, "_" + tar.funcName + num);
         return curBlock;
     }
 
-    void mergePhiResult(Function src, Function tar, HashMap<LocalTmpVar, Storage> copyMap, String suffix) {
+    void mergePhiResult(Function src, Function tar, HashMap<String, Storage> copyMap, String suffix) {
         for (Map.Entry<String, Storage> entry : src.phiResult.entrySet()) {
-            tar.phiResult.put(entry.getKey() + suffix, (Storage) replace(entry.getValue(), copyMap, curAllocaMap));
+            tar.phiResult.put(entry.getKey() + suffix, (Storage) replace(entry.getValue(), copyMap));
         }
     }
 
-    Entity replace(Entity entity, HashMap<LocalTmpVar, Storage> copyMap, HashMap<LocalVar, LocalVar> curAllocaMap) {
-        if (entity instanceof LocalVar && curAllocaMap.containsKey(entity)) {
-            entity = curAllocaMap.get(entity);
-        } else if (entity instanceof LocalTmpVar && copyMap.containsKey(entity)) {
-            entity = copyMap.get(entity);
+    Entity replace(Entity entity, HashMap<String, Storage> copyMap) {
+        if (copyMap.containsKey(entity.toString())) {
+            entity = copyMap.get(entity.toString());
         }
         return entity;
     }
 
-    void replaceUse(HashMap<LocalTmpVar, Storage> copyMap, ArrayList<BasicBlock> blocks) {
+    void replaceUse(HashMap<String, Storage> copyMap, ArrayList<BasicBlock> blocks) {
         for (BasicBlock block : blocks) {
             for (Stmt stmt : block.statements) {
-                stmt.replaceUse(copyMap, curAllocaMap);
+                stmt.replaceUse(copyMap);
             }
             if (block.tailStmt != null) {
-                block.tailStmt.replaceUse(copyMap, curAllocaMap);
+                block.tailStmt.replaceUse(copyMap);
             }
         }
     }

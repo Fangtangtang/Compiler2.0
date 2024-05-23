@@ -51,7 +51,7 @@ public class CCP {
                     >
             > localTmpVarInfo = null;
 
-    HashMap<LocalTmpVar, Constant> localTmpVar2Const = null;
+    HashMap<String, Storage> localTmpVar2Const = null;
     // 收集block信息
     // (currentBlockType,newly promoted)
     HashMap<String,
@@ -244,7 +244,7 @@ public class CCP {
                 throw new InternalException("[CCP]:should have converted to jump?");
             } else if (branch.condition instanceof LocalTmpVar tmpVar) {
                 if (localTmpVarInfo.get(tmpVar).getFirst() == VarType.oneConstDef) {
-                    cond = ((ConstBool) localTmpVar2Const.get(tmpVar)).value;
+                    cond = ((ConstBool) localTmpVar2Const.get(tmpVar.toString())).value;
                     executable = 1;
                 } else if (localTmpVarInfo.get(tmpVar).getFirst() == VarType.multiExeDef) {
                     executable = 2;
@@ -456,7 +456,7 @@ public class CCP {
                     }
                     case oneConstDef -> {
                         return new Pair<>(
-                                localTmpVar2Const.get(tmpVar),
+                                (Constant) localTmpVar2Const.get(tmpVar.toString()),
                                 VarType.oneConstDef
                         );
                     }
@@ -478,7 +478,7 @@ public class CCP {
             }
             case oneConstDef -> {
                 varWorkList.add(tmpVar);
-                localTmpVar2Const.remove(tmpVar);
+                localTmpVar2Const.remove(tmpVar.toString());
                 tmpInfo.setFirst(VarType.multiExeDef);
             }
             case multiExeDef -> {
@@ -491,13 +491,13 @@ public class CCP {
         switch (tmpInfo.getFirst()) {
             case noExeDef -> {
                 tmpInfo.setFirst(VarType.oneConstDef);
-                localTmpVar2Const.put(tmpVar, constant);
+                localTmpVar2Const.put(tmpVar.toString(), constant);
                 varWorkList.add(tmpVar);
             }
             case oneConstDef -> {
-                if (!equalInValue(constant, localTmpVar2Const.get(tmpVar))) {// promote to multi
+                if (!equalInValue(constant, (Constant) localTmpVar2Const.get(tmpVar.toString()))) {// promote to multi
                     tmpInfo.setFirst(VarType.multiExeDef);
-                    localTmpVar2Const.remove(tmpVar);
+                    localTmpVar2Const.remove(tmpVar.toString());
                     // add to workList
                     varWorkList.add(tmpVar);
                 }

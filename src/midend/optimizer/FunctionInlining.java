@@ -15,6 +15,7 @@ import java.util.*;
 /**
  * @author F
  * 函数内联
+ * 一个函数在一次pass中仅被内联一次？
  * - 暂不处理递归函数
  * - 函数调用关系成图，尝试将tail全缩掉？
  * TODO: 选择哪些做 inlining

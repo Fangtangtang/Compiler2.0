@@ -27,7 +27,7 @@ public class Mem2Reg {
     Function function;
     ConstInt zero = new ConstInt("0");
     HashMap<String, Stack<Storage>> allocaDefMap = null;
-    HashMap<LocalTmpVar, Storage> loads = null;
+    HashMap<String, Storage> loads = null;
     // BlockName -> < LocalVarNAme , newLiveOutDef >
     HashMap<String, HashMap<String, Storage>> newDefInBlock = null;
     HashSet<String> visited = null;
@@ -139,10 +139,10 @@ public class Mem2Reg {
                     load.pointer instanceof LocalVar localVar) {
                 Storage replace = allocaDefInBlock.get(localVar.identity);
                 while (replace instanceof LocalTmpVar var &&
-                        loads.containsKey(var)) {
-                    replace = loads.get(var);
+                        loads.containsKey(var.toString())) {
+                    replace = loads.get(var.toString());
                 }
-                loads.put(load.result, replace);
+                loads.put(load.result.toString(), replace);
             }
             // def of localVar
             else if (stmt instanceof Store store &&
@@ -230,17 +230,17 @@ public class Mem2Reg {
                 block.statements.addFirst(phiEntry.getValue());
             }
             for (Stmt stmt : block.statements) {
-                stmt.replaceUse(loads, null);
+                stmt.replaceUse(loads);
             }
-            block.tailStmt.replaceUse(loads, null);
+            block.tailStmt.replaceUse(loads);
         }
         for (Map.Entry<String, DomPhi> phiEntry : function.ret.domPhiMap.entrySet()) {
             function.ret.statements.addFirst(phiEntry.getValue());
         }
         for (Stmt stmt : function.ret.statements) {
-            stmt.replaceUse(loads, null);
+            stmt.replaceUse(loads);
         }
-        function.ret.tailStmt.replaceUse(loads, null);
+        function.ret.tailStmt.replaceUse(loads);
     }
 
 }

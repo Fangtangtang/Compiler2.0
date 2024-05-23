@@ -105,7 +105,7 @@ public class Jump extends TerminalStmt {
     }
 
     @Override
-    public void replaceUse(HashMap<LocalTmpVar, Constant> constantMap) {
+    public void replaceUse(HashMap<String, Storage> constantMap) {
         result = (Storage) replace(result, constantMap);
     }
 

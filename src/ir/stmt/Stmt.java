@@ -42,16 +42,25 @@ public abstract class Stmt implements Serializable {
     //包括需要新建的def
     public abstract Pair<Stmt, LocalTmpVar> creatCopy(String suffix);
 
-    public abstract void replaceUse(HashMap<LocalTmpVar, Constant> constantMap);
+//    public abstract void replaceUse(HashMap<LocalTmpVar, Constant> constantMap);
 
     public abstract void replaceUse(HashMap<LocalTmpVar, Storage> copyMap, HashMap<LocalVar, LocalVar> curAllocaMap);
 
-    public Entity replace(Entity entity, HashMap<LocalTmpVar, Constant> constantMap) {
-        if (entity instanceof LocalTmpVar tmpVar && constantMap.containsKey(tmpVar)) {
-            return constantMap.get(tmpVar);
+    public abstract void replaceUse(HashMap<String, Storage> copyMap);
+
+    public Entity replace(Entity entity, HashMap<String, Storage> constantMap) {
+        if (entity != null && constantMap.containsKey(entity.toString())) {
+            return constantMap.get(entity.toString());
         }
         return entity;
     }
+
+//    public Entity replace(Entity entity, HashMap<String, Constant> constantMap) {
+//        if (entity instanceof LocalTmpVar tmpVar && constantMap.containsKey(tmpVar)) {
+//            return constantMap.get(tmpVar.toString());
+//        }
+//        return entity;
+//    }
 
     public Entity replace(Entity entity, HashMap<LocalTmpVar, Storage> copyMap, HashMap<LocalVar, LocalVar> curAllocaMap) {
         if (entity instanceof LocalVar && curAllocaMap != null && curAllocaMap.containsKey(entity)) {

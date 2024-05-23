@@ -18,27 +18,27 @@ public class IROptimizer {
     }
 
     public void execute() {
-        FunctionInlining functionInlining = new FunctionInlining(irRoot);
+        FunctionInliningAdv functionInlining = new FunctionInliningAdv(irRoot);
         functionInlining.execute();
-        BasicBlockEliminator eliminator = new BasicBlockEliminator(irRoot);
-        eliminator.simplifyBlock();
-
-        Global2Local global2Local = new Global2Local(irRoot);
-        global2Local.execute();
-
-        // todo =============================================
-        CFGBuilder cfgBuilder = new CFGBuilder(irRoot);
-        cfgBuilder.build();
-        DomTreeBuilder domTreeBuilder = new DomTreeBuilder(irRoot);
-        domTreeBuilder.build();
-        Mem2Reg mem2Reg = new Mem2Reg();
-        for (Map.Entry<String, Function> entry : irRoot.funcDef.entrySet()) {
-            Function func = entry.getValue();
-            //普通local function
-            if (func.entry != null) {
-                mem2Reg.execute(func);
-            }
-        }
+//        BasicBlockEliminator eliminator = new BasicBlockEliminator(irRoot);
+//        eliminator.simplifyBlock();
+//
+//        Global2Local global2Local = new Global2Local(irRoot);
+//        global2Local.execute();
+//
+//        // todo =============================================
+//        CFGBuilder cfgBuilder = new CFGBuilder(irRoot);
+//        cfgBuilder.build();
+//        DomTreeBuilder domTreeBuilder = new DomTreeBuilder(irRoot);
+//        domTreeBuilder.build();
+//        Mem2Reg mem2Reg = new Mem2Reg();
+//        for (Map.Entry<String, Function> entry : irRoot.funcDef.entrySet()) {
+//            Function func = entry.getValue();
+//            //普通local function
+//            if (func.entry != null) {
+//                mem2Reg.execute(func);
+//            }
+//        }
         // todo =============================================
 //
 //        LocalTmpVarPropagation localTmpVarPropagation = new LocalTmpVarPropagation(irRoot);

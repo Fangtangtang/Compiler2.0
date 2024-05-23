@@ -142,7 +142,7 @@ public class DualPhi extends Instruction {
     }
 
     @Override
-    public void replaceUse(HashMap<LocalTmpVar, Constant> constantMap) {
+    public void replaceUse(HashMap<String, Storage> constantMap) {
         ans1 = (Storage) replace(ans1, constantMap);
         ans2 = (Storage) replace(ans2, constantMap);
     }

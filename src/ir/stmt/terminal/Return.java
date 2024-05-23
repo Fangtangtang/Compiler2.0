@@ -101,7 +101,7 @@ public class Return extends TerminalStmt {
     }
 
     @Override
-    public void replaceUse(HashMap<LocalTmpVar, Constant> constantMap) {
+    public void replaceUse(HashMap<String, Storage> constantMap) {
         value = replace(value, constantMap);
     }
 

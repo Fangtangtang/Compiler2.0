@@ -145,7 +145,7 @@ public class Call extends Instruction {
     }
 
     @Override
-    public void replaceUse(HashMap<LocalTmpVar, Constant> constantMap) {
+    public void replaceUse(HashMap<String, Storage> constantMap) {
         ArrayList<Storage> prev = parameterList;
         parameterList = new ArrayList<>();
         for (Storage param : prev) {

@@ -146,7 +146,7 @@ public class Binary extends Instruction {
     }
 
     @Override
-    public void replaceUse(HashMap<LocalTmpVar, Constant> constantMap) {
+    public void replaceUse(HashMap<String, Storage> constantMap) {
         op1 = replace(op1, constantMap);
         op2 = replace(op2, constantMap);
     }

@@ -71,11 +71,12 @@ public class Alloca extends Instruction {
 
     @Override
     public Pair<Stmt, LocalTmpVar> creatCopy(String suffix) {
-        return null;
+        Stmt stmt = new Alloca(this.result.storage.type, this.result.identity + suffix);
+        return new Pair<>(stmt, null);
     }
 
     @Override
-    public void replaceUse(HashMap<LocalTmpVar, Constant> constantMap) {
+    public void replaceUse(HashMap<String, Storage> constantMap) {
         return;
     }
 

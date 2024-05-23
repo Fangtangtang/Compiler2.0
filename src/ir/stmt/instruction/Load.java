@@ -91,7 +91,7 @@ public class Load extends Instruction {
     }
 
     @Override
-    public void replaceUse(HashMap<LocalTmpVar, Constant> constantMap) {
+    public void replaceUse(HashMap<String, Storage> constantMap) {
         pointer = replace(pointer, constantMap);
     }
 

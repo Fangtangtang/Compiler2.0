@@ -153,7 +153,7 @@ public class DomPhi extends Instruction {
     }
 
     @Override
-    public void replaceUse(HashMap<LocalTmpVar, Constant> constantMap) {
+    public void replaceUse(HashMap<String, Storage> constantMap) {
         HashMap<String, Storage> newList = new HashMap<>();
         for (Map.Entry<String, Storage> entry : phiList.entrySet()) {
             newList.put(

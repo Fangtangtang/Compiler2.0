@@ -104,7 +104,7 @@ public class Store extends Instruction {
     }
 
     @Override
-    public void replaceUse(HashMap<LocalTmpVar, Constant> constantMap) {
+    public void replaceUse(HashMap<String, Storage> constantMap) {
         value = replace(value, constantMap);
         pointer = replace(pointer, constantMap);
     }
