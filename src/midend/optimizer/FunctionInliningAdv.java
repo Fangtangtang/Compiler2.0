@@ -25,7 +25,7 @@ public class FunctionInliningAdv {
     ArrayList<TerminalStmt> terminalStmts = null;
 
     //BB重命名
-    HashMap<String, String> renameMap = null;
+    HashMap<String, String> renameMapInFunc = null;
 
     public FunctionInliningAdv(IRRoot root) {
         this.irRoot = root;
@@ -75,7 +75,7 @@ public class FunctionInliningAdv {
         }
     }
 
-    ArrayList<DualPhi> dualPhis = null;
+//    ArrayList<DualPhi> dualPhis = null;
 
     boolean inliningPass() {
         boolean flag = false;
@@ -84,9 +84,9 @@ public class FunctionInliningAdv {
             newAllocaStmt = new LinkedList<>();
             newBlock = new HashMap<>();
             terminalStmts = new ArrayList<>();
-            renameMap = new HashMap<>();
-//            ArrayList<DualPhi>
-            dualPhis = new ArrayList<>();
+            renameMapInFunc = new HashMap<>();
+            // phis in function
+            ArrayList<DualPhi> dualPhis = new ArrayList<>();
             if (func.entry != null) {
                 for (Map.Entry<String, BasicBlock> bbEntry : func.blockMap.entrySet()) {
                     BasicBlock block = bbEntry.getValue();
@@ -114,12 +114,15 @@ public class FunctionInliningAdv {
                             } else {
                                 func.calleeMap.put(callStmt.function, num - 1);
                             }
-                        } else if (stmt instanceof DualPhi dualPhi) {
+                        }
+                        // phi in target function
+                        else if (stmt instanceof DualPhi dualPhi) {
                             dualPhis.add(dualPhi);
                         }
                     }
-                    // todo:range
-                    replaceBlock.statements.addAll(block.statements.subList(prevInstIdx, block.statements.size()));
+                    replaceBlock.statements.addAll(
+                            block.statements.subList(prevInstIdx, block.statements.size())
+                    );
                     replaceBlock.tailStmt = block.tailStmt;
                 }
                 func.blockMap.putAll(newBlock);
@@ -129,17 +132,28 @@ public class FunctionInliningAdv {
                 func.entry.statements.addAll(0, newAllocaStmt);
                 targetRedirect(func);
                 for (DualPhi dualPhi : dualPhis) {
-                    if (renameMap.containsKey(dualPhi.label1)) {
-                        dualPhi.label1 = renameMap.get(dualPhi.label1);
+                    // 几层嵌套
+                    if (renameMapInFunc.containsKey(dualPhi.label1)) {
+                        dualPhi.label1 = renameMapInFunc.get(dualPhi.label1);
                     }
-                    if (renameMap.containsKey(dualPhi.label2)) {
-                        dualPhi.label2 = renameMap.get(dualPhi.label2);
+                    if (renameMapInFunc.containsKey(dualPhi.label2)) {
+                        dualPhi.label2 = renameMapInFunc.get(dualPhi.label2);
                     }
+//                    String label = dualPhi.label1;
+//                    while (renameMapInFunc.containsKey(label)) {
+//                        label = renameMapInFunc.get(label);
+//                    }
+//                    dualPhi.label1 = label;
+//                    label = dualPhi.label2;
+//                    while (renameMapInFunc.containsKey(label)) {
+//                        label = renameMapInFunc.get(label);
+//                    }
+//                    dualPhi.label2 = label;
                 }
             }
             newAllocaStmt = null;
             newBlock = null;
-            renameMap = null;
+            renameMapInFunc = null;
         }
         return flag;
     }
@@ -151,12 +165,13 @@ public class FunctionInliningAdv {
                             int prevInstIdx,
                             int callInstIdx,
                             int num) {
+        HashMap<String, String> renameMapInSrc = new HashMap<>();
         //entry特殊重命名
-        renameMap.put(src.entry.label + "_" + tar.funcName + num, callingBlock.label);
+        String prevEntryLabel = src.entry.label + "_" + tar.funcName + num;
+        String newEntryLabel = replaceBlock.label;
         //当前在处理的tar中block
         BasicBlock curBlock = replaceBlock;
         ArrayList<BasicBlock> blocks = new ArrayList<>();
-//        blocks.add(curBlock);
         newBlock.put(curBlock.label, curBlock);
         //call前的不变
         if (prevInstIdx < callInstIdx) {
@@ -204,7 +219,12 @@ public class FunctionInliningAdv {
                     //insert stmt
                     Stmt newStmt = stmtCopy.getFirst();
                     if (newStmt instanceof DualPhi dualPhi) {
-                        dualPhis.add(dualPhi);
+                        if (dualPhi.label1.equals(prevEntryLabel)) {
+                            dualPhi.label1 = newEntryLabel;
+                        }
+                        if (dualPhi.label2.equals(prevEntryLabel)) {
+                            dualPhi.label2 = newEntryLabel;
+                        }
                     }
                     iterInCurBlock.add(newStmt);
                 }
@@ -217,7 +237,7 @@ public class FunctionInliningAdv {
         curBlock = new BasicBlock(src.ret.label + "_" + tar.funcName + num);
         blocks.add(curBlock);
         newBlock.put(curBlock.label, curBlock);
-        renameMap.put(callingBlock.label, curBlock.label);
+        renameMapInFunc.put(callingBlock.label, curBlock.label);
         iterInCurBlock = curBlock.statements.listIterator();
         if (call.result != null) {
             Load loadStmt = (Load) src.ret.statements.get(0);

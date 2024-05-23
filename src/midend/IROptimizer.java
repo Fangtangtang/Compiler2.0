@@ -20,27 +20,26 @@ public class IROptimizer {
     public void execute() {
         FunctionInliningAdv functionInlining = new FunctionInliningAdv(irRoot);
         functionInlining.execute();
-//        BasicBlockEliminator eliminator = new BasicBlockEliminator(irRoot);
-//        eliminator.simplifyBlock();
-//
-//        Global2Local global2Local = new Global2Local(irRoot);
-//        global2Local.execute();
-//
-//        // todo =============================================
-//        CFGBuilder cfgBuilder = new CFGBuilder(irRoot);
-//        cfgBuilder.build();
-//        DomTreeBuilder domTreeBuilder = new DomTreeBuilder(irRoot);
-//        domTreeBuilder.build();
-//        Mem2Reg mem2Reg = new Mem2Reg();
-//        for (Map.Entry<String, Function> entry : irRoot.funcDef.entrySet()) {
-//            Function func = entry.getValue();
-//            //普通local function
-//            if (func.entry != null) {
-//                mem2Reg.execute(func);
-//            }
-//        }
-        // todo =============================================
-//
+        BasicBlockEliminator eliminator = new BasicBlockEliminator(irRoot);
+        eliminator.simplifyBlock();
+
+        Global2Local global2Local = new Global2Local(irRoot);
+        global2Local.execute();
+
+        // mem2reg
+        CFGBuilder cfgBuilder = new CFGBuilder(irRoot);
+        cfgBuilder.build();
+        DomTreeBuilder domTreeBuilder = new DomTreeBuilder(irRoot);
+        domTreeBuilder.build();
+        Mem2Reg mem2Reg = new Mem2Reg();
+        for (Map.Entry<String, Function> entry : irRoot.funcDef.entrySet()) {
+            Function func = entry.getValue();
+            //普通local function
+            if (func.entry != null) {
+                mem2Reg.execute(func);
+            }
+        }
+
 //        LocalTmpVarPropagation localTmpVarPropagation = new LocalTmpVarPropagation(irRoot);
 //        localTmpVarPropagation.execute();
 //
@@ -49,10 +48,10 @@ public class IROptimizer {
 //
 //        CCP ccp = new CCP(irRoot);
 //        ccp.execute();
-//
+
 //        DeadCodeEliminator codeEliminator = new DeadCodeEliminator(irRoot);
 //        codeEliminator.execute();
-//
+
 //        eliminator.simplifyBlock();
 //        eliminator.simplifyCtlFlow();
     }
