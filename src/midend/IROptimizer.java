@@ -18,7 +18,7 @@ public class IROptimizer {
     }
 
     public void execute() {
-        FunctionInliningAdv functionInlining = new FunctionInliningAdv(irRoot);
+        FunctionInlining functionInlining = new FunctionInlining(irRoot);
         functionInlining.execute();
         BasicBlockEliminator eliminator = new BasicBlockEliminator(irRoot);
         eliminator.simplifyBlock();

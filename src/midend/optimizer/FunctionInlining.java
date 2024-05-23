@@ -216,20 +216,6 @@ public class FunctionInlining {
                         curAllocaMap.put(alloca.result, allocaStmt.result);
                     }
                 } else {
-                    ArrayList<Entity> use = stmt.getUse();
-                    ArrayList<Entity> newUse = new ArrayList<>();
-                    //replace
-                    if (use != null) {
-                        for (Entity element : use) {
-                            if (element instanceof LocalVar localVar) {
-                                newUse.add(curAllocaMap.get(localVar));
-                            } else if (element instanceof LocalTmpVar localTmpVar) {
-                                newUse.add(copyMap.get(localTmpVar));
-                            } else {
-                                newUse.add(element);
-                            }
-                        }
-                    }
                     Pair<Stmt, LocalTmpVar> stmtCopy = stmt.creatCopy("_" + tar.funcName + num);
                     LocalTmpVar newDef = stmtCopy.getSecond();
                     if (newDef != null) {
@@ -250,24 +236,6 @@ public class FunctionInlining {
                 }
             }
             TerminalStmt tailStmt = srcBlock.tailStmt;
-            Entity newUse = null;
-            ArrayList<Entity> newUseList = new ArrayList<>();
-            if (tailStmt instanceof Jump jump) {
-                newUse = jump.result;
-            } else if (tailStmt instanceof Branch br) {
-                if (br.condition instanceof LocalVar localVar) {
-                    newUseList.add(curAllocaMap.get(localVar));
-                } else if (br.condition instanceof LocalTmpVar localTmpVar) {
-                    newUseList.add(copyMap.get(localTmpVar));
-                }
-                newUse = br.result;
-            }
-            if (newUse instanceof LocalVar localVar) {
-                newUse = curAllocaMap.get(localVar);
-            } else if (newUse instanceof LocalTmpVar localTmpVar) {
-                newUse = copyMap.get(localTmpVar);
-            }
-            newUseList.add(newUse);
             Pair<Stmt, LocalTmpVar> stmtCopy = tailStmt.creatCopy("_" + tar.funcName + num);
             curBlock.tailStmt = (TerminalStmt) stmtCopy.getFirst();
             terminalStmts.add(curBlock.tailStmt);
