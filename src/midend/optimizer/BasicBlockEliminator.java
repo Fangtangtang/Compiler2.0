@@ -51,7 +51,6 @@ public class BasicBlockEliminator {
                     domPhiStmts.add(domPhi);
                 }
             }
-//           TODO:block映射出错
             if (block.tailStmt instanceof Jump jump) {
                 jump.target.prevBasicBlocks.add(block.label);
                 block.subsBasicBlocks.add(jump.targetName);
@@ -128,6 +127,28 @@ public class BasicBlockEliminator {
                     if (tmp.size() > 1) {
                         labelInPhi.addAll(tmp);
                     }
+                }
+            }
+        }
+        BasicBlock retBlock = func.ret;
+        workList.add(retBlock);
+        for (Stmt stmt : retBlock.statements) {
+            if (stmt instanceof DualPhi dualPhi) {
+                HashSet<String> tmp = new HashSet<>();
+                tmp.add(dualPhi.label1);
+                tmp.add(dualPhi.label2);
+                // size<=1 fake dualPhi
+                if (tmp.size() > 1) {
+                    labelInPhi.addAll(tmp);
+                }
+            }
+            if (stmt instanceof DomPhi domPhi) {
+                HashSet<String> tmp = new HashSet<>();
+                for (Map.Entry<String, Storage> entry : domPhi.phiList.entrySet()) {
+                    tmp.add(entry.getKey());
+                }
+                if (tmp.size() > 1) {
+                    labelInPhi.addAll(tmp);
                 }
             }
         }

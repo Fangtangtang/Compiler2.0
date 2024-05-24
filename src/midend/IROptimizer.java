@@ -40,18 +40,18 @@ public class IROptimizer {
             }
         }
 
-//        LocalTmpVarPropagation localTmpVarPropagation = new LocalTmpVarPropagation(irRoot);
-//        localTmpVarPropagation.execute();
+        LocalTmpVarPropagation localTmpVarPropagation = new LocalTmpVarPropagation(irRoot);
+        localTmpVarPropagation.execute();
 
         eliminator.simplifyCtlFlow();
 //
 //        CCP ccp = new CCP(irRoot);
 //        ccp.execute();
 
-        DeadCodeEliminator codeEliminator = new DeadCodeEliminator(irRoot);
-        codeEliminator.execute();
-
-        eliminator.simplifyBlock();
-        eliminator.simplifyCtlFlow();
+//        DeadCodeEliminator codeEliminator = new DeadCodeEliminator(irRoot);
+//        codeEliminator.execute();
+//
+//        eliminator.simplifyBlock();
+//        eliminator.simplifyCtlFlow();
     }
 }

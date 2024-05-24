@@ -55,18 +55,8 @@ public class DomPhi extends Instruction {
     public void print(PrintStream out) {
         StringBuilder str = new StringBuilder("\t" + result.toString() + " = phi ");
         boolean isFirst = true;
-        IRType type = null;
+        IRType type = result.type;
         StringBuilder varStr = new StringBuilder();
-        for (Map.Entry<String, Storage> entry : phiList.entrySet()) {
-            Storage ans = entry.getValue();
-            if (!(ans instanceof Null)) {
-                type = ans.type;
-            }
-        }
-        if (type == null) {
-//            return;
-            throw new InternalException("[DomPhi]: unexpected phi value");
-        }
         for (Map.Entry<String, Storage> entry : phiList.entrySet()) {
             Storage ans = entry.getValue();
             String s;
