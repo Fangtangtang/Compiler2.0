@@ -198,6 +198,8 @@ public class CCP {
             // TODO: put to a better place (control information collect)
             if (stmt instanceof DualPhi dualPhi) {
                 dualPhi.inBlockLabel = block.label;
+            } else if (stmt instanceof DomPhi domPhi) {
+                domPhi.inBlockLabel = block.label;
             }
             if (stmt.hasDef()) {
                 def = stmt.getDef();
@@ -296,6 +298,8 @@ public class CCP {
             propagateOnIcmp(icmp);
         } else if (inst instanceof DualPhi dualPhi) {
             propagateOnPhi(dualPhi);
+        } else if (inst instanceof DomPhi domPhi) {
+            propagateOnPhi(domPhi);
         } else if (inst instanceof Trunc trunc) {
             propagateOnTrunc(trunc);
         } else if (inst instanceof Zext zext) {
@@ -413,6 +417,39 @@ public class CCP {
             }
         }
 
+    }
+
+    void propagateOnPhi(DomPhi domPhiInst) {
+        HashSet<String> livePrev = liveCtr.get(domPhiInst.inBlockLabel);
+        if (livePrev == null) {
+            livePrev = new HashSet<>();
+        }
+        LocalTmpVar tmpVar = (LocalTmpVar) domPhiInst.getDef();
+        int constCnt = 0;
+        Constant constant = null;
+        for (Map.Entry<String, Storage> entry : domPhiInst.phiList.entrySet()) {
+            Pair<Constant, VarType> ansInfo = entity2Constant(entry.getValue());
+            VarType ansType = ansInfo.getSecond();
+            // 有一个可执行的不定值前驱
+            if (livePrev.contains(entry.getKey())) {
+                if (ansType == VarType.multiExeDef) {
+                    promoteToMulti(tmpVar);
+                    return;
+                }
+                if (ansType == VarType.oneConstDef) {
+                    Constant constAns = ansInfo.getFirst();
+                    if (constant == null || equalInValue(constant, constAns)) {
+                        constant = constAns;
+                    }
+                    constCnt += 1;
+                }
+            }
+        }
+        if (constCnt == 1) {
+            assignConstToVar(tmpVar, constant);
+        } else if (constCnt > 1) {
+            promoteToMulti(tmpVar);
+        }
     }
 
     void propagateOnTrunc(Trunc truncInst) {

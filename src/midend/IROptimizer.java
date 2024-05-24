@@ -44,9 +44,9 @@ public class IROptimizer {
         localTmpVarPropagation.execute();
 
         eliminator.simplifyCtlFlow();
-//
-//        CCP ccp = new CCP(irRoot);
-//        ccp.execute();
+
+        CCP ccp = new CCP(irRoot);
+        ccp.execute();
 
 //        DeadCodeEliminator codeEliminator = new DeadCodeEliminator(irRoot);
 //        codeEliminator.execute();
