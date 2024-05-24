@@ -55,27 +55,29 @@ public class FunctionInliningAdv {
             if (func.entry != null) {
                 func.calleeMap = new HashMap<>();
                 for (Map.Entry<String, BasicBlock> bbEntry : func.blockMap.entrySet()) {
-                    BasicBlock block = bbEntry.getValue();
-                    for (Stmt stmt : block.statements) {
-                        // call self-defined function
-                        if (stmt instanceof Call callStmt &&
-                                callStmt.function.entry != null) {
-                            if (func.calleeMap.containsKey(callStmt.function)) {
-                                func.calleeMap.put(
-                                        callStmt.function,
-                                        func.calleeMap.get(callStmt.function) + 1
-                                );
-                            } else {
-                                func.calleeMap.put(callStmt.function, 1);
-                            }
-                        }
-                    }
+                    collectInBlock(func,bbEntry.getValue());
                 }
+                collectInBlock(func,func.ret);
             }
         }
     }
 
-//    ArrayList<DualPhi> dualPhis = null;
+    void collectInBlock(Function func, BasicBlock block) {
+        for (Stmt stmt : block.statements) {
+            // call self-defined function
+            if (stmt instanceof Call callStmt &&
+                    callStmt.function.entry != null) {
+                if (func.calleeMap.containsKey(callStmt.function)) {
+                    func.calleeMap.put(
+                            callStmt.function,
+                            func.calleeMap.get(callStmt.function) + 1
+                    );
+                } else {
+                    func.calleeMap.put(callStmt.function, 1);
+                }
+            }
+        }
+    }
 
     boolean inliningPass() {
         boolean flag = false;

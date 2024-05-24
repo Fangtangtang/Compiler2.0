@@ -48,10 +48,10 @@ public class IROptimizer {
         CCP ccp = new CCP(irRoot);
         ccp.execute();
 
-//        DeadCodeEliminator codeEliminator = new DeadCodeEliminator(irRoot);
-//        codeEliminator.execute();
-//
-//        eliminator.simplifyBlock();
-//        eliminator.simplifyCtlFlow();
+        DeadCodeEliminator codeEliminator = new DeadCodeEliminator(irRoot);
+        codeEliminator.execute();
+
+        eliminator.simplifyBlock();
+        eliminator.simplifyCtlFlow();
     }
 }

@@ -1,9 +1,7 @@
 package midend.optimizer;
 
-import ir.BasicBlock;
-import ir.IRRoot;
-import ir.entity.Entity;
-import ir.entity.Storage;
+import ir.*;
+import ir.entity.*;
 import ir.entity.var.GlobalVar;
 import ir.function.Function;
 import ir.stmt.Stmt;
@@ -41,22 +39,9 @@ public class DeadCodeEliminator {
             if (func.entry != null) {
                 func.calleeMap = new HashMap<>();
                 for (Map.Entry<String, BasicBlock> bbEntry : func.blockMap.entrySet()) {
-                    BasicBlock block = bbEntry.getValue();
-                    for (Stmt stmt : block.statements) {
-                        // call self-defined function
-                        if (stmt instanceof Call callStmt &&
-                                callStmt.function.entry != null) {
-                            if (func.calleeMap.containsKey(callStmt.function)) {
-                                func.calleeMap.put(
-                                        callStmt.function,
-                                        func.calleeMap.get(callStmt.function) + 1
-                                );
-                            } else {
-                                func.calleeMap.put(callStmt.function, 1);
-                            }
-                        }
-                    }
+                    collectInBlock(func, bbEntry.getValue());
                 }
+                collectInBlock(func, func.ret);
             }
         }
         for (Map.Entry<String, Function> funcEntry : irRoot.funcDef.entrySet()) {
@@ -86,6 +71,35 @@ public class DeadCodeEliminator {
                         break;
                     }
                 }
+                if (!func.effectual) {
+                    for (Stmt stmt : func.ret.statements) {
+                        ArrayList<Entity> useList = stmt.getUse();
+                        if (useList != null) {
+                            for (Entity entity : useList) {
+                                if (entity instanceof GlobalVar) {
+                                    func.effectual = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    void collectInBlock(Function func, BasicBlock block) {
+        for (Stmt stmt : block.statements) {
+            if (stmt instanceof Call callStmt &&
+                    callStmt.function.entry != null) {
+                if (func.calleeMap.containsKey(callStmt.function)) {
+                    func.calleeMap.put(
+                            callStmt.function,
+                            func.calleeMap.get(callStmt.function) + 1
+                    );
+                } else {
+                    func.calleeMap.put(callStmt.function, 1);
+                }
             }
         }
     }
@@ -97,44 +111,24 @@ public class DeadCodeEliminator {
         for (Map.Entry<String, BasicBlock> bbEntry : func.blockMap.entrySet()) {
             BasicBlock block = bbEntry.getValue();
             for (Stmt stmt : block.statements) {
-                // 无效call
-                if (stmt instanceof Call call && (!call.hasDef()) && !call.function.effectual) {
-                    call.isDead = true;
-                }
-                Entity def = stmt.getDef();
-                if (def != null) {
-                    workList.put(def.toString(), new Pair<>(0, stmt));
-                }
+                collectDefOnStmt(workList, stmt);
             }
+        }
+        for (Stmt stmt : func.ret.statements) {
+            collectDefOnStmt(workList, stmt);
         }
         // collect use
         for (Map.Entry<String, BasicBlock> bbEntry : func.blockMap.entrySet()) {
             BasicBlock block = bbEntry.getValue();
             for (Stmt stmt : block.statements) {
-                ArrayList<Entity> useList = stmt.getUse();
-                if (useList != null) {
-                    for (Entity entity : useList) {
-                        if (entity!=null){
-                            String name=entity.toString();
-                            if (workList.containsKey(name)) {
-                                workList.get(name).setFirst(workList.get(name).getFirst() + 1);
-                            }
-                        }
-                    }
-                }
+                collectUseOnStmt(workList, stmt);
             }
-            ArrayList<Entity> useList = block.tailStmt.getUse();
-            if (useList != null) {
-                for (Entity entity : useList) {
-                    if (entity!=null) {
-                        String name = entity.toString();
-                        if (workList.containsKey(name)) {
-                            workList.get(name).setFirst(workList.get(name).getFirst() + 1);
-                        }
-                    }
-                }
-            }
+            collectUseOnStmt(workList, block.tailStmt);
         }
+        for (Stmt stmt : func.ret.statements) {
+            collectUseOnStmt(workList, stmt);
+        }
+        collectUseOnStmt(workList, func.ret.tailStmt);
         while (true) {
             boolean update = false;
             String unused = null;
@@ -152,7 +146,7 @@ public class DeadCodeEliminator {
                 ArrayList<Entity> useList = defStmt.getUse();
                 if (useList != null) {
                     for (Entity entity : useList) {
-                        if (entity!=null) {
+                        if (entity != null) {
                             String name = entity.toString();
                             if (workList.containsKey(name)) {
                                 workList.get(name).setFirst(workList.get(name).getFirst() - 1);
@@ -167,6 +161,31 @@ public class DeadCodeEliminator {
         }
     }
 
+    private void collectDefOnStmt(HashMap<String, Pair<Integer, Stmt>> workList, Stmt stmt) {
+        // 无效call
+        if (stmt instanceof Call call && (!call.hasDef()) && !call.function.effectual) {
+            call.isDead = true;
+        }
+        Entity def = stmt.getDef();
+        if (def != null) {
+            workList.put(def.toString(), new Pair<>(0, stmt));
+        }
+    }
+
+    private void collectUseOnStmt(HashMap<String, Pair<Integer, Stmt>> workList, Stmt stmt) {
+        ArrayList<Entity> useList = stmt.getUse();
+        if (useList != null) {
+            for (Entity entity : useList) {
+                if (entity != null) {
+                    String name = entity.toString();
+                    if (workList.containsKey(name)) {
+                        workList.get(name).setFirst(workList.get(name).getFirst() + 1);
+                    }
+                }
+            }
+        }
+    }
+
     void removeDeadStmt(Function func) {
         for (Map.Entry<String, BasicBlock> bbEntry : func.blockMap.entrySet()) {
             BasicBlock block = bbEntry.getValue();
@@ -177,6 +196,15 @@ public class DeadCodeEliminator {
                     if (stmt instanceof Call call && !call.function.effectual) {
                         iterator.remove();
                     }
+                }
+            }
+        }
+        Iterator<Stmt> iterator = func.ret.statements.iterator();
+        while (iterator.hasNext()) {
+            Stmt stmt = iterator.next();
+            if (stmt.isDead) {
+                if (stmt instanceof Call call && !call.function.effectual) {
+                    iterator.remove();
                 }
             }
         }
