@@ -20,7 +20,6 @@ import java.util.*;
  * llvm ir的localVar通过alloca的方式，每次使用的时候做load和store
  * 将store看成破坏了ssa的def，load看成use
  * mem2reg消去alloca并保持ssa特性
- * todo：暂时认为很早很早以前写的 dom tree 相关的没问题
  */
 public class Mem2Reg {
 
@@ -115,7 +114,7 @@ public class Mem2Reg {
      * dfs on CFG
      * - rename name in use(若visited，不用再做)
      * - insert phi [value,label]
-     * todo: dfs from each node instead of the root of the domTree
+     * [!] dfs from each node instead of the root of the domTree
      *
      * @param block node in CFG
      */

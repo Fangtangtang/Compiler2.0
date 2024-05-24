@@ -1046,7 +1046,7 @@ public class InstructionSelectorOnEntity implements IRVisitor {
      */
     @Override
     public void visit(DomPhi stmt) {
-        // todo
+        // TODO: eliminate domPhi, manage critical edges
     }
 
 }
