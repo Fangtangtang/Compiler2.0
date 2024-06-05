@@ -197,7 +197,9 @@ public class Binary extends Instruction {
             }
             ret = new ConstBool(result);
         }
+//        else {
+//        throw new InternalException("unexpected cond in Binary instruction");
+//    }
         return ret;
-
     }
 }

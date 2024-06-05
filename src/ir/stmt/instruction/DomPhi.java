@@ -32,8 +32,19 @@ public class DomPhi extends Instruction {
     }
 
     public void put(String label, Storage value) {
-        if (value instanceof Null && phiList.containsKey(label)) {
-            return;
+        if (value instanceof Null) {
+            if (phiList.containsKey(label)) {
+                return;
+            } else {
+                if (result.type instanceof IntType intType) {
+                    if (intType.typeName.equals(IntType.TypeName.BOOL) ||
+                            intType.typeName.equals(IntType.TypeName.TMP_BOOL)) {
+                        value = new ConstBool(false);
+                    } else if (intType.typeName.equals(IntType.TypeName.INT)) {
+                        value = new ConstInt("0");
+                    }
+                }
+            }
         }
         phiList.put(label, value);
     }

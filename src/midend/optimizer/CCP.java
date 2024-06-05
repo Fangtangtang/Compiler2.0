@@ -493,6 +493,7 @@ public class CCP {
                     }
                     case oneConstDef -> {
                         return new Pair<>(
+                                // todo： error null
                                 (Constant) localTmpVar2Const.get(tmpVar.toString()),
                                 VarType.oneConstDef
                         );

@@ -36,6 +36,7 @@ public class InstructionSelector implements IRVisitor {
     HashMap<String, Block> currentBlockMap = null;
     Function currentIRFunc;
 
+    String retOfCurrentFunc = null;
     // critical: split and add new block
     public HashMap<Pair<String, String>, ArrayList<ASMInstruction>> criticalEdges = null;
     // not critical: move instructions from domPhi in IR
@@ -239,6 +240,7 @@ public class InstructionSelector implements IRVisitor {
                 func.accept(this);
                 // --------------------------------------
                 addExtraInst();
+                retOfCurrentFunc = null;
                 currentBlockMap = null;
                 phi2mvInstructions = null;
                 criticalEdges = null;
@@ -287,7 +289,7 @@ public class InstructionSelector implements IRVisitor {
         currentFunc.funcBlocks.forEach(
                 block -> {
                     ArrayList<ASMInstruction> instList = phi2mvInstructions.get(block.name);
-                    if (instList!=null) {
+                    if (instList != null) {
                         ListIterator<ASMInstruction> iterator =
                                 block.instructions.listIterator(block.instructions.size());
                         // 从尾部向前遍历链表
@@ -308,10 +310,16 @@ public class InstructionSelector implements IRVisitor {
         for (Map.Entry<Pair<String, String>, ArrayList<ASMInstruction>> entry : criticalEdges.entrySet()) {
             Pair<String, String> edge = entry.getKey();
             ArrayList<ASMInstruction> insts = entry.getValue();
+            if (insts.size() == 0) {
+                continue;
+            }
             Block from = currentBlockMap.get(edge.getFirst());
             currentBlock = new Block(edge.getFirst() + "_" + edge.getSecond());
             currentFunc.funcBlocks.add(currentBlock);
             String to = edge.getSecond();
+            if (to.equals(retOfCurrentFunc)) {
+                currentFunc.retBlocks.add(currentBlock);
+            }
             for (ASMInstruction inst : from.controlInstructions) {
                 if (inst instanceof BranchInst branchInst) {
                     if (branchInst.desName.equals(to)) {
@@ -413,6 +421,8 @@ public class InstructionSelector implements IRVisitor {
         } else {
             currentBlock = currentFunc.funcBlocks.get(currentFunc.funcBlocks.size() - 1);
         }
+        currentFunc.retBlocks.add(currentBlock);
+        retOfCurrentFunc = currentBlock.name;
         //有返回值，返回值放在a0
         if (!(function.retType instanceof VoidType)) {
             PhysicalRegister a0 = new PhysicalRegister("a0");

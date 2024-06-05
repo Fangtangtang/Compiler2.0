@@ -168,19 +168,21 @@ public class RegisterAllocator implements ASMVisitor {
                 new ImmBinaryInst(sp, new Imm(stackSize), fp, ImmBinaryInst.Opcode.addi)
         );
         //出函数的指令
-        currentBlock = currentFunc.funcBlocks.get(currentFunc.funcBlocks.size() - 1);
-        currentBlock.pushBack(
-                new LoadInst(sp, registerMap.getReg("ra"), new Imm(stackSize - 4))
-        );
-        currentBlock.pushBack(
-                new LoadInst(sp, fp, new Imm(stackSize - 8))
-        );
-        currentBlock.pushBack(
-                new ImmBinaryInst(sp, new Imm(stackSize), sp, ImmBinaryInst.Opcode.addi)
-        );
-        currentBlock.pushBack(
-                new RetInst()
-        );
+        for (int i = 0; i < currentFunc.retBlocks.size(); i++) {
+            currentBlock = currentFunc.retBlocks.get(i);
+            currentBlock.pushBack(
+                    new LoadInst(sp, registerMap.getReg("ra"), new Imm(stackSize - 4))
+            );
+            currentBlock.pushBack(
+                    new LoadInst(sp, fp, new Imm(stackSize - 8))
+            );
+            currentBlock.pushBack(
+                    new ImmBinaryInst(sp, new Imm(stackSize), sp, ImmBinaryInst.Opcode.addi)
+            );
+            currentBlock.pushBack(
+                    new RetInst()
+            );
+        }
     }
 
     @Override
