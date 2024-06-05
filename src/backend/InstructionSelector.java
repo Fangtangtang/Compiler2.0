@@ -36,7 +36,6 @@ public class InstructionSelector implements IRVisitor {
     HashMap<String, Block> currentBlockMap = null;
     Function currentIRFunc;
 
-    String retOfCurrentFunc = null;
     // critical: split and add new block
     public HashMap<Pair<String, String>, ArrayList<ASMInstruction>> criticalEdges = null;
     // not critical: move instructions from domPhi in IR
@@ -240,7 +239,6 @@ public class InstructionSelector implements IRVisitor {
                 func.accept(this);
                 // --------------------------------------
                 addExtraInst();
-                retOfCurrentFunc = null;
                 currentBlockMap = null;
                 phi2mvInstructions = null;
                 criticalEdges = null;
@@ -317,9 +315,6 @@ public class InstructionSelector implements IRVisitor {
             currentBlock = new Block(edge.getFirst() + "_" + edge.getSecond());
             currentFunc.funcBlocks.add(currentBlock);
             String to = edge.getSecond();
-            if (to.equals(retOfCurrentFunc)) {
-                currentFunc.retBlocks.add(currentBlock);
-            }
             for (ASMInstruction inst : from.controlInstructions) {
                 if (inst instanceof BranchInst branchInst) {
                     if (branchInst.desName.equals(to)) {
@@ -381,6 +376,9 @@ public class InstructionSelector implements IRVisitor {
             creatBlock(block.label);
             visit(block);
         }
+        creatBlock(function.ret.label);
+        currentFunc.retBlock = currentBlock;
+        visit(function.ret);
         currentFunc.extraParamCnt = (maxParamCnt > 8 ? maxParamCnt - 8 : 0);
         //入参（相当于局部变量）
         PhysicalRegister sp = registerMap.getReg("sp");
@@ -415,22 +413,6 @@ public class InstructionSelector implements IRVisitor {
             );
         }
         currentFunc.funcBlocks.get(0).instructions.addAll(0, getParams);
-        //最后一个块
-        if (function.ret != null) {
-            creatBlock(function.ret.label);
-        } else {
-            currentBlock = currentFunc.funcBlocks.get(currentFunc.funcBlocks.size() - 1);
-        }
-        currentFunc.retBlocks.add(currentBlock);
-        retOfCurrentFunc = currentBlock.name;
-        //有返回值，返回值放在a0
-        if (!(function.retType instanceof VoidType)) {
-            PhysicalRegister a0 = new PhysicalRegister("a0");
-            setPhysicalRegSize(a0, function.retVal);
-            currentBlock.pushBack(
-                    new MoveInst(a0, getVirtualRegister(function.retVal))
-            );
-        }
     }
 
     @Override
@@ -651,7 +633,6 @@ public class InstructionSelector implements IRVisitor {
                     new CallInst(stmt.function.funcName, true)
             );
             PhysicalRegister a0 = new PhysicalRegister("a0");
-//            a0.color = Colors.Color.a0;
             setPhysicalRegSize(a0, stmt.result);
             currentBlock.pushBack(
                     new MoveInst(getVirtualRegister(stmt.result), a0)
@@ -1110,11 +1091,26 @@ public class InstructionSelector implements IRVisitor {
     }
 
     /**
-     * 每个函数仅有一个Return
-     * 在回收栈之后直接在函数访问中添加
+     * 函数返回值
+     *
+     * @param stmt
      */
     @Override
     public void visit(Return stmt) {
+        if (!(currentIRFunc.retType instanceof VoidType)) {
+            PhysicalRegister a0 = new PhysicalRegister("a0");
+            setPhysicalRegSize(a0, currentIRFunc.retVal);
+            Operand retVal = toOperand(stmt.value);
+            if (retVal instanceof Register register) {
+                currentBlock.pushBack(
+                        new MoveInst(a0, register)
+                );
+            } else {
+                currentBlock.pushBack(
+                        new LiInst(a0, (Imm) retVal)
+                );
+            }
+        }
     }
 
     /**

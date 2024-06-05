@@ -66,22 +66,20 @@ public class ASMOptimizer {
         );
         store(func.entry, pairs);
         //出函数的指令
-        for (int i = 0; i < func.retBlocks.size(); i++) {
-            Block endBlock = func.retBlocks.get(i);
-            load(endBlock, pairs);
-            endBlock.pushBack(
-                    new LoadInst(sp, regMap.getReg("ra"), new Imm(stackSize - 4))
-            );
-            endBlock.pushBack(
-                    new LoadInst(sp, fp, new Imm(stackSize - 8))
-            );
-            endBlock.pushBack(
-                    new ImmBinaryInst(sp, new Imm(stackSize), sp, ImmBinaryInst.Opcode.addi)
-            );
-            endBlock.pushBack(
-                    new RetInst()
-            );
-        }
+        Block endBlock = func.retBlock;
+        load(endBlock, pairs);
+        endBlock.pushBack(
+                new LoadInst(sp, regMap.getReg("ra"), new Imm(stackSize - 4))
+        );
+        endBlock.pushBack(
+                new LoadInst(sp, fp, new Imm(stackSize - 8))
+        );
+        endBlock.pushBack(
+                new ImmBinaryInst(sp, new Imm(stackSize), sp, ImmBinaryInst.Opcode.addi)
+        );
+        endBlock.pushBack(
+                new RetInst()
+        );
     }
 
     ArrayList<Pair<PhysicalRegister, StackRegister>> allocateStack(Func func,
