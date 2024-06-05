@@ -32,12 +32,7 @@ public class BasicBlockEliminator {
 
     void simplifyBlockOnFunc(Function func) {
         // init
-        for (Map.Entry<String, BasicBlock> blockEntry : func.blockMap.entrySet()) {
-            BasicBlock block = blockEntry.getValue();
-            block.prevBasicBlocks = new ArrayList<>();
-            block.subsBasicBlocks = new ArrayList<>();
-        }
-        func.ret.prevBasicBlocks = new ArrayList<>();
+        func.clearGenealogy();
         // collect PhiStmts
         ArrayList<DualPhi> dualPhiStmts = new ArrayList<>();
         ArrayList<DomPhi> domPhiStmts = new ArrayList<>();

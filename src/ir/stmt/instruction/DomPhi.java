@@ -20,7 +20,6 @@ import java.util.*;
  */
 public class DomPhi extends Instruction {
     public LocalTmpVar result;
-    public String phiLabel;
     public HashMap<String, Storage> phiList = new HashMap<>();
 
     public DomPhi(LocalTmpVar result) {

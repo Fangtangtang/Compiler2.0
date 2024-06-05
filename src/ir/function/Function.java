@@ -5,7 +5,12 @@ import ir.IRVisitor;
 import ir.entity.*;
 import ir.entity.var.*;
 import ir.irType.*;
+import ir.stmt.Stmt;
 import ir.stmt.instruction.Alloca;
+import ir.stmt.instruction.DomPhi;
+import ir.stmt.instruction.DualPhi;
+import ir.stmt.terminal.Branch;
+import ir.stmt.terminal.Jump;
 import utility.dominance.DomTree;
 import utility.dominance.DomTreeNode;
 
@@ -56,6 +61,54 @@ public class Function {
         this.funcName = funcName;
         this.entry = entryBlock;
         blockMap.put(entryBlock.label, entryBlock);
+    }
+
+    public void clearGenealogy() {
+        for (Map.Entry<String, BasicBlock> blockEntry : this.blockMap.entrySet()) {
+            BasicBlock block = blockEntry.getValue();
+            block.prevBasicBlocks = new ArrayList<>();
+            block.subsBasicBlocks = new ArrayList<>();
+        }
+        this.ret.prevBasicBlocks = new ArrayList<>();
+    }
+
+    public void buildGenealogy() {
+        for (Map.Entry<String, BasicBlock> blockEntry : blockMap.entrySet()) {
+            BasicBlock block = blockEntry.getValue();
+            if (block.tailStmt instanceof Jump jump) {
+                jump.target.prevBasicBlocks.add(block.label);
+                block.subsBasicBlocks.add(jump.targetName);
+            } else if (block.tailStmt instanceof Branch branch) {
+                branch.trueBranch.prevBasicBlocks.add(block.label);
+                branch.falseBranch.prevBasicBlocks.add(block.label);
+                block.subsBasicBlocks.add(branch.trueBranch.label);
+                block.subsBasicBlocks.add(branch.falseBranch.label);
+            }
+        }
+    }
+
+    public void clearGenealogyWithBlock() {
+        for (Map.Entry<String, BasicBlock> blockEntry : this.blockMap.entrySet()) {
+            BasicBlock block = blockEntry.getValue();
+            block.predecessorList = new ArrayList<>();
+            block.successorList = new ArrayList<>();
+        }
+        this.ret.predecessorList = new ArrayList<>();
+    }
+
+    public void buildGenealogyWithBlock() {
+        for (Map.Entry<String, BasicBlock> blockEntry : blockMap.entrySet()) {
+            BasicBlock block = blockEntry.getValue();
+            if (block.tailStmt instanceof Jump jump) {
+                jump.target.predecessorList.add(block);
+                block.successorList.add(jump.target);
+            } else if (block.tailStmt instanceof Branch branch) {
+                branch.trueBranch.predecessorList.add(block);
+                branch.falseBranch.predecessorList.add(block);
+                block.successorList.add(branch.trueBranch);
+                block.successorList.add(branch.falseBranch);
+            }
+        }
     }
 
     public String printParameterList() {

@@ -84,7 +84,7 @@ public class Main {
 
         //without optimize
 //        Program program = new Program();
-//        InstructionSelectorOnEntity instSelector = new InstructionSelectorOnEntity(program);
+//        InstructionSelector instSelector = new InstructionSelector(program);
 //        instSelector.visit(irBuilder.irRoot);
 //        RegisterAllocator allocator = new RegisterAllocator(instSelector.registerMap);
 //        allocator.visit(program);
@@ -92,7 +92,7 @@ public class Main {
 
 //        Program program = new Program();
 //        // ir -> asm:含“mem2reg”
-//        InstructionSelectorOnEntity selector = new InstructionSelectorOnEntity(program);
+//        InstructionSelector selector = new InstructionSelector(program);
 //        selector.visit(irBuilder.irRoot);
 //        // asm上优化
 //        ASMOptimizer asmOptimizer = new ASMOptimizer(program.text, selector.registerMap);

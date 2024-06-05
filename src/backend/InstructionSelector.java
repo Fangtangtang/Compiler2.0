@@ -21,7 +21,7 @@ import java.util.*;
  * @author F
  * 遍历IR，转化为ASM指令
  */
-public class InstructionSelectorOnEntity implements IRVisitor {
+public class InstructionSelector implements IRVisitor {
     //使用的所用物理寄存器
     public PhysicalRegMap registerMap = new PhysicalRegMap();
 //    PhysicalRegister t0, t1, t2, t3;
@@ -32,7 +32,15 @@ public class InstructionSelectorOnEntity implements IRVisitor {
     HashMap<String, VirtualRegister> toReg;
 
     Func currentFunc;
+    // asm block label -> block
+    HashMap<String, Block> currentBlockMap = null;
     Function currentIRFunc;
+
+    // critical: split and add new block
+    public HashMap<Pair<String, String>, ArrayList<ASMInstruction>> criticalEdges = null;
+    // not critical: move instructions from domPhi in IR
+    public HashMap<String, ArrayList<ASMInstruction>> phi2mvInstructions = null;
+
     Block currentBlock;
 
     int maxParamCnt = 0;
@@ -201,7 +209,7 @@ public class InstructionSelectorOnEntity implements IRVisitor {
         return new Pair<>(getVirtualRegister(entity), false);
     }
 
-    public InstructionSelectorOnEntity(Program program) {
+    public InstructionSelector(Program program) {
         this.program = program;
     }
 
@@ -224,9 +232,106 @@ public class InstructionSelectorOnEntity implements IRVisitor {
             Function func = function.getValue();
             //有函数定义的函数
             if (func.entry != null) {
-                function.getValue().accept(this);
+                collectCriticalEdge(func);
+                currentBlockMap = new HashMap<>();
+                phi2mvInstructions = new HashMap<>();
+                // --------------------------------------
+                func.accept(this);
+                // --------------------------------------
+                addExtraInst();
+                currentBlockMap = null;
+                phi2mvInstructions = null;
+                criticalEdges = null;
             }
         }
+    }
+
+    /**
+     * collect critical edge by adding new BB
+     * collect only, eliminate when necessary
+     * [def] Critical
+     * - pair<from,to>
+     * - `from` have multiple subs and `to` have multiple prevs
+     *
+     * @param func ir function
+     */
+    private void collectCriticalEdge(Function func) {
+        criticalEdges = new HashMap<>();
+        // clear and reconstruct
+        func.clearGenealogyWithBlock();
+        func.buildGenealogyWithBlock();
+        // find critical
+        for (Map.Entry<String, BasicBlock> blockEntry : func.blockMap.entrySet()) {
+            BasicBlock from = blockEntry.getValue();
+            if (from.successorList.size() > 1) {
+                for (BasicBlock to : from.successorList) {
+                    if (to.predecessorList.size() > 1) {
+                        criticalEdges.put(
+                                new Pair<>(
+                                        renameBlock(from.label),
+                                        renameBlock(to.label)
+                                ),
+                                new ArrayList<>()
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * add mv inst into each block
+     * before control instructions
+     */
+    private void addExtraInst() {
+        currentFunc.funcBlocks.forEach(
+                block -> {
+                    ArrayList<ASMInstruction> instList = phi2mvInstructions.get(block.name);
+                    if (instList!=null) {
+                        ListIterator<ASMInstruction> iterator =
+                                block.instructions.listIterator(block.instructions.size());
+                        // 从尾部向前遍历链表
+                        while (iterator.hasPrevious()) {
+                            ASMInstruction currentInst = iterator.previous();
+                            if (!(currentInst instanceof BranchInst ||
+                                    currentInst instanceof JumpInst)) {
+                                iterator.next();
+                                break;
+                            }
+                        }
+                        for (ASMInstruction inst : instList) {
+                            iterator.add(inst);
+                        }
+                    }
+                }
+        );
+        for (Map.Entry<Pair<String, String>, ArrayList<ASMInstruction>> entry : criticalEdges.entrySet()) {
+            Pair<String, String> edge = entry.getKey();
+            ArrayList<ASMInstruction> insts = entry.getValue();
+            Block from = currentBlockMap.get(edge.getFirst());
+            currentBlock = new Block(edge.getFirst() + "_" + edge.getSecond());
+            currentFunc.funcBlocks.add(currentBlock);
+            String to = edge.getSecond();
+            for (ASMInstruction inst : from.controlInstructions) {
+                if (inst instanceof BranchInst branchInst) {
+                    if (branchInst.desName.equals(to)) {
+                        branchInst.desName = currentBlock.name;
+                    }
+                }
+                if (inst instanceof JumpInst jumpInst) {
+                    if (jumpInst.desName.equals(to)) {
+                        jumpInst.desName = currentBlock.name;
+                    }
+                }
+            }
+            for (ASMInstruction inst : insts) {
+                currentBlock.pushBack(inst);
+            }
+            currentBlock.pushBack(
+                    new JumpInst(to)
+            );
+        }
+
     }
 
     private void setPhysicalRegSize(PhysicalRegister reg, Entity entity) {
@@ -235,6 +340,13 @@ public class InstructionSelectorOnEntity implements IRVisitor {
         } else {
             reg.size = 4;
         }
+    }
+
+    private void creatBlock(String label) {
+        label = renameBlock(label);
+        currentBlock = new Block(label);
+        currentBlockMap.put(label, currentBlock);
+        currentFunc.funcBlocks.add(currentBlock);
     }
 
     /**
@@ -258,8 +370,7 @@ public class InstructionSelectorOnEntity implements IRVisitor {
         //顺序访问每一个block
         for (Map.Entry<String, BasicBlock> entry : function.blockMap.entrySet()) {
             BasicBlock block = entry.getValue();
-            currentBlock = new Block(renameBlock(block.label));
-            currentFunc.funcBlocks.add(currentBlock);
+            creatBlock(block.label);
             visit(block);
         }
         currentFunc.extraParamCnt = (maxParamCnt > 8 ? maxParamCnt - 8 : 0);
@@ -298,8 +409,7 @@ public class InstructionSelectorOnEntity implements IRVisitor {
         currentFunc.funcBlocks.get(0).instructions.addAll(0, getParams);
         //最后一个块
         if (function.ret != null) {
-            currentBlock = new Block(renameBlock(function.ret.label));
-            currentFunc.funcBlocks.add(currentBlock);
+            creatBlock(function.ret.label);
         } else {
             currentBlock = currentFunc.funcBlocks.get(currentFunc.funcBlocks.size() - 1);
         }
@@ -1041,12 +1151,39 @@ public class InstructionSelectorOnEntity implements IRVisitor {
 
     /**
      * DomPhi
+     * 向有效前驱中插入mv
      *
      * @param stmt domPhi
      */
     @Override
     public void visit(DomPhi stmt) {
-        // TODO: eliminate domPhi, manage critical edges
+        VirtualRegister resultReg = getVirtualRegister(stmt.result);
+        String to = currentBlock.name;
+        for (Map.Entry<String, Storage> entry : stmt.phiList.entrySet()) {
+            String from = renameBlock(entry.getKey());
+            Pair<String, String> pair = new Pair<>(from, to);
+            ASMInstruction inst;
+            Operand operand = toOperand(entry.getValue());
+            if (operand instanceof Register register) {
+                inst = new MoveInst(resultReg, register);
+            } else {
+                inst = new LiInst(resultReg, (Imm) operand);
+            }
+            // insert on critical edge
+            if (criticalEdges.containsKey(pair)) {
+                criticalEdges.get(pair).add(inst);
+            }
+            // insert into block
+            else {
+                if (!phi2mvInstructions.containsKey(from)) {
+                    phi2mvInstructions.put(
+                            from,
+                            new ArrayList<>()
+                    );
+                }
+                phi2mvInstructions.get(from).add(inst);
+            }
+        }
     }
 
 }
