@@ -76,11 +76,18 @@ public class DualPhi extends Instruction {
         } else {
             s2 = ans2.toString();
         }
-        out.println(
-                "\t" + result.toString() + " = phi " + ans1.type
-                        + " [ " + s1 + ", %" + label1 + " ]" + ","
-                        + " [ " + s2 + ", %" + label2 + " ]"
-        );
+        if (label1.equals(label2)) {
+            out.println(
+                    "\t" + result.toString() + " = phi " + ans1.type
+                            + " [ " + s1 + ", %" + label1 + " ]"
+            );
+        } else {
+            out.println(
+                    "\t" + result.toString() + " = phi " + ans1.type
+                            + " [ " + s1 + ", %" + label1 + " ]" + ","
+                            + " [ " + s2 + ", %" + label2 + " ]"
+            );
+        }
     }
 
     @Override

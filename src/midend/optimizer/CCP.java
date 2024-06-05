@@ -158,10 +158,10 @@ public class CCP {
                 varWorkList.remove(var);
             }
         }
-        // remove dead block
-        removeDeadBlock(func);
         // replace var with constant and remove useless assignment
         removeDeadVarDef(func);
+        // remove dead block
+        removeDeadBlock(func);
         // update control flow
         updateControlFlow(func);
     }
@@ -551,6 +551,50 @@ public class CCP {
             String blockName = blockEntry.getKey();
             if (blockInfo.get(blockName).getFirst() == BlockType.executable) {
                 newBlockMap.put(blockName, blockEntry.getValue());
+            }
+        }
+        // update phi label
+        for (Map.Entry<String, BasicBlock> blockEntry : newBlockMap.entrySet()) {
+            // invalid phi
+            ArrayList<Stmt> rm = new ArrayList<>();
+            for (Stmt stmt : blockEntry.getValue().statements) {
+                if (stmt instanceof DualPhi dualPhi) {
+                    int cnt = 0;
+                    String label = null;
+                    Storage ans = null;
+                    if (newBlockMap.containsKey(dualPhi.label1)) {
+                        cnt += 1;
+                        label = dualPhi.label1;
+                        ans = dualPhi.ans1;
+                    }
+                    if (newBlockMap.containsKey(dualPhi.label2)) {
+                        cnt += 1;
+                        label = dualPhi.label2;
+                        ans = dualPhi.ans2;
+                    }
+                    if (cnt == 0) {
+                        rm.add(dualPhi);
+                    } else if (cnt == 1) {
+                        // todo: valid?
+                        dualPhi.label1 = dualPhi.label2 = label;
+                        dualPhi.ans1 = dualPhi.ans2 = ans;
+                    }
+                }
+                if (stmt instanceof DomPhi domPhi) {
+                    HashMap<String, Storage> newPhiList = new HashMap<>();
+                    for (Map.Entry<String, Storage> phi : domPhi.phiList.entrySet()) {
+                        if (newBlockMap.containsKey(phi.getKey())) {
+                            newPhiList.put(phi.getKey(), phi.getValue());
+                        }
+                    }
+                    if (newPhiList.size() == 0) {
+                        rm.add(domPhi);
+                    }
+                    domPhi.phiList = newPhiList;
+                }
+            }
+            for (Stmt stmt : rm) {
+                blockEntry.getValue().statements.remove(stmt);
             }
         }
         func.blockMap = newBlockMap;
