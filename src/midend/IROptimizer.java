@@ -21,7 +21,7 @@ public class IROptimizer {
         FunctionInliningAdv functionInlining = new FunctionInliningAdv(irRoot);
         functionInlining.execute();
         BasicBlockEliminator eliminator = new BasicBlockEliminator(irRoot);
-        eliminator.simplifyBlock();
+//        eliminator.simplifyBlock();
 
         Global2Local global2Local = new Global2Local(irRoot);
         global2Local.execute();
@@ -40,18 +40,20 @@ public class IROptimizer {
             }
         }
 
-        LocalTmpVarPropagation localTmpVarPropagation = new LocalTmpVarPropagation(irRoot);
-        localTmpVarPropagation.execute();
-
         eliminator.simplifyCtlFlow();
 
         CCP ccp = new CCP(irRoot);
         ccp.execute();
 
+//        eliminator.simplifyBlock();
+
+        LocalTmpVarPropagation localTmpVarPropagation = new LocalTmpVarPropagation(irRoot);
+        localTmpVarPropagation.execute();
+
+
         DeadCodeEliminator codeEliminator = new DeadCodeEliminator(irRoot);
         codeEliminator.execute();
-
-        eliminator.simplifyBlock();
-        eliminator.simplifyCtlFlow();
+//
+//        eliminator.simplifyCtlFlow();
     }
 }

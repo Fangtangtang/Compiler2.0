@@ -45,7 +45,7 @@ public class InstructionSelector implements IRVisitor {
 
     int maxParamCnt = 0;
 
-    Imm zero = new Imm(0);
+    Imm zero_imm = new Imm(0);
 
     //共用的重命名规则
     private String renameBlock(String blockName) {
@@ -82,7 +82,7 @@ public class InstructionSelector implements IRVisitor {
                 }
                 //全局变量的值
                 currentBlock.pushBack(
-                        new LoadInst(t0, t1, zero)
+                        new LoadInst(t0, t1, zero_imm)
                 );
                 currentBlock.pushBack(
                         new MoveInst(globalVarReg, t1)
@@ -148,7 +148,7 @@ public class InstructionSelector implements IRVisitor {
         } else if (constant instanceof ConstBool constBool) {
             return new Imm(constBool.value);
         } else if (constant instanceof Null) {
-            return registerMap.getReg("zero");
+            return zero_imm;
         } else {
             throw new InternalException("can not resolve constant");
         }
@@ -884,14 +884,14 @@ public class InstructionSelector implements IRVisitor {
         if (pointerPair.getFirst() instanceof PhysicalRegister register) {
             if (resultPair.getFirst() instanceof PhysicalRegister addr) {
                 currentBlock.pushBack(
-                        new LoadInst(register, t2, zero)
+                        new LoadInst(register, t2, zero_imm)
                 );
                 currentBlock.pushBack(
-                        new StoreInst(t2, addr, zero)
+                        new StoreInst(t2, addr, zero_imm)
                 );
             } else {
                 currentBlock.pushBack(
-                        new LoadInst(register, resultPair.getFirst(), zero)
+                        new LoadInst(register, resultPair.getFirst(), zero_imm)
                 );
             }
             return;
@@ -900,7 +900,7 @@ public class InstructionSelector implements IRVisitor {
         else if (pointerPair.getSecond()) {
             if (resultPair.getFirst() instanceof PhysicalRegister addr) {
                 currentBlock.pushBack(
-                        new StoreInst(pointerPair.getFirst(), addr, zero)
+                        new StoreInst(pointerPair.getFirst(), addr, zero_imm)
                 );
             } else {
                 currentBlock.pushBack(
@@ -913,14 +913,14 @@ public class InstructionSelector implements IRVisitor {
         else {
             if (resultPair.getFirst() instanceof PhysicalRegister addr) {
                 currentBlock.pushBack(
-                        new LoadInst(pointerPair.getFirst(), t2, zero)
+                        new LoadInst(pointerPair.getFirst(), t2, zero_imm)
                 );
                 currentBlock.pushBack(
-                        new StoreInst(t2, addr, zero)
+                        new StoreInst(t2, addr, zero_imm)
                 );
             } else {
                 currentBlock.pushBack(
-                        new LoadInst(pointerPair.getFirst(), resultPair.getFirst(), zero)
+                        new LoadInst(pointerPair.getFirst(), resultPair.getFirst(), zero_imm)
                 );
             }
         }
@@ -951,11 +951,6 @@ public class InstructionSelector implements IRVisitor {
                 currentBlock.pushBack(
                         new LiInst(pair.getFirst(), (Imm) value)
                 );
-            } else if (value instanceof PhysicalRegister physicalRegister &&
-                    "zero".equals(physicalRegister.name)) {
-                currentBlock.pushBack(
-                        new LiInst(pair.getFirst(), zero)
-                );
             } else {
                 currentBlock.pushBack(
                         new MoveInst(pair.getFirst(), (Register) value)
@@ -980,20 +975,11 @@ public class InstructionSelector implements IRVisitor {
                     new LiInst(t3, (Imm) value)
             );
             currentBlock.pushBack(
-                    new StoreInst(t3, addr, zero)
-            );
-        } else if (value instanceof PhysicalRegister physicalRegister &&
-                "zero".equals(physicalRegister.name)) {
-            PhysicalRegister t3 = new PhysicalRegister("t3", value.size);
-            currentBlock.pushBack(
-                    new LiInst(t3, zero)
-            );
-            currentBlock.pushBack(
-                    new StoreInst(t3, addr, zero)
+                    new StoreInst(t3, addr, zero_imm)
             );
         } else {
             currentBlock.pushBack(
-                    new StoreInst(value, addr, zero)
+                    new StoreInst(value, addr, zero_imm)
             );
         }
     }
