@@ -1,9 +1,14 @@
 package asm;
 
 import asm.instruction.ASMInstruction;
+import asm.instruction.BranchInst;
+import asm.instruction.JumpInst;
+import utility.error.InternalException;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * @author F
@@ -39,6 +44,7 @@ public class Func {
     public ArrayList<Block> funcBlocks = new ArrayList<>();
     //反向CFG上RPO排列的Block
     public ArrayList<Block> reorderedBlock = new ArrayList<>();
+    public Block entryBlock = null;
     public Block retBlock = null;
     //virtual register（栈上，局部变量+临时量）占用
     //默认含ra，fp
@@ -48,6 +54,44 @@ public class Func {
 
     public Func(String name) {
         this.name = name;
+    }
+
+    public void constructGenealogy() {
+        HashMap<String, Block> blockMap = new HashMap<>();
+        funcBlocks.forEach(
+                block -> {
+                    block.predecessorList = new ArrayList<>();
+                    block.successorList = new ArrayList<>();
+                    blockMap.put(block.name, block);
+                }
+        );
+        for (int i = 0; i < funcBlocks.size(); i++) {
+            Block block = funcBlocks.get(i);
+            if (block.instructions.size() == 0) {
+                continue;
+            }
+            boolean flag = false;
+            for (var instruction : block.controlInstructions) {
+                Block target = null;
+                if (instruction instanceof JumpInst jumpInst) {
+                    flag = true;
+                    target = blockMap.get(jumpInst.desName);
+                } else if (instruction instanceof BranchInst branchInst) {
+                    target = blockMap.get(branchInst.desName);
+                }
+                if (target != null) {
+                    block.successorList.add(target);
+                    target.predecessorList.add(block);
+                } else {
+                    throw new InternalException("unexpected control inst");
+                }
+            }
+            if (!flag && i + 1 < funcBlocks.size()) {
+                Block target = funcBlocks.get(i + 1);
+                block.successorList.add(target);
+                target.predecessorList.add(block);
+            }
+        }
     }
 
     public void print(PrintStream out) {

@@ -17,11 +17,11 @@ public class IROptimizer {
         this.irRoot = irRoot;
     }
 
+    // TODO：
+    // 激进死代码消除
     public void execute() {
         FunctionInliningAdv functionInlining = new FunctionInliningAdv(irRoot);
         functionInlining.execute();
-        BasicBlockEliminator eliminator = new BasicBlockEliminator(irRoot);
-//        eliminator.simplifyBlock();
 
         Global2Local global2Local = new Global2Local(irRoot);
         global2Local.execute();
@@ -40,20 +40,14 @@ public class IROptimizer {
             }
         }
 
-        eliminator.simplifyCtlFlow();
-
         CCP ccp = new CCP(irRoot);
         ccp.execute();
-
-//        eliminator.simplifyBlock();
 
         LocalTmpVarPropagation localTmpVarPropagation = new LocalTmpVarPropagation(irRoot);
         localTmpVarPropagation.execute();
 
-
         DeadCodeEliminator codeEliminator = new DeadCodeEliminator(irRoot);
         codeEliminator.execute();
-//
-//        eliminator.simplifyCtlFlow();
+
     }
 }

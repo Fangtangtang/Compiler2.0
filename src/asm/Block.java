@@ -2,6 +2,7 @@ package asm;
 
 import asm.instruction.*;
 import asm.operand.*;
+import utility.error.InternalException;
 
 import java.io.PrintStream;
 import java.util.*;

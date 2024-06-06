@@ -24,44 +24,10 @@ public class CFGBuilder {
     public void build() {
         text.functions.forEach(
                 func -> {
-                    buildOnFunction(func);
+                    func.constructGenealogy();
                     setReorderedBlockOnReverse(func);
                 }
         );
-    }
-
-    private void buildOnFunction(Func func) {
-        blockMap = new HashMap<>();
-        func.funcBlocks.forEach(
-                block -> blockMap.put(block.name, block)
-        );
-        for (int i = 0; i < func.funcBlocks.size(); i++) {
-            Block block = func.funcBlocks.get(i);
-            if (block.instructions.size() == 0) {
-                continue;
-            }
-            boolean flag = false;
-            for (var instruction : block.controlInstructions) {
-                Block target = null;
-                if (instruction instanceof JumpInst jumpInst) {
-                    flag = true;
-                    target = blockMap.get(jumpInst.desName);
-                } else if (instruction instanceof BranchInst branchInst) {
-                    target = blockMap.get(branchInst.desName);
-                }
-                if (target != null) {
-                    block.successorList.add(target);
-                    target.predecessorList.add(block);
-                } else {
-                    throw new InternalException("unexpected control inst");
-                }
-            }
-            if (!flag && i + 1 < func.funcBlocks.size()) {
-                Block target = func.funcBlocks.get(i + 1);
-                block.successorList.add(target);
-                target.predecessorList.add(block);
-            }
-        }
     }
 
     private void setReorderedBlockOnReverse(Func func) {

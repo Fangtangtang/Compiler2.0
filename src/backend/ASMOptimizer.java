@@ -26,7 +26,15 @@ public class ASMOptimizer {
         t0 = regMap.getReg("t0");
     }
 
+    // TODO: 一些可能的优化方向
+    // - 在asm上简化控制流
+    // - 函数call时的save简化
     public void execute() {
+        // BlockInlining
+        BlockInlining blockInlining = new BlockInlining(text);
+        blockInlining.execute();
+        // graph coloring
+        // ----------------------------------------------------------
         CFGBuilder cfgBuilder = new CFGBuilder(text);
         cfgBuilder.build();
         text.functions.forEach(
@@ -38,6 +46,7 @@ public class ASMOptimizer {
                     addExtraInstToFunc(func, calleeSaved);
                 }
         );
+        // ----------------------------------------------------------
     }
 
     /**
