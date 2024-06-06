@@ -23,6 +23,7 @@ public class RegisterAllocator implements ASMVisitor {
     //函数重写替换
     Text text = new Text();
     Func currentFunc;
+    Func prevFunc;
     Block currentBlock;
     int stackRegisterSpace;
     HashMap<String, StackRegister> stackRegMap = new HashMap<>();
@@ -133,6 +134,7 @@ public class RegisterAllocator implements ASMVisitor {
     public void visit(Func func) {
         //重写函数
         currentFunc = new Func(func.name);
+        prevFunc = func;
         currentFunc.extraParamCnt = func.extraParamCnt;//照搬
         text.functions.add(currentFunc);
         stackRegisterSpace = 8;
@@ -168,7 +170,7 @@ public class RegisterAllocator implements ASMVisitor {
                 new ImmBinaryInst(sp, new Imm(stackSize), fp, ImmBinaryInst.Opcode.addi)
         );
         //出函数的指令
-        currentBlock = currentFunc.retBlock;
+        currentBlock = prevFunc.retBlock;
         currentBlock.pushBack(
                 new LoadInst(sp, registerMap.getReg("ra"), new Imm(stackSize - 4))
         );

@@ -1154,16 +1154,47 @@ public class InstructionSelector implements IRVisitor {
         for (Map.Entry<String, Storage> entry : stmt.phiList.entrySet()) {
             String from = renameBlock(entry.getKey());
             Pair<String, String> pair = new Pair<>(from, to);
-            ASMInstruction inst;
-            Operand operand = toOperand(entry.getValue());
-            if (operand instanceof Register register) {
-                inst = new MoveInst(resultReg, register);
+            ArrayList<ASMInstruction> newInsts = new ArrayList<>();
+            Entity orgValue = entry.getValue();
+            Operand operand = null;
+            if (orgValue instanceof ConstInt constInt) {
+                int num = Integer.parseInt(constInt.value);
+                if (num < (1 << 11)) {
+                    operand = new Imm(num);
+                }
+                //先lui，如果低位非0，addi
+                else {
+                    PhysicalRegister t0 = new PhysicalRegister("t0", 4);
+                    newInsts.add(
+                            new LuiInst(t0, new Imm((num >> 12)))
+                    );
+                    if ((num & 0xFFF) != 0) {
+                        newInsts.add(
+                                new ImmBinaryInst(
+                                        t0,
+                                        new Imm(num & 0xFFF),
+                                        t0,
+                                        ImmBinaryInst.Opcode.addi
+                                )
+                        );
+                    }
+                    operand = t0;
+                }
+            } else if (orgValue instanceof ConstBool constBool) {
+                operand = new Imm(constBool.value);
+            } else if (orgValue instanceof Null) {
+                operand = zero_imm;
             } else {
-                inst = new LiInst(resultReg, (Imm) operand);
+                operand = getVirtualRegister(orgValue);
+            }
+            if (operand instanceof Register register) {
+                newInsts.add(new MoveInst(resultReg, register));
+            } else {
+                newInsts.add(new LiInst(resultReg, (Imm) operand));
             }
             // insert on critical edge
             if (criticalEdges.containsKey(pair)) {
-                criticalEdges.get(pair).add(inst);
+                criticalEdges.get(pair).addAll(newInsts);
             }
             // insert into block
             else {
@@ -1173,7 +1204,7 @@ public class InstructionSelector implements IRVisitor {
                             new ArrayList<>()
                     );
                 }
-                phi2mvInstructions.get(from).add(inst);
+                phi2mvInstructions.get(from).addAll(newInsts);
             }
         }
     }
