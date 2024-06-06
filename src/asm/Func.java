@@ -56,7 +56,7 @@ public class Func {
         this.name = name;
     }
 
-    public void constructGenealogy() {
+    public HashMap<String, Block> constructGenealogy() {
         HashMap<String, Block> blockMap = new HashMap<>();
         funcBlocks.forEach(
                 block -> {
@@ -92,6 +92,7 @@ public class Func {
                 target.predecessorList.add(block);
             }
         }
+        return blockMap;
     }
 
     public void print(PrintStream out) {

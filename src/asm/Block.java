@@ -2,6 +2,7 @@ package asm;
 
 import asm.instruction.*;
 import asm.operand.*;
+import backend.optimizer.interferenceGraph.Node;
 import utility.error.InternalException;
 
 import java.io.PrintStream;
@@ -26,6 +27,22 @@ public class Block {
 
     public Block(String name) {
         this.name = name;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Block block)) {
+            return false;
+        }
+        return name.equals(block.name);
     }
 
     public void pushBack(ASMInstruction instruction) {
