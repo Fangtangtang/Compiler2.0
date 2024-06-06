@@ -374,9 +374,6 @@ public class InstructionSelector implements IRVisitor {
         for (Map.Entry<String, BasicBlock> entry : function.blockMap.entrySet()) {
             BasicBlock block = entry.getValue();
             creatBlock(block.label);
-            if (block.label.equals(function.entry.label)) {
-                currentFunc.entryBlock = currentBlock;
-            }
             visit(block);
         }
         creatBlock(function.ret.label);

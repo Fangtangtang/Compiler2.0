@@ -39,7 +39,6 @@ public class Func {
     public ArrayList<Block> funcBlocks = new ArrayList<>();
     //反向CFG上RPO排列的Block
     public ArrayList<Block> reorderedBlock = new ArrayList<>();
-    public Block entryBlock = null;
     public Block retBlock = null;
     //virtual register（栈上，局部变量+临时量）占用
     //默认含ra，fp
