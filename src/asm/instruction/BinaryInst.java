@@ -3,6 +3,7 @@ package asm.instruction;
 import asm.ASMVisitor;
 import asm.operand.Operand;
 import asm.operand.Register;
+import backend.optimizer.interferenceGraph.Colors;
 import ir.stmt.instruction.Binary;
 import utility.error.InternalException;
 

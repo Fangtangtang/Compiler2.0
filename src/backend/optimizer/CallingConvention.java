@@ -75,15 +75,19 @@ public class CallingConvention {
                 //call后插入
                 if (callInst.hasReturn) {
                     iter.next();
-                    MoveInst mvRetInst = (MoveInst) iter.next();
-                    iter.remove();
-                    iter.add(
-                            new MoveInst(gp, mvRetInst.rs1)
-                    );
-                    iter.add(
-                            new MoveInst(mvRetInst.rd, gp)
-                    );
-                    iter.previous();
+                    ASMInstruction instruction = iter.next();
+                    if (instruction instanceof MoveInst mvRetInst) {
+                        if (mvRetInst.rs1.color == Colors.Color.a0) {
+                            iter.remove();
+                            iter.add(
+                                    new MoveInst(gp, mvRetInst.rs1)
+                            );
+                            iter.add(
+                                    new MoveInst(mvRetInst.rd, gp)
+                            );
+                            iter.previous();
+                        }
+                    }
                     iter.previous();
                     afterCall(iter, pairs);
                     iter.previous();

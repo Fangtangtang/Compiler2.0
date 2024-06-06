@@ -43,7 +43,6 @@ visitor.visit(this);
 
     @Override
     public void setUse(ArrayList<Register> use) {
-
     }
 
     @Override

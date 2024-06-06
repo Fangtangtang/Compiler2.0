@@ -41,6 +41,9 @@ public class ASMOptimizer {
                 func -> {
                     GraphColoring graphColoring = new GraphColoring(func, regMap);
                     graphColoring.execute();
+                    // remove some dead varDef
+                    DeadDefEliminator deadDefEliminator = new DeadDefEliminator(func);
+                    deadDefEliminator.execute();
                     CallingConvention callingConvention = new CallingConvention(func, regMap);
                     ArrayList<PhysicalRegister> calleeSaved = callingConvention.execute();
                     addExtraInstToFunc(func, calleeSaved);

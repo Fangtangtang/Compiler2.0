@@ -15,10 +15,12 @@ public class CallInst extends ASMInstruction {
 
     public String funcName;
     public boolean hasReturn = false;
+    public int paraSize = 0;
 
-    public CallInst(String funcName, boolean hasReturn) {
+    public CallInst(String funcName, boolean hasReturn, int paraSize) {
         this.funcName = funcName;
         this.hasReturn = hasReturn;
+        this.paraSize = paraSize;
     }
 
     @Override

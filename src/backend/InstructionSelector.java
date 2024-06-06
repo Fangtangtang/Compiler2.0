@@ -633,7 +633,7 @@ public class InstructionSelector implements IRVisitor {
         //存返回值
         if (!(stmt.function.retType instanceof VoidType) && stmt.result != null) {
             currentBlock.pushBack(
-                    new CallInst(stmt.function.funcName, true)
+                    new CallInst(stmt.function.funcName, true, stmt.parameterList.size())
             );
             PhysicalRegister a0 = new PhysicalRegister("a0");
             setPhysicalRegSize(a0, stmt.result);
@@ -642,7 +642,7 @@ public class InstructionSelector implements IRVisitor {
             );
         } else {
             currentBlock.pushBack(
-                    new CallInst(stmt.function.funcName, false)
+                    new CallInst(stmt.function.funcName, false, stmt.parameterList.size())
             );
         }
     }
