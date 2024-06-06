@@ -1,5 +1,7 @@
 package asm.operand;
 
+import backend.optimizer.interferenceGraph.Colors;
+
 /**
  * @author F
  * 物理寄存器
@@ -11,6 +13,7 @@ public class PhysicalRegister extends Register {
         this.name = name;
         size = 4;
         index = ++id;
+        this.color = Colors.Color.valueOf(name);
     }
 
     //形式physical reg，不唯一
@@ -18,6 +21,7 @@ public class PhysicalRegister extends Register {
         this.name = name;
         this.size = size;
         index = ++id;
+        this.color = Colors.Color.valueOf(name);
     }
 
     @Override

@@ -7,10 +7,7 @@ import asm.instruction.BranchInst;
 import asm.instruction.JumpInst;
 import asm.section.Text;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.ListIterator;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author F
@@ -28,15 +25,18 @@ public class BlockInlining {
 
     public void execute() {
         text.functions.forEach(
-                this::inliningOnFunc
+                func -> {
+                    inliningOnFunc(func);
+                    eliminateDeadBlock(func);
+                }
         );
     }
 
     private void inliningOnFunc(Func func) {
         // construct graph
         func.constructGenealogy();
-        HashSet<String> vis = new HashSet<>();
         HashSet<Block> workList = new HashSet<>();
+        HashSet<String> vis = new HashSet<>();
         workList.add(func.entryBlock);
         while (!workList.isEmpty()) {
             Block block = workList.iterator().next();
@@ -46,7 +46,14 @@ public class BlockInlining {
             if (block.successorList.size() == 1) {
                 Block successor = block.successorList.get(0);
                 if (successor == func.retBlock) {
-                        continue;
+                    continue;
+                }
+                // todo:避免代码过分膨胀(可否放松？)
+                if (successor.predecessorList.size() > 1) {
+                    if (!vis.contains(successor.name)) {
+                        workList.add(successor);
+                    }
+                    continue;
                 }
                 ListIterator<ASMInstruction> iterator =
                         block.instructions.listIterator(block.instructions.size());
@@ -77,12 +84,28 @@ public class BlockInlining {
 
     /**
      * [def] dead block
-     * - no inst
      * - unreachable
      *
      * @param func asm function
      */
     private void eliminateDeadBlock(Func func) {
-        // todo
+        HashSet<Block> aliveBlocks = new HashSet<>();
+        Queue<Block> queue = new LinkedList<>();
+        queue.add(func.entryBlock);
+        aliveBlocks.add(func.entryBlock);
+        while (!queue.isEmpty()) {
+            Block block = queue.remove();
+            aliveBlocks.add(block);
+            for (Block successor : block.successorList) {
+                if (!aliveBlocks.contains(successor)) {
+                    queue.add(successor);
+                }
+            }
+        }
+        func.funcBlocks = new ArrayList<>();
+        func.funcBlocks.add(func.entryBlock);
+        aliveBlocks.remove(func.entryBlock);
+        func.funcBlocks.addAll(aliveBlocks);
     }
+
 }
