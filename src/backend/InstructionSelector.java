@@ -1154,8 +1154,23 @@ public class InstructionSelector implements IRVisitor {
     public void visit(DomPhi stmt) {
         VirtualRegister resultReg = getVirtualRegister(stmt.result);
         String to = currentBlock.name;
+        // only one actual value, move directly
+        if (stmt.validList.size() == 1) {
+            for (String from : stmt.validList) {
+                Operand operand = toOperand(stmt.phiList.get(from));
+                if (operand instanceof Register register) {
+                    currentBlock.pushBack(new MoveInst(resultReg, register));
+                } else {
+                    currentBlock.pushBack(new LiInst(resultReg, (Imm) operand));
+                }
+                return;
+            }
+        }
         for (Map.Entry<String, Storage> entry : stmt.phiList.entrySet()) {
             String from = renameBlock(entry.getKey());
+            if (!stmt.validList.contains(entry.getKey())) {
+                continue;
+            }
             Pair<String, String> pair = new Pair<>(from, to);
             ArrayList<ASMInstruction> newInsts = new ArrayList<>();
             Entity orgValue = entry.getValue();

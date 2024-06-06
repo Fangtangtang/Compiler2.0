@@ -40,11 +40,11 @@ public class IROptimizer {
             }
         }
 
-        CCP ccp = new CCP(irRoot);
-        ccp.execute();
-
         LocalTmpVarPropagation localTmpVarPropagation = new LocalTmpVarPropagation(irRoot);
         localTmpVarPropagation.execute();
+
+        CCP ccp = new CCP(irRoot);
+        ccp.execute();
 
         DeadCodeEliminator codeEliminator = new DeadCodeEliminator(irRoot);
         codeEliminator.execute();

@@ -21,6 +21,7 @@ import java.util.*;
 public class DomPhi extends Instruction {
     public LocalTmpVar result;
     public HashMap<String, Storage> phiList = new HashMap<>();
+    public HashSet<String> validList = new HashSet<>();
 
     public DomPhi(LocalTmpVar result) {
         this.result = result;
@@ -45,6 +46,8 @@ public class DomPhi extends Instruction {
                     }
                 }
             }
+        }else {
+            validList.add(label);
         }
         phiList.put(label, value);
     }

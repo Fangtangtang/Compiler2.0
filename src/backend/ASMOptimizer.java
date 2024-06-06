@@ -73,10 +73,14 @@ public class ASMOptimizer {
         func.entry.pushBack(
                 new ImmBinaryInst(sp, new Imm(stackSize), fp, ImmBinaryInst.Opcode.addi)
         );
-        store(func.entry, pairs);
+        if (!"main".equals(func.name)) {
+            store(func.entry, pairs);
+        }
         //出函数的指令
         Block endBlock = func.retBlock;
-        load(endBlock, pairs);
+        if (!"main".equals(func.name)) {
+            load(endBlock, pairs);
+        }
         endBlock.pushBack(
                 new LoadInst(sp, regMap.getReg("ra"), new Imm(stackSize - 4))
         );
