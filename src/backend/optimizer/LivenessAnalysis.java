@@ -72,7 +72,6 @@ public class LivenessAnalysis {
                             tmp.add(usedReg);
                         }
                     }
-//                    tmp.addAll(successor.use);
                     for (Register reg : successor.liveOut) {
                         if (!successor.def.contains(reg) && globalReg.contains(reg)) {
                             tmp.add(reg);

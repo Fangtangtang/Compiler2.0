@@ -67,7 +67,7 @@ public class CFGBuilder {
     private void setReorderedBlockOnReverse(Func func) {
         postorder = new ArrayList<>();
         vis = new HashSet<>();
-        dfs(func.funcBlocks.get(func.funcBlocks.size() - 1));
+        dfs(func.entryBlock);
         int maxIndex = postorder.size() - 1;
         for (int index = maxIndex; index >= 0; --index) {
             Block block = postorder.get(index);
@@ -81,10 +81,10 @@ public class CFGBuilder {
 
     private void dfs(Block block) {
         vis.add(block.name);
-        block.predecessorList.forEach(
-                pred -> {
-                    if (!vis.contains(pred.name)) {
-                        dfs(pred);
+        block.successorList.forEach(
+                successor -> {
+                    if (!vis.contains(successor.name)) {
+                        dfs(successor);
                     }
                 }
         );

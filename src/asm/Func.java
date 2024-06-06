@@ -34,11 +34,12 @@ import java.util.ArrayList;
  */
 public class Func {
     public String name;
-    //不需要名字标签的块
+    //不需要名字标签的块(不放进funcBlocks)
     public Block entry;
     public ArrayList<Block> funcBlocks = new ArrayList<>();
     //反向CFG上RPO排列的Block
     public ArrayList<Block> reorderedBlock = new ArrayList<>();
+    public Block entryBlock = null;
     public Block retBlock = null;
     //virtual register（栈上，局部变量+临时量）占用
     //默认含ra，fp
