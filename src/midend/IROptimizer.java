@@ -34,8 +34,8 @@ public class IROptimizer {
         Mem2Reg mem2Reg = new Mem2Reg();
         for (Map.Entry<String, Function> entry : irRoot.funcDef.entrySet()) {
             Function func = entry.getValue();
-            //普通local function
-            if (func.entry != null) {
+            // 普通local function
+            if (func.entry != null && func.blockMap.size() < 800) {
                 mem2Reg.execute(func);
             }
         }

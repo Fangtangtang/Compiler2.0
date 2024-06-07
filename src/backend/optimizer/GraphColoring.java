@@ -17,6 +17,8 @@ import java.util.*;
  */
 public class GraphColoring {
     Func func;
+
+    Set<VirtualRegister> addedRegs;
     InterferenceGraph interferenceGraph;
     Stack<UncoloredNode> selectStack;
     NodeSet nodeSet;
@@ -32,6 +34,7 @@ public class GraphColoring {
     public GraphColoring(Func func, PhysicalRegMap registerMap) {
         this.func = func;
         this.registerMap = registerMap;
+        this.addedRegs = new HashSet<>();
         fp = registerMap.getReg("fp");
         sp = registerMap.getReg("sp");
         t0 = registerMap.getReg("t0");
@@ -388,12 +391,14 @@ public class GraphColoring {
     }
 
     //TODO:spill启发式
+    // 新加入的virtual代替原来spill不了的，无限死循环！！！
     //选择degree最大的
     void selectSpill() {
         int maxDegree = -1;
         UncoloredNode m = null;
         for (UncoloredNode node : nodeSet.spillWorkList) {
-            if (node.degree > maxDegree) {
+            if (!addedRegs.contains(node.register) &&
+                    node.degree > maxDegree) {
                 maxDegree = node.degree;
                 m = node;
             }
@@ -469,6 +474,7 @@ public class GraphColoring {
         Counter counter = pair.getSecond();
         ++counter.cnt;
         VirtualRegister newReg = new VirtualRegister(register.name + "." + counter.cnt, register.size);
+        addedRegs.add(newReg);
         Pair<Register, Imm> addrPair = getRegAddress(stackRegister);
         rewrittenInstructions.add(
                 new LoadInst(addrPair.getFirst(), newReg, addrPair.getSecond())
@@ -483,6 +489,7 @@ public class GraphColoring {
         Counter counter = pair.getSecond();
         ++counter.cnt;
         VirtualRegister newReg = new VirtualRegister(register.name + "." + counter.cnt, register.size);
+        addedRegs.add(newReg);
         Pair<Register, Imm> addrPair = getRegAddress(stackRegister);
         rewrittenInstructions.add(
                 new StoreInst(newReg, addrPair.getFirst(), addrPair.getSecond())
