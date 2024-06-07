@@ -31,6 +31,7 @@ public class StoreInst extends ASMInstruction {
         this.imm = imm;
         this.size = rs1.size;
         complete = true;
+        aliveByNature = true;
     }
 
     public StoreInst(Operand rs1,
@@ -43,6 +44,7 @@ public class StoreInst extends ASMInstruction {
         this.rs2 = pointer;
         this.complete = complete;
         this.needPointerAddr = needPointerAddr;
+        aliveByNature = true;
     }
 
     @Override

@@ -34,11 +34,17 @@ public class ASMOptimizer {
         // BlockInlining
         BlockInlining blockInlining = new BlockInlining(text);
         blockInlining.simplifyCtrFlow();
-
+        // ADCE
+        ReverseCFGBuilder cfgBuilder = new ReverseCFGBuilder(text);
+        cfgBuilder.build();
+        for (Func func : text.functions) {
+            AggressiveDCE aggressiveDCE = new AggressiveDCE(func);
+            aggressiveDCE.execute();
+        }
         // graph coloring
         // ----------------------------------------------------------
         // true ASM after this
-        ReverseCFGBuilder cfgBuilder = new ReverseCFGBuilder(text);
+        cfgBuilder = new ReverseCFGBuilder(text);
         cfgBuilder.build();
         text.functions.forEach(
                 func -> {

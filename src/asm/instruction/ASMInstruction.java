@@ -12,6 +12,7 @@ import java.util.ArrayList;
  * ASM指令
  */
 public abstract class ASMInstruction {
+    boolean aliveByNature = false;
 
     public abstract void print(PrintStream out);
 
@@ -25,14 +26,6 @@ public abstract class ASMInstruction {
 
     public static ArrayList<Colors.Color> getUsePhysical(ASMInstruction instruction) {
         ArrayList<Colors.Color> ret = new ArrayList<>();
-        if (instruction instanceof CallInst callInst) {
-            for (int i = 0; i < callInst.paraSize; i++) {
-                if (i == 8) {
-                    break;
-                }
-                ret.add(Colors.Color.valueOf("a" + i));
-            }
-        }
         ArrayList<Register> regs = instruction.getUse();
         if (regs != null) {
             for (Register reg : regs) {
@@ -47,6 +40,10 @@ public abstract class ASMInstruction {
             return null;
         }
         return instruction.getDef().color;
+    }
+
+    public boolean isAliveByNature() {
+        return aliveByNature;
     }
 
     public abstract void setUse(ArrayList<Register> use);

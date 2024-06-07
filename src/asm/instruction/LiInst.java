@@ -28,6 +28,13 @@ public class LiInst extends ASMInstruction {
         this.rd.size = this.imm.size;
     }
 
+    public LiInst(Register rd, Imm imm, boolean isRet) {
+        this.rd = rd;
+        this.imm = imm;
+        this.rd.size = this.imm.size;
+        aliveByNature = isRet;
+    }
+
     @Override
     public void print(PrintStream out) {
         out.println("\tli\t" + rd + ", " + imm);

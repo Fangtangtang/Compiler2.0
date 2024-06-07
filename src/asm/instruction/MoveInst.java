@@ -27,6 +27,14 @@ public class MoveInst extends ASMInstruction {
         index = ++id;
     }
 
+    public MoveInst(Register rd, Register rs1, boolean isRet) {
+        this.rd = rd;
+        this.rs1 = rs1;
+        rd.size = rs1.size;
+        index = ++id;
+        aliveByNature = isRet;
+    }
+
     @Override
     public void print(PrintStream out) {
         if (rd.equals(rs1)) {

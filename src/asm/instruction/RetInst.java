@@ -12,6 +12,10 @@ import java.util.ArrayList;
  */
 public class RetInst extends ASMInstruction {
 
+    public RetInst() {
+        aliveByNature = true;
+    }
+
     @Override
     public void print(PrintStream out) {
         out.println("\tret");

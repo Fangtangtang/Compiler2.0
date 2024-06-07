@@ -1,6 +1,5 @@
 package asm;
 
-import asm.instruction.ASMInstruction;
 import asm.instruction.BranchInst;
 import asm.instruction.JumpInst;
 import utility.error.InternalException;
@@ -8,7 +7,7 @@ import utility.error.InternalException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Objects;
 
 /**
  * @author F
@@ -56,7 +55,7 @@ public class Func {
         this.name = name;
     }
 
-    public HashMap<String, Block> constructGenealogy() {
+    public void constructGenealogy() {
         HashMap<String, Block> blockMap = new HashMap<>();
         funcBlocks.forEach(
                 block -> {
@@ -82,8 +81,8 @@ public class Func {
                 if (target != null) {
                     block.successorList.add(target);
                     target.predecessorList.add(block);
-                } else {
-                    throw new InternalException("unexpected control inst");
+                } else if (!Objects.equals(block.name, retBlock.name)) {
+                    throw new InternalException("[Func] unexpected control inst");
                 }
             }
             if (!flag && i + 1 < funcBlocks.size()) {
@@ -92,7 +91,6 @@ public class Func {
                 target.predecessorList.add(block);
             }
         }
-        return blockMap;
     }
 
     public void print(PrintStream out) {

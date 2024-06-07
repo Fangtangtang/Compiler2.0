@@ -35,9 +35,11 @@ public class ReverseDomTree {
     }
 
     private void setReorderedBlock(Func func) {
+        reorderedNode = new ArrayList<>();
         for (Block block : func.reorderedBlock) {
             ReverseDomTreeNode node = new ReverseDomTreeNode(block);
             reorderedNode.add(node);
+            label2node.put(block.name, node);
         }
     }
 

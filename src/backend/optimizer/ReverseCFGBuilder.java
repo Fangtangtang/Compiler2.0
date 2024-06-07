@@ -27,6 +27,7 @@ public class ReverseCFGBuilder {
     }
 
     private void setReorderedBlockOnReverse(Func func) {
+        func.reorderedBlock=new ArrayList<>();
         postorder = new ArrayList<>();
         vis = new HashSet<>();
         dfs(func.retBlock);

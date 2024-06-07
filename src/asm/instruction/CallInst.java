@@ -1,6 +1,7 @@
 package asm.instruction;
 
 import asm.ASMVisitor;
+import asm.operand.PhysicalRegister;
 import asm.operand.Register;
 
 import java.io.PrintStream;
@@ -14,13 +15,20 @@ import java.util.ArrayList;
 public class CallInst extends ASMInstruction {
 
     public String funcName;
-    public boolean hasReturn = false;
-    public int paraSize = 0;
+    public boolean hasReturn;
 
-    public CallInst(String funcName, boolean hasReturn, int paraSize) {
+    // `sp` used but not in the paraList
+    public ArrayList<Register> paraList;
+    PhysicalRegister retValue;
+
+    public CallInst(String funcName, boolean hasReturn,
+                    ArrayList<Register> paraList,
+                    PhysicalRegister retValue) {
         this.funcName = funcName;
         this.hasReturn = hasReturn;
-        this.paraSize = paraSize;
+        this.paraList = paraList;
+        this.aliveByNature = true;
+        this.retValue = retValue;
     }
 
     @Override
@@ -40,21 +48,21 @@ public class CallInst extends ASMInstruction {
 
     @Override
     public ArrayList<Register> getUse() {
-        return null;
+        return paraList;
     }
 
     @Override
     public Register getDef() {
-        return null;
+        return retValue;
     }
 
     @Override
     public void setUse(ArrayList<Register> use) {
-
+        // todo??
     }
 
     @Override
     public void setDef(Register def) {
-
+        // todo??
     }
 }

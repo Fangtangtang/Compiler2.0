@@ -569,10 +569,12 @@ public class InstructionSelector implements IRVisitor {
         PhysicalRegister reg;
         Storage parameter;
         Operand param;
+        ArrayList<Register> paraRegs = new ArrayList<>();
         if (stmt.parameterList.size() <= 8) {
             for (int i = 0; i < stmt.parameterList.size(); ++i) {
 //                reg = registerMap.getReg("a" + i);
                 reg = new PhysicalRegister("a" + i);
+                paraRegs.add(reg);
                 parameter = stmt.parameterList.get(i);
                 setPhysicalRegSize(reg, parameter);
                 param = toOperand(parameter);
@@ -591,6 +593,7 @@ public class InstructionSelector implements IRVisitor {
             for (i = 0; i < 8; ++i) {
 //                reg = registerMap.getReg("a" + i);
                 reg = new PhysicalRegister("a" + i);
+                paraRegs.add(reg);
                 parameter = stmt.parameterList.get(i);
                 setPhysicalRegSize(reg, parameter);
                 param = toOperand(parameter);
@@ -627,22 +630,23 @@ public class InstructionSelector implements IRVisitor {
                 currentBlock.pushBack(
                         new StoreInst(param, sp, new Imm(((i - 8) << 2)))
                 );
+                paraRegs.add((Register) param);
             }
         }
         //函数调用
         //存返回值
         if (!(stmt.function.retType instanceof VoidType) && stmt.result != null) {
-            currentBlock.pushBack(
-                    new CallInst(stmt.function.funcName, true, stmt.parameterList.size())
-            );
             PhysicalRegister a0 = new PhysicalRegister("a0");
+            currentBlock.pushBack(
+                    new CallInst(stmt.function.funcName, true, paraRegs, a0)
+            );
             setPhysicalRegSize(a0, stmt.result);
             currentBlock.pushBack(
                     new MoveInst(getVirtualRegister(stmt.result), a0)
             );
         } else {
             currentBlock.pushBack(
-                    new CallInst(stmt.function.funcName, false, stmt.parameterList.size())
+                    new CallInst(stmt.function.funcName, false, paraRegs, null)
             );
         }
     }
@@ -1092,11 +1096,11 @@ public class InstructionSelector implements IRVisitor {
             Operand retVal = toOperand(stmt.value);
             if (retVal instanceof Register register) {
                 currentBlock.pushBack(
-                        new MoveInst(a0, register)
+                        new MoveInst(a0, register, true)
                 );
             } else {
                 currentBlock.pushBack(
-                        new LiInst(a0, (Imm) retVal)
+                        new LiInst(a0, (Imm) retVal, true)
                 );
             }
         }
