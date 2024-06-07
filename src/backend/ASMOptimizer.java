@@ -36,11 +36,11 @@ public class ASMOptimizer {
         blockInlining.simplifyCtrFlow();
         // ADCE
         ReverseCFGBuilder cfgBuilder = new ReverseCFGBuilder(text);
-        cfgBuilder.build();
-        for (Func func : text.functions) {
-            AggressiveDCE aggressiveDCE = new AggressiveDCE(func);
-            aggressiveDCE.execute();
-        }
+//        cfgBuilder.build();
+//        for (Func func : text.functions) {
+//            AggressiveDCE aggressiveDCE = new AggressiveDCE(func);
+//            aggressiveDCE.execute();
+//        }
         // graph coloring
         // ----------------------------------------------------------
         // true ASM after this
@@ -88,6 +88,9 @@ public class ASMOptimizer {
         if (!"main".equals(func.name)) {
             store(func.entry, pairs);
         }
+        func.entry.pushBack(
+                new JumpInst(func.entryBlock.name)
+        );
         //出函数的指令
         Block endBlock = func.retBlock;
         if (!"main".equals(func.name)) {

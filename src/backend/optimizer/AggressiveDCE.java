@@ -34,22 +34,24 @@ public class AggressiveDCE {
     }
 
     public void execute() {
-        initWorkList();
         domTree = new ReverseDomTree(func);
+        initWorkList();
         // 迭代工作表至收敛
         while (!workList.isEmpty()) {
             ASMInstruction inst = workList.iterator().next();
             workList.remove(inst);
             liveInst.add(inst);
             Block instBlock = inst2Block.get(inst);
-            liveBlock.put(instBlock.name, instBlock);
-            // 反图中instBlock反向支配的也活跃 DF(edge in CDG)
-            ReverseDomTreeNode node = domTree.label2node.get(instBlock.name);
-            for (ReverseDomTreeNode predecessor : node.domFrontier) {
-                for (ASMInstruction instruction :
-                        predecessor.block.controlInstructions) {
-                    if (!liveInst.contains(instruction)) {
-                        workList.add(instruction);
+            if (!liveBlock.containsKey(instBlock.name)) {
+                liveBlock.put(instBlock.name, instBlock);
+                // 反图中instBlock反向支配的也活跃 DF(edge in CDG)
+                ReverseDomTreeNode node = domTree.label2node.get(instBlock.name);
+                for (ReverseDomTreeNode predecessor : node.domFrontier) {
+                    for (ASMInstruction instruction :
+                            predecessor.block.controlInstructions) {
+                        if (!liveInst.contains(instruction)) {
+                            workList.add(instruction);
+                        }
                     }
                 }
             }
@@ -82,11 +84,23 @@ public class AggressiveDCE {
         def2Inst = new HashMap<>();
         inst2Block = new HashMap<>();
         liveBlock.put(func.retBlock.name, func.retBlock);
+        ReverseDomTreeNode node = domTree.label2node.get(func.retBlock.name);
+        for (ReverseDomTreeNode predecessor : node.domFrontier) {
+            for (ASMInstruction instruction :
+                    predecessor.block.controlInstructions) {
+                if (!liveInst.contains(instruction)) {
+                    workList.add(instruction);
+                }
+            }
+        }
         for (Block block : func.funcBlocks) {
             for (ASMInstruction inst : block.instructions) {
                 inst2Block.put(inst, block);
                 Register def = inst.getDef();
                 if (def != null) {
+                    if (def2Inst.containsKey(def)){
+                        throw new InternalException("[ADCE]: not ssa!!");
+                    }
                     def2Inst.put(def, inst);
                 }
                 if (inst.isAliveByNature()) {
@@ -109,42 +123,39 @@ public class AggressiveDCE {
             LinkedList<ASMInstruction> newInstList = new LinkedList<>();
             ArrayList<ASMInstruction> newCtlInstList = new ArrayList<>();
             for (ASMInstruction inst : block.instructions) {
-                if (liveInst.contains(inst)) {
-                    if (inst instanceof JumpInst jumpInst) {
-                        String dest = jumpInst.desName;
-                        ReverseDomTreeNode destNode = domTree.label2node.get(dest);
-                        while (!liveBlock.containsKey(destNode.block.name)) {
-                            destNode = destNode.iDom;
-                        }
-                        jumpInst.desName = destNode.block.name;
-                        to.add(jumpInst.desName);
-                        newInstList.add(jumpInst);
-                        newCtlInstList.add(jumpInst);
-                    } else if (inst instanceof BranchInst branchInst) {
-                        String dest = branchInst.desName;
-                        ReverseDomTreeNode destNode = domTree.label2node.get(dest);
-                        while (!liveBlock.containsKey(destNode.block.name)) {
-                            destNode = destNode.iDom;
-                        }
-                        branchInst.desName = destNode.block.name;
-                        to.add(branchInst.desName);
-                        newInstList.add(branchInst);
-                        newCtlInstList.add(branchInst);
-                    } else {
-                        newInstList.add(inst);
+                if (inst instanceof JumpInst jumpInst) {
+                    String dest = jumpInst.desName;
+                    ReverseDomTreeNode destNode = domTree.label2node.get(dest);
+                    while (!liveBlock.containsKey(destNode.block.name)) {
+                        destNode = destNode.iDom;
                     }
+                    jumpInst.desName = destNode.block.name;
+                    to.add(jumpInst.desName);
+                    newInstList.add(jumpInst);
+                    newCtlInstList.add(jumpInst);
+                } else if (inst instanceof BranchInst branchInst) {
+                    String dest = branchInst.desName;
+                    ReverseDomTreeNode destNode = domTree.label2node.get(dest);
+                    while (!liveBlock.containsKey(destNode.block.name)) {
+                        destNode = destNode.iDom;
+                    }
+                    branchInst.desName = destNode.block.name;
+                    to.add(branchInst.desName);
+                    newInstList.add(branchInst);
+                    newCtlInstList.add(branchInst);
+                } else if (liveInst.contains(inst)) {
+                    newInstList.add(inst);
                 }
             }
             block.instructions = newInstList;
-            block.controlInstructions=newCtlInstList;
+            block.controlInstructions = newCtlInstList;
             newBlockList.add(block);
         }
-        func.funcBlocks = newBlockList;
-        // new entry??
         for (Map.Entry<String, Block> entry : liveBlock.entrySet()) {
             if (!to.contains(entry.getKey())) {
                 func.entry = entry.getValue();
             }
         }
+        func.funcBlocks = newBlockList;
     }
 }

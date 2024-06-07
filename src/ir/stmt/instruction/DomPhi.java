@@ -8,7 +8,6 @@ import ir.irType.IRType;
 import ir.irType.IntType;
 import ir.stmt.Stmt;
 import utility.Pair;
-import utility.error.InternalException;
 
 import java.io.PrintStream;
 import java.util.*;
@@ -32,6 +31,18 @@ public class DomPhi extends Instruction {
         this.phiList = phiList;
     }
 
+    public DomPhi(LocalTmpVar result,
+                  Storage ans1,
+                  Storage ans2,
+                  String label1,
+                  String label2) {
+        this.result = result;
+        this.phiList.put(label1, ans1);
+        this.phiList.put(label2, ans2);
+        validList.add(label1);
+        validList.add(label2);
+    }
+
     public void put(String label, Storage value) {
         if (value instanceof Null) {
             if (phiList.containsKey(label)) {
@@ -46,7 +57,7 @@ public class DomPhi extends Instruction {
                     }
                 }
             }
-        }else {
+        } else {
             validList.add(label);
         }
         phiList.put(label, value);
@@ -121,7 +132,15 @@ public class DomPhi extends Instruction {
 
     @Override
     public void promoteGlobalVar() {
-        throw new InternalException("[DomPhi]: won't use global variable!");
+        HashMap<String, Storage> newList = new HashMap<>();
+        for (Map.Entry<String, Storage> entry : phiList.entrySet()) {
+            Storage rep = entry.getValue();
+            if (rep instanceof GlobalVar globalVar && globalVar.convertedLocalVar != null) {
+                rep = globalVar.convertedLocalVar;
+            }
+            newList.put(entry.getKey(), rep);
+        }
+        phiList = newList;
     }
 
     @Override

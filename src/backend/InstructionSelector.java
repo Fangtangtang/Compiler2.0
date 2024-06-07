@@ -168,21 +168,23 @@ public class InstructionSelector implements IRVisitor {
         }
         //先lui，如果低位非0，addi
         else {
-            PhysicalRegister t0 = new PhysicalRegister("t0", 4);
+            PhysicalRegister t0_1 = new PhysicalRegister("t0", 4);
+            PhysicalRegister t0_2 = new PhysicalRegister("t0", 4);
             currentBlock.pushBack(
-                    new LuiInst(t0, new Imm((num >> 12)))
+                    new LuiInst(t0_1, new Imm((num >> 12)))
             );
             if ((num & 0xFFF) != 0) {
                 currentBlock.pushBack(
                         new ImmBinaryInst(
-                                t0,
+                                t0_1,
                                 new Imm(num & 0xFFF),
-                                t0,
+                                t0_2,
                                 ImmBinaryInst.Opcode.addi
                         )
                 );
+                return t0_2;
             }
-            return t0;
+            return t0_1;
         }
     }
 
@@ -1186,21 +1188,24 @@ public class InstructionSelector implements IRVisitor {
                 }
                 //先lui，如果低位非0，addi
                 else {
-                    PhysicalRegister t0 = new PhysicalRegister("t0", 4);
+                    PhysicalRegister t0_1 = new PhysicalRegister("t0", 4);
+                    PhysicalRegister t0_2 = new PhysicalRegister("t0", 4);
                     newInsts.add(
-                            new LuiInst(t0, new Imm((num >> 12)))
+                            new LuiInst(t0_1, new Imm((num >> 12)))
                     );
                     if ((num & 0xFFF) != 0) {
                         newInsts.add(
                                 new ImmBinaryInst(
-                                        t0,
+                                        t0_1,
                                         new Imm(num & 0xFFF),
-                                        t0,
+                                        t0_2,
                                         ImmBinaryInst.Opcode.addi
                                 )
                         );
+                        operand = t0_2;
+                    } else {
+                        operand = t0_1;
                     }
-                    operand = t0;
                 }
             } else if (orgValue instanceof ConstBool constBool) {
                 operand = new Imm(constBool.value);

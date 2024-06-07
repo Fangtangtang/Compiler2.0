@@ -76,21 +76,24 @@ public class CallingConvention {
                 if (callInst.hasReturn) {
                     iter.next();
                     ASMInstruction instruction = iter.next();
-                    if (instruction instanceof MoveInst mvRetInst) {
-                        if (mvRetInst.rs1.color == Colors.Color.a0) {
-                            iter.remove();
-                            iter.add(
-                                    new MoveInst(gp, mvRetInst.rs1)
-                            );
-                            iter.add(
-                                    new MoveInst(mvRetInst.rd, gp)
-                            );
-                            iter.previous();
-                        }
+                    if (instruction instanceof MoveInst mvRetInst &&
+                            mvRetInst.rs1.color == Colors.Color.a0) {
+                        iter.remove(); // mv
+                        iter.add(
+                                new MoveInst(gp, mvRetInst.rs1)
+                        );
+                        iter.add(
+                                new MoveInst(mvRetInst.rd, gp)
+                        );
+                        iter.previous();
+                        iter.previous();
+                        afterCall(iter, pairs);
+                        iter.previous();
+                    } else {
+                        iter.previous();
+                        iter.previous();
+                        afterCall(iter, pairs);
                     }
-                    iter.previous();
-                    afterCall(iter, pairs);
-                    iter.previous();
                 } else {
                     afterCall(iter, pairs);
                 }
