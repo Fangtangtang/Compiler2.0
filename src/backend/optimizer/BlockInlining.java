@@ -12,9 +12,9 @@ import java.util.*;
 /**
  * @author F
  * BlockInlining
- * <p>
  * 若Block仅有一个后继，直接将后继内联
  * （在asm上做这个免除ir上phi和用于标记的控制流的复杂处理）
+ * todo:后继有多个前驱，内联？导致非ssa
  */
 public class BlockInlining {
     Text text;
@@ -23,16 +23,16 @@ public class BlockInlining {
         this.text = text;
     }
 
-    public void execute() {
+    public void simplifyCtrFlow() {
         text.functions.forEach(
                 func -> {
-                    inliningOnFunc(func);
+                    simplifyCtrFlowOnFunc(func);
                     eliminateDeadBlock(func);
                 }
         );
     }
 
-    private void inliningOnFunc(Func func) {
+    private void simplifyCtrFlowOnFunc(Func func) {
         // construct graph
         func.constructGenealogy();
         HashSet<Block> workList = new HashSet<>();
@@ -48,7 +48,6 @@ public class BlockInlining {
                 if (successor == func.retBlock) {
                     continue;
                 }
-                // todo:避免代码过分膨胀(可否放松？)
                 if (successor.predecessorList.size() > 1) {
                     if (!vis.contains(successor.name)) {
                         workList.add(successor);

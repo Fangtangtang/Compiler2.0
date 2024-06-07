@@ -30,12 +30,15 @@ public class ASMOptimizer {
     // - 在asm上简化控制流
     // - 函数call时的save简化
     public void execute() {
+        // still SSA (asm ssa ir)
         // BlockInlining
         BlockInlining blockInlining = new BlockInlining(text);
-        blockInlining.execute();
+        blockInlining.simplifyCtrFlow();
+
         // graph coloring
         // ----------------------------------------------------------
-        CFGBuilder cfgBuilder = new CFGBuilder(text);
+        // true ASM after this
+        ReverseCFGBuilder cfgBuilder = new ReverseCFGBuilder(text);
         cfgBuilder.build();
         text.functions.forEach(
                 func -> {

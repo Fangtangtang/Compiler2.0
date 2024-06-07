@@ -1,23 +1,19 @@
 package backend.optimizer;
 
 import asm.*;
-import asm.instruction.*;
 import asm.section.Text;
-import utility.error.InternalException;
 
 import java.util.*;
 
 /**
  * @author F
- * asm上CFGBuilder
+ * asm上反向CFGBuilder
  */
-public class CFGBuilder {
+public class ReverseCFGBuilder {
     //所有自定义的函数
     Text text;
 
-    HashMap<String, Block> blockMap;
-
-    public CFGBuilder(Text text) {
+    public ReverseCFGBuilder(Text text) {
         this.text = text;
     }
 

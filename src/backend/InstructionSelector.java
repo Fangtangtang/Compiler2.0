@@ -20,11 +20,11 @@ import java.util.*;
 /**
  * @author F
  * 遍历IR，转化为ASM指令
+ * register以index为区分，仍然为SSA
  */
 public class InstructionSelector implements IRVisitor {
     //使用的所用物理寄存器
     public PhysicalRegMap registerMap = new PhysicalRegMap();
-//    PhysicalRegister t0, t1, t2, t3;
 
     Program program;
 

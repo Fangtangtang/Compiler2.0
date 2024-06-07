@@ -15,7 +15,6 @@ import java.util.*;
 public class DomTree {
     public ArrayList<DomTreeNode> reorderedBlock;
     public int[] iDomArray;
-    public HashMap<String, DomTreeNode> label2node = new HashMap<>();
 
     public DomTree(Function function) {
         reorderedBlock = function.reorderedBlock;
@@ -68,7 +67,6 @@ public class DomTree {
             DomTreeNode node = new DomTreeNode(block);
             reorderedBlock.add(node);
             block.reversePostorder = maxIndex - index;
-            label2node.put(block.label, node);
         }
     }
 

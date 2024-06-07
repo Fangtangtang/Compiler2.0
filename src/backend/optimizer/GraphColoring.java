@@ -391,7 +391,7 @@ public class GraphColoring {
     }
 
     //TODO:spill启发式
-    // 新加入的virtual代替原来spill不了的，无限死循环！！！
+    //新加入的virtual代替原来spill不了的，无限死循环！！！
     //选择degree最大的
     void selectSpill() {
         int maxDegree = -1;

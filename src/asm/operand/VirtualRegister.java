@@ -4,6 +4,7 @@ package asm.operand;
  * @author F
  * 虚拟寄存器
  * 未被实际分配
+ * SSA
  */
 public class VirtualRegister extends Register {
     public String name;
