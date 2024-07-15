@@ -13,7 +13,7 @@ import utility.scope.Scope;
 abstract public class ASTNode {
     public Position pos;
 
-    //有些节点会引入scope
+    //结点性质：直接所属的作用域，有些节点会引入scope
     public Scope scope = null;
 
     public ASTNode(Position pos) {

@@ -403,9 +403,11 @@ public class GraphColoring {
                 m = node;
             }
         }
-        nodeSet.spillWorkList.remove(m);
-        nodeSet.simplifyWorkList.add(m);
-        freezeMoves(m);
+        if (m != null) {
+            nodeSet.spillWorkList.remove(m);
+            nodeSet.simplifyWorkList.add(m);
+            freezeMoves(m);
+        }
     }
 
     //selectStack中元素一一弹出，分配颜色

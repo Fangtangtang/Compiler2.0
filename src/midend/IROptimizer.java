@@ -27,18 +27,18 @@ public class IROptimizer {
         global2Local.execute();
 
         // mem2reg
-        CFGBuilder cfgBuilder = new CFGBuilder(irRoot);
-        cfgBuilder.build();
-        DomTreeBuilder domTreeBuilder = new DomTreeBuilder(irRoot);
-        domTreeBuilder.build();
-        Mem2Reg mem2Reg = new Mem2Reg();
-        for (Map.Entry<String, Function> entry : irRoot.funcDef.entrySet()) {
-            Function func = entry.getValue();
-            // 普通local function
-            if (func.entry != null && func.blockMap.size() < 800) {
-                mem2Reg.execute(func);
-            }
-        }
+//        CFGBuilder cfgBuilder = new CFGBuilder(irRoot);
+//        cfgBuilder.build();
+//        DomTreeBuilder domTreeBuilder = new DomTreeBuilder(irRoot);
+//        domTreeBuilder.build();
+//        Mem2Reg mem2Reg = new Mem2Reg();
+//        for (Map.Entry<String, Function> entry : irRoot.funcDef.entrySet()) {
+//            Function func = entry.getValue();
+//            // 普通local function
+//            if (func.entry != null && func.blockMap.size() < 800) {
+//                mem2Reg.execute(func);
+//            }
+//        }
 
         LocalTmpVarPropagation localTmpVarPropagation = new LocalTmpVarPropagation(irRoot);
         localTmpVarPropagation.execute();
