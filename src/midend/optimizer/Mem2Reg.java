@@ -103,18 +103,19 @@ public class Mem2Reg {
      * |    + 新的 phiDef
      */
     void rename() {
-        for (Map.Entry<String, BasicBlock> entry : function.blockMap.entrySet()) {
-            visited = new HashSet<>();
-            BasicBlock block = entry.getValue();
-            renameDfs(block);
-        }
+        visited = new HashSet<>();
+        renameDfs(function.entry);
+//        for (Map.Entry<String, BasicBlock> entry : function.blockMap.entrySet()) {
+//            visited = new HashSet<>();
+//            BasicBlock block = entry.getValue();
+//            renameDfs(block);
+//        }
     }
 
     /**
      * dfs on CFG
      * - rename name in use(若visited，不用再做)
      * - insert phi [value,label]
-     * [!] dfs from each node instead of the root of the domTree
      *
      * @param block node in CFG
      */
