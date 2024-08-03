@@ -119,8 +119,11 @@ public class Mem2Reg {
      * @param block node in CFG
      */
     void renameDfs(BasicBlock block) {
+        // in the entry of the block, var should be renamed to what?
         HashMap<String, Storage> allocaDefInBlock = new HashMap<>();
+        // new def in current block
         HashSet<String> newDef = new HashSet<>();
+        // def in block (name -> latest value)
         for (Map.Entry<String, Stack<Storage>> entry : allocaDefMap.entrySet()) {
             if (!entry.getValue().isEmpty()) {
                 allocaDefInBlock.put(entry.getKey(), entry.getValue().peek());
@@ -130,10 +133,11 @@ public class Mem2Reg {
             allocaDefInBlock.put(entry.getKey(), entry.getValue().result);
             newDef.add(entry.getKey());
         }
-        // rename
+        // replace statements
+        // -------------------------------------------------------------------------------------------------------------
         LinkedList<Stmt> newStatements = new LinkedList<>();
         for (Stmt stmt : block.statements) {
-            // use of localVar
+            // use of localVar：不再需要load语句，将load的result的使用替换为replace的使用
             if (stmt instanceof Load load &&
                     load.pointer instanceof LocalVar localVar) {
                 Storage replace = allocaDefInBlock.get(localVar.identity);
@@ -143,12 +147,14 @@ public class Mem2Reg {
                 }
                 loads.put(load.result.toString(), replace);
             }
-            // def of localVar
+            // def of localVar (replace def statements)：向alloca地址存的def语句不再需要
             else if (stmt instanceof Store store &&
                     store.pointer instanceof LocalVar localVar) {
                 allocaDefInBlock.put(localVar.identity, (Storage) store.value);
                 newDef.add(localVar.identity);
-            } else if (stmt instanceof Alloca alloca) {
+            }
+            // Alloca不再需要
+            else if (stmt instanceof Alloca alloca) {
                 allocaDefInBlock.put(alloca.result.identity, undefinedVar);
                 newDef.add(alloca.result.identity);
             } else {
@@ -156,6 +162,7 @@ public class Mem2Reg {
             }
         }
         block.statements = newStatements;
+        // -------------------------------------------------------------------------------------------------------------
         // update allocaDefMap: push
         HashMap<String, Storage> map;
         if (!newDefInBlock.containsKey(block.label)) {
@@ -176,12 +183,9 @@ public class Mem2Reg {
                 allocaDefMap.get(defEntry.getKey()).push(defEntry.getValue());
             }
         }
+        // 向后继插入phi过去的值
         for (BasicBlock successor : block.successorList) {
-            // insert phi
             for (Map.Entry<String, DomPhi> entry : successor.domPhiMap.entrySet()) {
-//                    if (newDef.contains(entry.getKey())) {
-//                        entry.getValue().put(block.label, allocaDefInBlock.get(entry.getKey()));
-//                    }
                 if (allocaDefInBlock.containsKey(entry.getKey())) {
                     entry.getValue().put(
                             block.label,
@@ -200,7 +204,7 @@ public class Mem2Reg {
                     );
                 }
             }
-            // dfs
+            // dfs(跨BB的phi值)
             if (!visited.contains(successor.label)) {
                 visited.add(successor.label);
                 renameDfs(successor);
@@ -220,7 +224,7 @@ public class Mem2Reg {
     }
 
     /**
-     * add DomPhi it statements
+     * add DomPhi to statements
      */
     void updateStmts() {
         for (Map.Entry<String, BasicBlock> entry : function.blockMap.entrySet()) {

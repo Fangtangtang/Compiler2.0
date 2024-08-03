@@ -54,14 +54,32 @@ abstract public class ASTNode {
 ```
 
 #### Collect Symbol and Check Semantic
+##### Collect Symbol 
+将支持前向引用的`Symbol`收录进`SymbolTable`。
+
+检查语法时，对支持前向引用的（mx中的`Class`和`Function`），需要先记录`SymbolName -> SymbolType`等，用于在语法检查到其定义之前检查其使用的合法性。
+
+`SymbolCollector`访问`AST`上和前向引用部分对应的结点。
 ```java
         Scope.symbolTable = new SymbolTable();
         SymbolCollector symbolCollector = new SymbolCollector(Scope.symbolTable);
         symbolCollector.visit(astRoot);
 ```
 
+##### Check Semantic
+`SemanticChecker`访问`AST`，检查语法错误。
+
 ```java
         SemanticChecker semanticChecker = new SemanticChecker();
         semanticChecker.visit(astRoot);
 ```
+
+非法Identifier等在parse阶段已被检出，该阶段主要检查以下几类。
+- Multiple Definitions of(Class\Function\Variable)
+- Undefined (Class\Function\Variable:include variable out of scope...)
+- Type Mismatch(assign\binary expression\return type)
+- Invaild Control Flow(invalid continue\break)
+- Invalid Type(condtion isn't bool\index isn't int\++bool...)
+- Missing Return Statement
+- Array Dimension Out Of Bound(int[] a=new int[2]; a[1][1]=1;)
 
