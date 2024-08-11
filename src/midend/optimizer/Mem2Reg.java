@@ -24,7 +24,6 @@ import java.util.*;
 public class Mem2Reg {
 
     Function function;
-    ConstInt zero = new ConstInt("0");
     HashMap<String, Stack<Storage>> allocaDefMap = null;
     HashMap<String, Storage> loads = null;
     // BlockName -> < LocalVarNAme , newLiveOutDef >

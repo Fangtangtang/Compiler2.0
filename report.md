@@ -35,6 +35,12 @@
 visitor mode，访问 `ParseTree` 结点（子树），子树accept，根据子树类型（和访问者类型）实现不同的访问逻辑。
 
 ASTBuilder访问行为为根据 `ParseTree` 结构构建对应的 `AST` 。
+```text
+visit accept是怎么绕的（TA时期遇到的提问）
+
+visitor.visit(node) --> node.accept(visitor) --> visitor.visitChildren(...) 
+visitChildren又是啥呢 其实对应生成出来的BaseVisitor（或者说Visitor）里面的visitProgram等等一堆函数（接口）
+```
 
 ##### AST Node
 ```java
@@ -78,8 +84,41 @@ abstract public class ASTNode {
 - Multiple Definitions of(Class\Function\Variable)
 - Undefined (Class\Function\Variable:include variable out of scope...)
 - Type Mismatch(assign\binary expression\return type)
-- Invaild Control Flow(invalid continue\break)
-- Invalid Type(condtion isn't bool\index isn't int\++bool...)
+- Invalid Control Flow(invalid continue\break)
+- Invalid Type(condition isn't bool\index isn't int\++bool...)
 - Missing Return Statement
 - Array Dimension Out Of Bound(int[] a=new int[2]; a[1][1]=1;)
 
+### Middle End
+#### Build IR (LLVM IR)
+```text
+warning：
+一个明显的多余操作。无需对bool类型分`i1, i8`再使用`trunc, zext`做类型转换，可直接用
+`i1`。
+```
+
+转为IR (intermediate representation)，转为中间语言，可在上面更方便处理优化工作，再从中间语言转向目标平台。
+
+实现中使用了`LLVM IR`作为了转向的中间表达。个人感觉它非常高明的一点在于用`alloca`，比较方便地转成了SSA，SSA在优化中意义重大。
+
+```
+LLVM 有一个假设：程序中所有的局部变量都在栈上，并且通过 alloca 指令在函数的 entry block 进行声明，
+并且这些声明只出现在 entry block 中。
+```
+
+但由于`alloca`引入大量访存指令，造成巨大开销，后续优化时可使用`LLVM IR`上的`Mem2Reg Pass`消去部分（mx上实际可完全消去）。
+
+##### 一些诡异实现
+
+- 用“访存”替代了一些`Phi`
+  - 现在想来这绝对不是个正常的、高效的实现。正确性上倒是没什么问题，走过的路径向指定内存区域写值，对值使用时直接`load`，不用考虑从哪条路径过来。
+  - 为啥会选择用“访存”？（实在有点愚蠢）
+    - 这类转换当时没有看参考，对`llvm ir`也还不熟，没考虑`Phi`到底有什么用，想到一个可行方案就直接给实现了
+    - 没太多sys知识，也没意识到访存是件多么麻烦的事
+    - 当时就有点把`llvm ir`的“内存”当无限`virtual register`的感觉（很好，为后来走上“歪路”埋下种子）
+
+
+
+#### 'Machine' IR
+
+（后知后觉，一个依赖于目标平台的中间表达层）
