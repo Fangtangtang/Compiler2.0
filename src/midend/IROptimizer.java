@@ -20,11 +20,11 @@ public class IROptimizer {
     // TODO：
     // 激进死代码消除
     public void execute() {
-        FunctionInliningAdv functionInlining = new FunctionInliningAdv(irRoot);
-        functionInlining.execute();
-
-        Global2Local global2Local = new Global2Local(irRoot);
-        global2Local.execute();
+//        FunctionInliningAdv functionInlining = new FunctionInliningAdv(irRoot);
+//        functionInlining.execute();
+//
+//        Global2Local global2Local = new Global2Local(irRoot);
+//        global2Local.execute();
 
         // mem2reg
         CFGBuilder cfgBuilder = new CFGBuilder(irRoot);
@@ -40,14 +40,14 @@ public class IROptimizer {
             }
         }
 
-        LocalTmpVarPropagation localTmpVarPropagation = new LocalTmpVarPropagation(irRoot);
-        localTmpVarPropagation.execute();
-
-        CCP ccp = new CCP(irRoot);
-        ccp.execute();
-
-        DeadCodeEliminator codeEliminator = new DeadCodeEliminator(irRoot);
-        codeEliminator.execute();
+//        LocalTmpVarPropagation localTmpVarPropagation = new LocalTmpVarPropagation(irRoot);
+//        localTmpVarPropagation.execute();
+//
+//        CCP ccp = new CCP(irRoot);
+//        ccp.execute();
+//
+//        DeadCodeEliminator codeEliminator = new DeadCodeEliminator(irRoot);
+//        codeEliminator.execute();
 
     }
 }

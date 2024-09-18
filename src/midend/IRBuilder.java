@@ -1240,12 +1240,12 @@ public class IRBuilder implements ASTVisitor<Entity> {
                 endBlock = new BasicBlock(currentFunction.funcName + "_loop.end" + label);
         //int i=0;
         LocalVar i_;//允许被通用的全局变量
-        String i_name = currentFunction.funcName + ".i";
+        String i_name = currentFunction.funcName + ".i" + layer;
         if (rename2mem.containsKey(i_name)) {
             i_ = (LocalVar) rename2mem.get(i_name);
         } else {
             Alloca stmt = new Alloca(zero.type, i_name);
-            pushBack(stmt);
+            currentInitStmts.add(stmt);
             i_ = stmt.result;
             rename2mem.put(i_name, i_);
         }
@@ -1304,7 +1304,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         );
         //判断是否终止
         if ((1 + layer) != indexList.size()) {
-            constructArray(indexList, dimension, layer + 1, newRoot);
+            constructArray(indexList, dimension, layer + 1, result);
         }
         pushBack(
                 new Jump(incBlock)
@@ -1723,6 +1723,7 @@ public class IRBuilder implements ASTVisitor<Entity> {
         if (currentScope instanceof GlobalScope) {
             currentBlock = globalInitFunc.currentBlock;
             currentFunction = globalInitFunc;
+            currentInitStmts = globalInitFunc.entry.statements;
             name = rename(node.name);
             //标明类型的空间，无初始值
             Storage initVar = new Storage(irType);
