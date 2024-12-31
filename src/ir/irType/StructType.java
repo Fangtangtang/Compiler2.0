@@ -40,7 +40,7 @@ public class StructType extends IRType {
         if (size > 0) {
             return size;
         }
-        size = 32 * memberTypes.size();
+        size = 32 * memberTypes.size(); // int|bool|指针集合
         return size;
     }
 
